@@ -102,6 +102,7 @@ class Shell {
         const def = this.game.def;
         const stars = calcStars(def, stats);
         this.save.levelResult(def.id, stars, stats);
+        if (def.id >= 7) this.save.unlockAbyss();
         if (def.finale) {
           this.save.unlockAbyss();
           setTimeout(() => this._show('credits'), 1400);

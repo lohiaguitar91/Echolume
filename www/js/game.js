@@ -92,7 +92,8 @@ export class Game {
 
   _abyssHalfWidth(depthUnits) {
     const m = depthUnits / TUNING.abyssDepthPerMeter;
-    return Math.max(TUNING.abyssMinWidth / 2 + 20, TUNING.abyssStartWidth / 2 + 60 - m * 0.14);
+    // Gentle narrowing: reaches its floor around 1350m instead of 800m.
+    return Math.max(TUNING.abyssMinWidth / 2 + 35, TUNING.abyssStartWidth / 2 + 60 - m * 0.07);
   }
 
   _rebuildAbyssGeometry() {
@@ -122,7 +123,7 @@ export class Game {
           taken: false, reveal: 0, phase: rng() * 6.28, driftPhase: rng() * 6.28,
         });
       }
-      const urchinChance = clamp(0.12 + depthM * 0.0009, 0, 0.55);
+      const urchinChance = clamp(0.09 + depthM * 0.0006, 0, 0.42);
       if (rng() < urchinChance) {
         const ux = wx + (rng() - 0.5) * 140, uy = wy + (rng() - 0.5) * 100;
         // Keep thorn clusters passable: never two urchins close enough to wall
@@ -136,11 +137,11 @@ export class Game {
           newUrchins.push({ x: ux, y: uy, reveal: 0, phase: rng() * 6.28, spikes });
         }
       }
-      const hunterChance = depthM < 60 ? 0 : clamp(0.05 + depthM * 0.0005, 0, 0.3);
+      const hunterChance = depthM < 100 ? 0 : clamp(0.04 + depthM * 0.00035, 0, 0.22);
       if (rng() < hunterChance) {
         newHunters.push({
           x: wx, y: wy, vx: 0, vy: 0, homeX: wx, homeY: wy,
-          wanderR: 160, fast: depthM > 400 && rng() < 0.4,
+          wanderR: 160, fast: depthM > 700 && rng() < 0.3,
           state: 'wander', alertT: 0, targetX: wx, targetY: wy, retargetT: 0,
           reveal: 0, phase: rng() * 6.28,
         });

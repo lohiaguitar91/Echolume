@@ -165,7 +165,7 @@ export class UI {
     b.disabled = !save.data.abyssUnlocked;
     b.textContent = save.data.abyssUnlocked
       ? `The Abyss${save.data.abyssBestDepth ? ` · ${save.data.abyssBestDepth} m` : ''}`
-      : 'The Abyss · locked';
+      : 'The Abyss · clear depth 7';
   }
 
   // ---- results ----
