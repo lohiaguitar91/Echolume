@@ -510,10 +510,16 @@ export class Game {
   }
 }
 
-export function calcStars(def, stats) {
-  let stars = 1;
+// Per-criterion star results — the UI lights each star by its own rule,
+// never by count (a lit star must sit above the label it actually earned).
+export function starBreakdown(def, stats) {
   const need = Math.ceil((def.stars?.motePct || 1) * stats.moteTotal);
-  if (stats.moteTotal === 0 || stats.motes >= need) stars++;
-  if (stats.pings <= (def.stars?.maxPings || Infinity)) stars++;
-  return stars;
+  const vent = true; // you're at the results screen because you reached it
+  const motes = stats.moteTotal === 0 || stats.motes >= need;
+  const songs = stats.pings <= (def.stars?.maxPings ?? Infinity);
+  return { vent, motes, songs, count: 1 + (motes ? 1 : 0) + (songs ? 1 : 0) };
+}
+
+export function calcStars(def, stats) {
+  return starBreakdown(def, stats).count;
 }

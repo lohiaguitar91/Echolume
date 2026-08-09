@@ -185,10 +185,17 @@ export class UI {
   fillResults(defName, stars, stats, opts = {}) {
     this.el.resultsTitle.textContent = opts.finale ? 'The deep opens' : 'Vent reached';
     const starEls = this.el.resultsStars.querySelectorAll('.star');
+    // Light each star by its own criterion, staggered among the earned ones.
+    const earned = opts.breakdown
+      ? [opts.breakdown.vent, opts.breakdown.motes, opts.breakdown.songs]
+      : [true, stars >= 2, stars >= 3];
+    let popIndex = 0;
     starEls.forEach((s, i) => {
       s.classList.remove('earned', 'pop1', 'pop2', 'pop3');
-      if (i < stars) {
-        setTimeout(() => s.classList.add('earned', `pop${i + 1}`), 350 + i * 380);
+      if (earned[i]) {
+        const delay = 350 + popIndex * 380;
+        popIndex++;
+        setTimeout(() => s.classList.add('earned', `pop${i + 1}`), delay);
       }
     });
     // Show what each star wants, so a missed star is a goal, not a mystery.
