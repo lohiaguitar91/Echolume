@@ -61,7 +61,7 @@
 
 <h1>Echolume</h1>
 <div class="subtitle">v1.1 &middot; The Listening Deep &middot; iteration plan</div>
-<div class="meta">Pre-publish roadmap &middot; August 9, 2026 &middot; no code changes made &mdash; design only</div>
+<div class="meta">Pre-publish roadmap &middot; August 9, 2026 &middot; iteration 2 (flow &amp; session pass) &middot; no code changes made &mdash; design only</div>
 
 <!-- ============ 1. ABYSS RECAP ============ -->
 <h2><span class="n">1</span>Abyss death recap &mdash; make the run mean something</h2>
@@ -371,14 +371,69 @@ entirely on which product it wants to be:</p>
   existing run stats &mdash; no new gameplay systems. Both feed the gem earn-side later without touching stars.</p>
 </div>
 
-<!-- ============ 6. SEQUENCE ============ -->
-<h2><span class="n">6</span>Suggested sequence</h2>
+<!-- ============ 6. FLOW ============ -->
+<h2><span class="n">6</span>Flow &mdash; the no-disruption audit and the loop that keeps players in</h2>
+<p>A walkthrough of every transition in the current build, counted in taps, plus the four smallest changes that
+close the gaps. The bar: <em>nothing between the player and the water, and always one visible reason to go back in.</em></p>
+<table>
+  <tr><th>Moment</th><th>Today</th><th>Gap</th><th>Proposal</th></tr>
+  <tr>
+    <td>Returning player wants to continue</td>
+    <td>Dive &rarr; find the next level cell &rarr; tap <span class="dim">(2 taps + a scan)</span></td>
+    <td class="mid">The scan is the disruption &mdash; the game should know</td>
+    <td><strong>Continue chip:</strong> title's primary button becomes "Continue &middot; Depth 5" when a next depth exists
+        (level select stays one tap away via Depths link). One tap from cold boot to water.</td>
+  </tr>
+  <tr>
+    <td>Finishing a level</td>
+    <td>Results &rarr; Next depth <span class="dim">(1 tap)</span></td>
+    <td class="mid">Next depth is a number, not a promise</td>
+    <td><strong>Next-depth tease</strong> on results: "Next &middot; Hush &mdash; something in it listens." One line of
+        anticipation above the button; new-element depths get their element named.</td>
+  </tr>
+  <tr>
+    <td>Dying on a hard depth (12&ndash;13)</td>
+    <td>Retry restarts clean <span class="dim">(1 tap, ~1s)</span></td>
+    <td class="mid">Run evidence vanishes &mdash; a 15-mote attempt that died at the vent saves nothing</td>
+    <td><strong>Deaths still write records:</strong> bestMotes/bestTime update on failed runs too (stars stay win-only).
+        The retry stops feeling like erasure. Two-line change when implemented.</td>
+  </tr>
+  <tr>
+    <td>Sitting on the title, unsure what's next</td>
+    <td>Progress lives inside Depths</td>
+    <td class="mid">No visible next goal at the front door</td>
+    <td><strong>Micro-goal line</strong> under the buttons, picked by priority: un-earned star closest to done &rarr;
+        next milestone distance &rarr; today's quest. "Depth 3 &middot; one more mote for its second star."</td>
+  </tr>
+</table>
+<div class="card">
+  <h3 style="margin-top:0">Flow guardrails (adopt as written rules for every future feature)</h3>
+  <ul>
+    <li>Nothing modal ever appears during play; all teaching stays in-world (hints, sound, light).</li>
+    <li>Every screen is at most one tap from being back in the water.</li>
+    <li>Audio ducks, never hard-cuts; transitions fade the world, never blank it.</li>
+    <li>Death to retry stays under 1.5 seconds and never shows an upsell in the premium SKU.</li>
+    <li>No timers, energy, or appointment mechanics &mdash; the only reason to return is wanting to.</li>
+    <li>Every run ends by pointing at the next one: record state, near-miss distance, tease, or quest progress.</li>
+  </ul>
+</div>
+<div class="card rec">
+  <h3 style="margin-top:0">The loop, named</h3>
+  <p style="margin-bottom:0"><strong>Play &rarr; feel (chain colors, glow, melody) &rarr; recap that points forward
+  (record / near-miss / medal / tease) &rarr; one-tap re-entry (Continue chip).</strong> Sections 1, 2, and 5 build the
+  middle of this loop; the four changes above close its ends. That end-to-end shape &mdash; not any single feature &mdash;
+  is what "can't put it down" actually is.</p>
+</div>
+
+<!-- ============ 7. SEQUENCE ============ -->
+<h2><span class="n">7</span>Suggested sequence</h2>
 <table>
   <tr><th>Release</th><th>Contents</th><th>Risk notes</th></tr>
   <tr>
     <td><strong>v1.1</strong> <span class="dim">(before store submission)</span></td>
-    <td>Abyss death recap &middot; mote color chains + bloom pulse &middot; trench medals (par times) &middot; glow bonus 3%&rarr;4%</td>
-    <td>All read-side or cosmetic; no re-review risk; ~2&ndash;3 focused sessions of work</td>
+    <td>Abyss death recap &middot; mote color chains + bloom pulse &middot; trench medals (par times) &middot; glow bonus 3%&rarr;4%
+        &middot; the four flow fixes from &sect;6 (Continue chip, next-depth tease, deaths write records, title micro-goal)</td>
+    <td>All read-side or cosmetic; no re-review risk; ~3&ndash;4 focused sessions of work</td>
   </tr>
   <tr>
     <td><strong>v1.2</strong></td>
