@@ -138,7 +138,7 @@ export function drawGame(R, game, particles, time, dt, palette) {
     const breathe = 0.92 + 0.08 * Math.sin(p.breathe * 2.4);
     let alpha = 1;
     if (p.invuln > 0) alpha = 0.45 + 0.55 * Math.abs(Math.sin(p.invuln * 14));
-    R.glowDot(p.x, p.y, 20 * breathe * game.auraScale + 4, palette.playerAura, 0.28 * alpha);
+    R.glowDot(p.x, p.y, 20 * breathe * game.effectiveAura() + 4, palette.playerAura, 0.28 * alpha);
     R.glowDot(p.x, p.y, 10.5, palette.playerAura, 0.75 * alpha);
     R.glowDot(p.x, p.y, 5.2, palette.player, alpha, '#ffffff');
     // motion tail

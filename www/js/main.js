@@ -9,7 +9,7 @@ import { AudioEngine } from './audio.js';
 import { Haptics } from './haptics.js';
 import { Save } from './save.js';
 import { UI } from './ui.js';
-import { Game, calcStars } from './game.js';
+import { Game, starBreakdown } from './game.js';
 import { GameServices } from './gameservices.js';
 import { getLevel, LEVELS } from './levels.js';
 import { drawGame, drawMenuAmbient } from './draw.js';
@@ -112,7 +112,8 @@ class Shell {
         const v = this.game.ents.vent;
         this.particles.burst(v.x, v.y, this.palette.vent, 30, 160, 1.3, 3.2, this.palette.ventCore);
         const def = this.game.def;
-        const stars = calcStars(def, stats);
+        const breakdown = starBreakdown(def, stats);
+        const stars = breakdown.count;
         this.save.levelResult(def.id, stars, stats);
         if (def.id >= 7) this.save.unlockAbyss();
         if (def.finale) {
@@ -123,6 +124,8 @@ class Shell {
             this.ui.fillResults(def.name, stars, stats, {
               hasNext: !!getLevel(def.id + 1),
               def,
+              record: this.save.data.levels[def.id],
+              breakdown,
             });
             for (let i = 0; i < stars; i++) {
               setTimeout(() => this.audio.star(i + 1), 780 + i * 380);

@@ -13,7 +13,7 @@ export const LEVELS = [
     hints: [
       { t: 0.0, text: 'Tap the water. Your song lights the dark.' },
       { t: 0.22, text: 'Every song also carries you. Tap where you want to go.' },
-      { t: 0.62, text: 'Gather the amber motes as you drift.' },
+      { t: 0.62, text: 'Gather the amber motes. Each one feeds your glow.' },
       { t: 0.88, text: 'The green vent leads deeper.' },
     ],
   },
