@@ -1,0 +1,25 @@
+{
+  "appId": "com.kaush.echolume",
+  "appName": "Echolume",
+  "webDir": "www",
+  "backgroundColor": "#030711",
+  "android": {
+    "backgroundColor": "#030711",
+    "allowMixedContent": false
+  },
+  "ios": {
+    "backgroundColor": "#030711",
+    "contentInset": "never",
+    "preferredContentMode": "mobile"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 900,
+      "launchAutoHide": true,
+      "backgroundColor": "#030711",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    }
+  }
+}
