@@ -24,7 +24,7 @@ Details for each live in docs/BUILDING.md and docs/PUBLISHING.md.
 
 ## 3. iOS build (Mac with current Xcode)
 - [ ] Clone repo, `npm install`, `npx cap sync ios`, `npx cap open ios`.
-- [ ] Set signing Team; bundle id `com.wibesllc.echolume`.
+- [x] Set signing Team (Wibes LLC, RV5N43T74L); bundle id `com.wibesllc.echolume`.
 - [ ] Run on a real iPhone once (same spot-checks as Android).
 - [ ] Product → Archive → upload to App Store Connect.
 - [ ] Listing from `store/listing-ios.md`; App Privacy = Data Not Collected;
