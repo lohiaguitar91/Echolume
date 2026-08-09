@@ -26,7 +26,8 @@ Details for each live in docs/BUILDING.md and docs/PUBLISHING.md.
 - [ ] Clone repo, `npm install`, `npx cap sync ios`, `npx cap open ios`.
 - [x] Set signing Team (Wibes LLC, RV5N43T74L); bundle id `com.wibesllc.echolume`.
 - [ ] Run on a real iPhone once (same spot-checks as Android).
-- [ ] Product → Archive → upload to App Store Connect.
+- [x] Product → Archive → upload to App Store Connect. (build 1.0 (1) uploaded via
+      CLI — see the xcodebuild commands in docs/BUILDING.md)
 - [ ] Listing from `store/listing-ios.md`; App Privacy = Data Not Collected;
       paste the review notes from that file into App Review Information.
 

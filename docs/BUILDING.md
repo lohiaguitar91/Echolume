@@ -48,6 +48,18 @@ Package.swift plugins). On a Mac:
 3. In Xcode: set your Team under Signing & Capabilities (bundle id `com.wibesllc.echolume`).
 4. Product → Archive → Distribute App → App Store Connect.
 
+CLI alternative to steps 2–4 (uses Xcode's signed-in account; team is already
+set in the project, `ios/App/UploadOptions.plist` holds the upload settings):
+
+    xcodebuild archive -project ios/App/App.xcodeproj -scheme App \
+      -destination 'generic/platform=iOS' \
+      -archivePath ios/App/output/Echolume.xcarchive -allowProvisioningUpdates
+    xcodebuild -exportArchive -archivePath ios/App/output/Echolume.xcarchive \
+      -exportOptionsPlist ios/App/UploadOptions.plist -allowProvisioningUpdates
+
+Bump CURRENT_PROJECT_VERSION (build number) in `ios/App/App.xcodeproj` before
+every upload — App Store Connect rejects reused build numbers.
+
 Note: Apple requires builds with the current SDK (Xcode 26 / iOS 26 SDK as of April 2026).
 
 ## Icon / splash regeneration
