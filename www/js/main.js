@@ -179,6 +179,15 @@ class Shell {
   }
 
   startAbyss() {
+    // First descent gets the explainer; after that, straight down.
+    if (!this.save.data.abyssIntroSeen) {
+      this._show('abyssintro');
+      return;
+    }
+    this._startAbyssNow();
+  }
+
+  _startAbyssNow() {
     this.particles.clear();
     this.audio.setRoot(293.66); // the Abyss sings in D
     this.game.startAbyss(1 + Math.floor(Math.random() * 100000));
@@ -224,6 +233,12 @@ class Shell {
       }
     });
     click('btn-abyss', () => this.startAbyss());
+    click('btn-abyss-begin', () => {
+      this.save.data.abyssIntroSeen = true;
+      this.save.persist();
+      this._startAbyssNow();
+    });
+    click('btn-abyss-back', () => this._show('title'));
     click('btn-settings', () => { this._settingsReturn = this.state; this._show('settings'); });
     click('btn-about', () => this._show('about'));
 

@@ -295,6 +295,9 @@ html, body {
 .hg-mote { fill: var(--mote); filter: drop-shadow(0 0 4px rgba(255, 196, 94, 0.9)); }
 .hg-vent { fill: none; stroke: #5effc2; stroke-width: 2.4; filter: drop-shadow(0 0 5px rgba(94, 255, 194, 0.8)); }
 .hg-star { fill: var(--mote); opacity: 0.95; filter: drop-shadow(0 0 5px rgba(255, 196, 94, 0.7)); }
+.hg-abyss-wall { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; opacity: 0.8; }
+.hg-abyss-wall.dim { opacity: 0.45; }
+.hg-abyss-wall.dimmer { opacity: 0.22; }
 
 /* ---------- about ---------- */
 .about-body { display: flex; flex-direction: column; gap: 14px; font-size: 14.5px; line-height: 1.65; }

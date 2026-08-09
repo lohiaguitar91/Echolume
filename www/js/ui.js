@@ -14,6 +14,7 @@ export class UI {
       settings: $('screen-settings'),
       about: $('screen-about'),
       howto: $('screen-howto'),
+      abyssintro: $('screen-abyss-intro'),
       paused: $('screen-pause'),
       results: $('screen-results'),
       gameover: $('screen-gameover'),

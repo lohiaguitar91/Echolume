@@ -10,6 +10,7 @@ const DEFAULTS = {
   abyssBestDepth: 0,
   abyssUnlocked: false,
   tutorialSeen: false,
+  abyssIntroSeen: false,
   settings: {
     sound: true,
     music: true,

@@ -124,6 +124,15 @@
           </svg>
           <p>Every tap is one song. Stars want three things: the vent reached, the motes gathered, few songs spent.</p>
         </div>
+        <div class="howto-row">
+          <svg class="howto-glyph" viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M14 18 Q22 26 32 26 Q42 26 50 18" class="hg-abyss-wall"/>
+            <path d="M18 30 Q25 37 32 37 Q39 37 46 30" class="hg-abyss-wall dim"/>
+            <path d="M23 42 Q28 47 32 47 Q36 47 41 42" class="hg-abyss-wall dimmer"/>
+            <circle cx="32" cy="54" r="2.6" class="hg-core"/>
+          </svg>
+          <p>Past the last vent waits the Abyss: an endless dive where depth is your score and the deep never stops narrowing.</p>
+        </div>
       </div>
       <div class="menu-buttons">
         <button id="btn-howto-dive" class="btn primary">Begin the dive</button>
@@ -221,6 +230,24 @@
       <div class="menu-buttons">
         <button id="btn-credits-abyss" class="btn primary">Enter the Abyss</button>
         <button id="btn-credits-menu" class="btn ghost">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Abyss first-entry explainer -->
+  <div class="screen overlay" id="screen-abyss-intro" hidden>
+    <div class="panel">
+      <h2>The Abyss</h2>
+      <p>There is no vent below. The dive ends only when the dark takes you.</p>
+      <div class="results-stats">
+        <div class="stat-row"><span>Score</span><span>how deep you dare</span></div>
+        <div class="stat-row"><span>The deep</span><span>narrows as you fall</span></div>
+        <div class="stat-row"><span>Hunters</span><span>more, and faster, below</span></div>
+        <div class="stat-row"><span>Your best</span><span>is remembered</span></div>
+      </div>
+      <div class="menu-buttons">
+        <button id="btn-abyss-begin" class="btn primary">Dive</button>
+        <button id="btn-abyss-back" class="btn ghost">Not yet</button>
       </div>
     </div>
   </div>
