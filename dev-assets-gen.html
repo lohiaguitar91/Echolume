@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Echolume asset generator (dev only)</title></head>
+<body style="background:#0a1020;color:#cde">
+<p id="log">generating…</p>
+<script>
+// Draws the app icon + splash in the game's exact visual language and POSTs
+// them to the dev server. Not part of the shipped game.
+
+function drawGlow(g, x, y, r, color, coreColor, alpha) {
+  const grad = g.createRadialGradient(x, y, 0, x, y, r);
+  grad.addColorStop(0, coreColor);
+  grad.addColorStop(0.25, color);
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  g.save();
+  g.globalAlpha = alpha;
+  g.globalCompositeOperation = 'lighter';
+  g.fillStyle = grad;
+  g.fillRect(x - r, y - r, r * 2, r * 2);
+  g.restore();
+}
+
+function ring(g, x, y, r, w, color, alpha) {
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  g.strokeStyle = color;
+  g.globalAlpha = alpha * 0.45;
+  g.lineWidth = w * 3;
+  g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.stroke();
+  g.globalAlpha = alpha;
+  g.lineWidth = w;
+  g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.stroke();
+  g.restore();
+}
+
+function bg(g, s) {
+  const grad = g.createLinearGradient(0, 0, 0, s);
+  grad.addColorStop(0, '#061021');
+  grad.addColorStop(0.55, '#04101f');
+  grad.addColorStop(1, '#02060f');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, s, s);
+  // vignette
+  const vg = g.createRadialGradient(s / 2, s / 2, s * 0.3, s / 2, s / 2, s * 0.75);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,0,0,0.5)');
+  g.fillStyle = vg;
+  g.fillRect(0, 0, s, s);
+}
+
+function motes(g, s, seedPts) {
+  for (const [fx, fy, r, a] of seedPts) {
+    drawGlow(g, fx * s, fy * s, r * s, '#ffc45e', '#fff2d0', a);
+  }
+}
+
+function caveHint(g, s) {
+  // dim revealed-wall arcs in the corners, like a ping just passed
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  g.strokeStyle = '#35e0ff';
+  g.lineCap = 'round';
+  const arcs = [
+    [0.06 * s, 1.06 * s, 0.42 * s, -0.62, -0.08, 0.10],
+    [1.02 * s, -0.02 * s, 0.44 * s, 2.6, 3.4, 0.08],
+    [-0.04 * s, 0.0 * s, 0.36 * s, 0.2, 1.1, 0.07],
+  ];
+  for (const [x, y, r, a0, a1, alpha] of arcs) {
+    g.globalAlpha = alpha * 0.5;
+    g.lineWidth = 0.030 * s;
+    g.beginPath(); g.arc(x, y, r, a0, a1); g.stroke();
+    g.globalAlpha = alpha * 1.6;
+    g.lineWidth = 0.008 * s;
+    g.beginPath(); g.arc(x, y, r, a0, a1); g.stroke();
+  }
+  g.restore();
+}
+
+function drawIcon(s, opts = {}) {
+  const c = document.createElement('canvas');
+  c.width = c.height = s;
+  const g = c.getContext('2d');
+  bg(g, s);
+  caveHint(g, s);
+  const cx = 0.5 * s, cy = 0.46 * s;
+  // safe-zone aware: maskable keeps everything within central 80%
+  const scale = opts.maskable ? 0.72 : 1;
+  ring(g, cx, cy, 0.335 * s * scale, 0.012 * s, '#2bbfe0', 0.5);
+  ring(g, cx, cy, 0.235 * s * scale, 0.014 * s, '#4fd9f2', 0.75);
+  ring(g, cx, cy, 0.140 * s * scale, 0.016 * s, '#7ef0ff', 0.95);
+  drawGlow(g, cx, cy, 0.30 * s * scale, '#2f9fc0', '#7ef0ff', 0.5);
+  drawGlow(g, cx, cy, 0.10 * s * scale, '#7ef0ff', '#ffffff', 1);
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  g.fillStyle = '#ffffff';
+  g.beginPath(); g.arc(cx, cy, 0.030 * s * scale, 0, Math.PI * 2); g.fill();
+  g.restore();
+  motes(g, s, [
+    [0.20, 0.76, 0.020, 0.8], [0.79, 0.70, 0.014, 0.65],
+    [0.70, 0.22, 0.011, 0.5], [0.28, 0.28, 0.009, 0.45],
+    [0.62, 0.84, 0.012, 0.55],
+  ]);
+  return c;
+}
+
+function drawSplash(s) {
+  const c = document.createElement('canvas');
+  c.width = c.height = s;
+  const g = c.getContext('2d');
+  bg(g, s);
+  const cx = 0.5 * s, cy = 0.46 * s;
+  ring(g, cx, cy, 0.115 * s, 0.0045 * s, '#2bbfe0', 0.4);
+  ring(g, cx, cy, 0.080 * s, 0.005 * s, '#4fd9f2', 0.6);
+  ring(g, cx, cy, 0.048 * s, 0.0055 * s, '#7ef0ff', 0.85);
+  drawGlow(g, cx, cy, 0.10 * s, '#2f9fc0', '#7ef0ff', 0.5);
+  drawGlow(g, cx, cy, 0.034 * s, '#7ef0ff', '#ffffff', 1);
+  motes(g, s, [
+    [0.42, 0.60, 0.006, 0.7], [0.58, 0.56, 0.005, 0.55], [0.47, 0.34, 0.004, 0.5],
+  ]);
+  // wordmark
+  g.save();
+  g.fillStyle = '#eafcff';
+  g.shadowColor = 'rgba(126,240,255,0.6)';
+  g.shadowBlur = 0.012 * s;
+  g.font = `200 ${0.030 * s}px -apple-system, "Segoe UI", Roboto, sans-serif`;
+  g.textAlign = 'center';
+  const word = 'ECHOLUME';
+  const ls = 0.016 * s; // letterspacing
+  let total = 0;
+  const widths = [...word].map((ch) => { const w = g.measureText(ch).width; total += w; return w; });
+  total += ls * (word.length - 1);
+  let x = cx - total / 2;
+  for (let i = 0; i < word.length; i++) {
+    g.textAlign = 'left';
+    g.fillText(word[i], x, 0.60 * s);
+    x += widths[i] + ls;
+  }
+  g.restore();
+  return c;
+}
+
+async function post(name, canvas) {
+  const r = await fetch('/__dev/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, dataUrl: canvas.toDataURL('image/png') }),
+  });
+  const j = await r.json();
+  log.textContent += `\n${name}: ${j.ok ? j.bytes + ' bytes' : j.error}`;
+  return j;
+}
+
+function drawFeature(w, h) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const g = c.getContext('2d');
+  const grad = g.createLinearGradient(0, 0, w, h);
+  grad.addColorStop(0, '#02060f');
+  grad.addColorStop(0.5, '#04101f');
+  grad.addColorStop(1, '#061021');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, w, h);
+  caveHint(g, h * 1.6);
+  const cx = w * 0.26, cy = h * 0.5;
+  ring(g, cx, cy, h * 0.34, h * 0.010, '#2bbfe0', 0.45);
+  ring(g, cx, cy, h * 0.24, h * 0.011, '#4fd9f2', 0.7);
+  ring(g, cx, cy, h * 0.145, h * 0.012, '#7ef0ff', 0.9);
+  drawGlow(g, cx, cy, h * 0.30, '#2f9fc0', '#7ef0ff', 0.5);
+  drawGlow(g, cx, cy, h * 0.10, '#7ef0ff', '#ffffff', 1);
+  motes(g, w, [
+    [0.13, 0.24 * h / w, 0.010, 0.7], [0.36, 0.72 * h / w, 0.008, 0.6],
+    [0.52, 0.30 * h / w, 0.007, 0.5], [0.90, 0.70 * h / w, 0.009, 0.55],
+  ]);
+  // wordmark + tagline right of center
+  g.save();
+  g.fillStyle = '#eafcff';
+  g.shadowColor = 'rgba(126,240,255,0.6)';
+  g.shadowBlur = h * 0.03;
+  g.font = `200 ${h * 0.155}px -apple-system, "Segoe UI", Roboto, sans-serif`;
+  const word = 'ECHOLUME';
+  const ls = h * 0.055;
+  let total = 0;
+  const widths = [...word].map((ch) => { const m = g.measureText(ch).width; total += m; return m; });
+  total += ls * (word.length - 1);
+  let x = w * 0.60 - total / 2;
+  for (let i = 0; i < word.length; i++) {
+    g.fillText(word[i], x, h * 0.47);
+    x += widths[i] + ls;
+  }
+  g.shadowBlur = h * 0.012;
+  g.fillStyle = '#7f97b8';
+  g.font = `300 ${h * 0.052}px -apple-system, "Segoe UI", Roboto, sans-serif`;
+  const tag = 'M O V E   B Y   S O U N D   ·   S E E   B Y   L I G H T';
+  const tw = g.measureText(tag).width;
+  g.fillText(tag, w * 0.60 - tw / 2, h * 0.62);
+  g.restore();
+  return c;
+}
+
+const log = document.getElementById('log');
+window.runFeature = async () => (await post('feature-graphic.png', drawFeature(1024, 500))).ok;
+window.run = async () => {
+  const out = [];
+  out.push(await post('icon.png', drawIcon(1024)));
+  out.push(await post('icon-maskable.png', drawIcon(1024, { maskable: true })));
+  out.push(await post('splash.png', drawSplash(2732)));
+  out.push(await post('splash-dark.png', drawSplash(2732)));
+  // PWA/web sizes
+  for (const s of [180, 192, 512]) {
+    const c = document.createElement('canvas');
+    c.width = c.height = s;
+    c.getContext('2d').drawImage(drawIcon(1024), 0, 0, s, s);
+    out.push(await post(`pwa/icon-${s}.png`, c));
+  }
+  const m = document.createElement('canvas');
+  m.width = m.height = 512;
+  m.getContext('2d').drawImage(drawIcon(1024, { maskable: true }), 0, 0, 512, 512);
+  out.push(await post('pwa/icon-512-maskable.png', m));
+  log.textContent += '\nDONE';
+  return out.every((o) => o.ok);
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "echolume",
+  "version": "1.0.0",
+  "description": "Echolume — move by sound, see by light. A bioluminescent echolocation game.",
+  "private": true,
+  "scripts": {
+    "dev": "node server.js",
+    "cap:sync": "npx cap sync",
+    "cap:android": "npx cap open android",
+    "cap:ios": "npx cap open ios"
+  },
+  "author": "Kaush",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.5.0",
+    "@capacitor/preferences": "^8.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5"
+  }
+}

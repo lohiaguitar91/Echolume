@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#030711">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Echolume: move by sound, see by light. Glide a blind deep-sea creature through bioluminescent caverns using sonar pulses.">
+<title>Echolume</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="css/ui.css">
+</head>
+<body>
+<canvas id="game" aria-hidden="true"></canvas>
+
+<div id="ui">
+
+  <!-- HUD (in-game) -->
+  <div class="screen hud" id="screen-hud" hidden>
+    <div class="hud-top">
+      <div class="hud-left">
+        <div id="hud-hearts" class="hearts" aria-label="health"></div>
+      </div>
+      <div class="hud-center">
+        <div id="hud-level-name" class="hud-level-name"></div>
+      </div>
+      <div class="hud-right">
+        <div class="hud-stat"><span class="mote-dot" aria-hidden="true"></span><span id="hud-motes">0/0</span></div>
+        <button id="btn-pause" class="icon-btn" aria-label="Pause">II</button>
+      </div>
+    </div>
+    <div id="hud-hint" class="hud-hint" hidden></div>
+    <div id="hud-toast" class="hud-toast" hidden></div>
+    <div class="hud-bottom">
+      <div class="hud-stat dim"><span id="hud-pings">0</span> songs</div>
+      <div class="hud-stat dim" id="hud-depth" hidden>0 m</div>
+    </div>
+  </div>
+
+  <!-- Title -->
+  <div class="screen menu" id="screen-title" hidden>
+    <div class="menu-inner">
+      <div class="logo" aria-label="Echolume">
+        <svg class="logo-rings" viewBox="0 0 200 200" aria-hidden="true">
+          <circle cx="100" cy="100" r="24" class="lr lr1"/>
+          <circle cx="100" cy="100" r="52" class="lr lr2"/>
+          <circle cx="100" cy="100" r="82" class="lr lr3"/>
+          <circle cx="100" cy="100" r="5" class="lr-core"/>
+        </svg>
+        <h1 class="logo-word">ECHOLUME</h1>
+        <p class="logo-tag">move by sound &middot; see by light</p>
+      </div>
+      <div class="menu-buttons">
+        <button id="btn-play" class="btn primary">Dive</button>
+        <button id="btn-abyss" class="btn" disabled>The Abyss</button>
+      </div>
+      <div class="menu-links">
+        <button id="btn-howto" class="link-btn">How to sing</button>
+        <button id="btn-settings" class="link-btn">Settings</button>
+        <button id="btn-about" class="link-btn">About</button>
+      </div>
+      <p class="version-line" id="version-line">v1.0.0</p>
+    </div>
+  </div>
+
+  <!-- Level select -->
+  <div class="screen menu" id="screen-levels" hidden>
+    <div class="menu-inner wide">
+      <div class="menu-header">
+        <button class="icon-btn back" data-back aria-label="Back">&#8249;</button>
+        <h2>Depths</h2>
+        <div class="menu-header-spacer"></div>
+      </div>
+      <div id="level-grid" class="level-grid"></div>
+      <div class="total-stars" id="total-stars"></div>
+    </div>
+  </div>
+
+  <!-- How to sing (tutorial) -->
+  <div class="screen menu" id="screen-howto" hidden>
+    <div class="menu-inner">
+      <div class="menu-header">
+        <button class="icon-btn back" data-back aria-label="Back">&#8249;</button>
+        <h2>How to sing</h2>
+        <div class="menu-header-spacer"></div>
+      </div>
+      <div class="howto-list">
+        <div class="howto-row">
+          <svg class="howto-glyph" viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="32" cy="32" r="6" class="hg-core"/>
+            <circle cx="32" cy="32" r="15" class="hg-ring"/>
+            <circle cx="32" cy="32" r="25" class="hg-ring dim"/>
+          </svg>
+          <p>Tap the water. Your song carries you there and lights the cave as it goes.</p>
+        </div>
+        <div class="howto-row">
+          <svg class="howto-glyph" viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="20" cy="38" r="5" class="hg-core"/>
+            <circle cx="20" cy="38" r="12" class="hg-ring dim"/>
+            <circle cx="46" cy="22" r="6" class="hg-hunter"/>
+            <path d="M40 27 L28 34" class="hg-arrow"/>
+          </svg>
+          <p>Songs are loud. Hunters swim toward the last place you sang.</p>
+        </div>
+        <div class="howto-row">
+          <svg class="howto-glyph" viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="20" cy="24" r="4" class="hg-mote"/>
+            <circle cx="34" cy="40" r="4" class="hg-mote"/>
+            <circle cx="47" cy="25" r="8" class="hg-vent"/>
+          </svg>
+          <p>Gather the amber motes. The green vent takes you deeper.</p>
+        </div>
+        <div class="howto-row">
+          <svg class="howto-glyph" viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M32 14 l4.7 9.5 10.5 1.5 -7.6 7.4 1.8 10.4 -9.4 -4.9 -9.4 4.9 1.8 -10.4 -7.6 -7.4 10.5 -1.5 z" class="hg-star"/>
+          </svg>
+          <p>Stars want three things: the vent reached, the motes gathered, few songs spent.</p>
+        </div>
+      </div>
+      <div class="menu-buttons">
+        <button id="btn-howto-dive" class="btn primary">Begin the dive</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div class="screen menu" id="screen-settings" hidden>
+    <div class="menu-inner">
+      <div class="menu-header">
+        <button class="icon-btn back" data-back aria-label="Back">&#8249;</button>
+        <h2>Settings</h2>
+        <div class="menu-header-spacer"></div>
+      </div>
+      <div class="settings-list">
+        <label class="setting-row"><span>Sound effects</span><input type="checkbox" id="set-sound" class="toggle"></label>
+        <label class="setting-row"><span>Ambient music</span><input type="checkbox" id="set-music" class="toggle"></label>
+        <label class="setting-row"><span>Haptics</span><input type="checkbox" id="set-haptics" class="toggle"></label>
+        <label class="setting-row"><span>Reduced motion</span><input type="checkbox" id="set-reduced" class="toggle"></label>
+        <label class="setting-row"><span>High-contrast palette</span><input type="checkbox" id="set-contrast" class="toggle"></label>
+      </div>
+      <div class="settings-actions">
+        <button id="btn-reset-save" class="btn danger ghost">Reset progress</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- About -->
+  <div class="screen menu" id="screen-about" hidden>
+    <div class="menu-inner">
+      <div class="menu-header">
+        <button class="icon-btn back" data-back aria-label="Back">&#8249;</button>
+        <h2>About</h2>
+        <div class="menu-header-spacer"></div>
+      </div>
+      <div class="about-body">
+        <p><strong>Echolume</strong> is a game about a small blind creature of the deep that moves the only way it knows: singing into the dark and riding its own echo.</p>
+        <p>Every pulse of song pushes you through the water and lights the world for a moment. But the deep listens back. Sing carefully.</p>
+        <p class="dim">No ads. No tracking. No accounts. Your progress lives only on this device.</p>
+        <p class="dim">Privacy policy: <span class="mono">echolume &rsaquo; store &rsaquo; privacy-policy</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pause -->
+  <div class="screen overlay" id="screen-pause" hidden>
+    <div class="panel">
+      <h2>Paused</h2>
+      <div class="menu-buttons">
+        <button id="btn-resume" class="btn primary">Resume</button>
+        <button id="btn-restart" class="btn">Restart level</button>
+        <button id="btn-pause-settings" class="btn ghost">Settings</button>
+        <button id="btn-quit" class="btn ghost">Back to menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="screen overlay" id="screen-results" hidden>
+    <div class="panel">
+      <h2 id="results-title">Vent reached</h2>
+      <div class="stars-row" id="results-stars" aria-label="stars earned">
+        <div class="star-col"><span class="star" data-star="1"></span><span class="star-label" data-starlabel="1"></span></div>
+        <div class="star-col"><span class="star" data-star="2"></span><span class="star-label" data-starlabel="2"></span></div>
+        <div class="star-col"><span class="star" data-star="3"></span><span class="star-label" data-starlabel="3"></span></div>
+      </div>
+      <div class="results-stats" id="results-stats"></div>
+      <div class="menu-buttons">
+        <button id="btn-next" class="btn primary">Next depth</button>
+        <button id="btn-replay" class="btn ghost">Replay</button>
+        <button id="btn-results-menu" class="btn ghost">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game over -->
+  <div class="screen overlay" id="screen-gameover" hidden>
+    <div class="panel">
+      <h2 id="gameover-title">The dark took you</h2>
+      <p class="dim" id="gameover-sub"></p>
+      <div class="menu-buttons">
+        <button id="btn-retry" class="btn primary">Try again</button>
+        <button id="btn-gameover-menu" class="btn ghost">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credits / finale -->
+  <div class="screen overlay" id="screen-credits" hidden>
+    <div class="panel">
+      <h2>Still water</h2>
+      <p>The little lume sang its way through every dark mile of the deep. And the deep sang back.</p>
+      <p class="accent">The Abyss is now open.</p>
+      <div class="menu-buttons">
+        <button id="btn-credits-abyss" class="btn primary">Enter the Abyss</button>
+        <button id="btn-credits-menu" class="btn ghost">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rotate prompt (landscape phones) -->
+  <div class="screen" id="screen-rotate" hidden>
+    <div class="rotate-inner"><div class="rotate-icon"></div><p>Echolume swims best upright</p></div>
+  </div>
+
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
