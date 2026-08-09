@@ -11,6 +11,8 @@ const DEFAULTS = {
   abyssUnlocked: false,
   tutorialSeen: false,
   abyssIntroSeen: false,
+  aboutSeen: false,
+  achievements: [],    // milestone ids unlocked locally (source of truth)
   settings: {
     sound: true,
     music: true,

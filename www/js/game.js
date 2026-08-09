@@ -5,6 +5,7 @@ import { TUNING } from './config.js';
 import { buildLevelGeometry, updateReveal, pingRevealSweep, auraReveal } from './level.js';
 import { setupEntities } from './entities.js';
 import { closestOnSegment, dist, clamp, mulberry32 } from './util.js';
+import { MILESTONES } from './gameservices.js';
 
 const _q = [];
 
@@ -54,6 +55,7 @@ export class Game {
       waypoints: [[0, 0]],
       startY: 0,
       motesScore: 0,
+      milestonesFired: new Set(),
     };
     this._extendAbyss();
     this._extendAbyss();
@@ -366,13 +368,20 @@ export class Game {
       this._progressAndRescue();
     }
 
-    // ---- abyss chunk extension ----
+    // ---- abyss chunk extension + depth milestones ----
     if (this.mode === 'abyss') {
       const a = this.abyss;
       const lastY = a.waypoints[a.waypoints.length - 1][1];
       if (p.y > lastY - 1400) {
         this._extendAbyss();
         this._rebuildAbyssGeometry();
+      }
+      const depthM = (p.y - a.startY) / TUNING.abyssDepthPerMeter;
+      for (const m of MILESTONES) {
+        if (depthM >= m && !a.milestonesFired.has(m)) {
+          a.milestonesFired.add(m);
+          if (this.cb.onMilestone) this.cb.onMilestone(m);
+        }
       }
     }
 

@@ -10,6 +10,7 @@ import { Haptics } from './haptics.js';
 import { Save } from './save.js';
 import { UI } from './ui.js';
 import { Game, calcStars } from './game.js';
+import { GameServices } from './gameservices.js';
 import { getLevel, LEVELS } from './levels.js';
 import { drawGame, drawMenuAmbient } from './draw.js';
 import { installDebug } from './debug.js';
@@ -25,6 +26,7 @@ class Shell {
     this.audio = new AudioEngine();
     this.haptics = new Haptics();
     this.save = new Save();
+    this.gs = new GameServices(this.save);
     this.ui = new UI();
     this.input = new Input(this.canvas);
     this.palette = PALETTE;
@@ -46,7 +48,14 @@ class Shell {
     this._wireInput();
     this._wireLifecycle();
     this.ui.setVersion(GAME_VERSION);
-    this._show('title');
+    // Very first launch opens on the story; every launch after, the title.
+    if (!this.save.data.aboutSeen) {
+      this.save.data.aboutSeen = true;
+      this.save.persist();
+      this._show('about');
+    } else {
+      this._show('title');
+    }
     // Debug/test API only in plain-web dev, never in shipped native builds.
     if (!window.Capacitor) installDebug(this);
 
@@ -87,7 +96,10 @@ class Shell {
         this.input.setActive(false);
       },
       onDeathDone: (stats) => {
-        if (this.game.mode === 'abyss') this.save.abyssResult(stats.depth);
+        if (this.game.mode === 'abyss') {
+          this.save.abyssResult(stats.depth);
+          this.gs.submitDepth(stats.depth);
+        }
         this.ui.fillGameover(this.game.mode, stats);
         this._show('gameover');
       },
@@ -118,6 +130,15 @@ class Shell {
             this._show('results');
           }, 900);
         }
+      },
+      onMilestone: (m) => {
+        if (!this.gs.unlock(m)) return; // already earned in a past run
+        this.audio.star(3);
+        this.haptics.success();
+        const p = this.game.ents.player;
+        this.particles.burst(p.x, p.y, this.palette.vent, 24, 150, 1.2, 3.2, this.palette.ventCore);
+        this.ui.toast(`${m.toLocaleString()} m`, 2200);
+        this.ui.hint(`Milestone: ${this.gs.unlockedCount()}/${this.gs.totalCount()} depths sung.`, 3000);
       },
       onAllMotes: (x, y) => {
         this.audio.allMotes();
@@ -180,8 +201,11 @@ class Shell {
   }
 
   startAbyss() {
+    this.gs.signIn(); // fire-and-forget; platform prompts once if available
     // First descent gets the explainer; after that, straight down.
     if (!this.save.data.abyssIntroSeen) {
+      const el = $('abyss-milestones');
+      if (el) el.textContent = `${this.gs.unlockedCount()}/${this.gs.totalCount()}`;
       this._show('abyssintro');
       return;
     }
@@ -242,6 +266,7 @@ class Shell {
     click('btn-abyss-back', () => this._show('title'));
     click('btn-settings', () => { this._settingsReturn = this.state; this._show('settings'); });
     click('btn-about', () => this._show('about'));
+    click('btn-about-continue', () => this._show('title'));
 
     for (const el of document.querySelectorAll('[data-back]')) {
       el.addEventListener('click', () => {

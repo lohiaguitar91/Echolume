@@ -20,7 +20,7 @@ ECHOLUME is a one-thumb atmosphere game about voice, light, and restraint.
 ★ Earn up to three stars per depth: reach the vent, gather the motes, and waste no songs.
 ★ A living soundscape, synthesized in real time: your motes build melodies, the cave echoes your voice, and your own heartbeat warns you what is near.
 ★ Beautiful bioluminescent world rendered at 60fps.
-★ Made to respect you: no ads, no tracking, no accounts, no internet required. Haptics, reduced-motion, and high-contrast options included.
+★ No ads and nothing tracked by us. Optional Play Games leaderboard and 15 depth achievements for the Abyss. Haptics, reduced-motion, and high-contrast options included.
 
 The deep is dark. You are not.
 

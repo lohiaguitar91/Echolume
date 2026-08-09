@@ -14,6 +14,14 @@ Echolume is a premium offline game. It is built to collect nothing.
 - No third-party SDKs that process data
 - No network requests: the game runs entirely on your device
 
+## Optional Game Center / Google Play Games
+
+If you choose to sign in to Apple Game Center or Google Play Games, Echolume submits
+your Abyss depth to a leaderboard and unlocks achievements through that service. This
+data is processed by Apple or Google under their own privacy policies; Echolume itself
+receives nothing back and stores nothing about your platform account. Declining the
+sign-in changes nothing except that milestones stay on your device only.
+
 ## Data stored on your device
 
 Your game progress (levels completed, stars, best Abyss depth) and your settings (sound, music, haptics, accessibility toggles) are saved locally on your device only. This data never leaves your device. Deleting the app deletes this data. You can also erase it at any time inside the app via **Settings → Reset progress**.
