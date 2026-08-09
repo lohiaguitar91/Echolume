@@ -139,25 +139,38 @@ export class UI {
   }
 
   // ---- level select ----
+  static moteTotal(lvl) {
+    return (lvl.moteCount || 0) + (lvl.extraMotes || []).reduce((s, em) => s + em.count, 0);
+  }
+
   buildLevelGrid(save, onPick) {
     const grid = this.el.levelGrid;
     grid.innerHTML = '';
+    let motesGathered = 0, motesInGame = 0;
     for (const lvl of LEVELS) {
       const unlocked = save.isUnlocked(lvl.id);
       const rec = save.data.levels[lvl.id];
+      const total = UI.moteTotal(lvl);
+      motesInGame += total;
+      if (rec) motesGathered += Math.min(rec.bestMotes, total);
       const btn = document.createElement('button');
       btn.className = 'level-cell' + (unlocked ? '' : ' locked');
       btn.disabled = !unlocked;
       const stars = rec ? rec.stars : 0;
+      const bestLine = rec
+        ? `<span class="level-best">${Math.min(rec.bestMotes, total)}/${total} motes</span>`
+        : (unlocked ? `<span class="level-best dim">${total} motes wait</span>` : '');
       btn.innerHTML = `
         <span class="level-num">${lvl.id}</span>
         <span class="level-name">${unlocked ? lvl.name : '???'}</span>
-        <span class="level-stars">${'★'.repeat(stars)}${'☆'.repeat(Math.max(0, 3 - stars))}</span>`;
+        <span class="level-stars">${'★'.repeat(stars)}${'☆'.repeat(Math.max(0, 3 - stars))}</span>
+        ${bestLine}`;
       if (unlocked) btn.addEventListener('click', () => onPick(lvl.id));
       grid.appendChild(btn);
     }
     const total = save.totalStars();
-    this.el.totalStars.textContent = `${total} / ${LEVELS.length * 3} stars`;
+    this.el.totalStars.textContent =
+      `${total} / ${LEVELS.length * 3} stars · ${motesGathered} / ${motesInGame} motes`;
   }
 
   refreshAbyssButton(save) {
@@ -191,10 +204,14 @@ export class UI {
         if (el) el.textContent = text;
       }
     }
+    const bestRow = opts.record
+      ? `<div class="stat-row best"><span>Level best</span><span>${Math.min(opts.record.bestMotes, stats.moteTotal)} / ${stats.moteTotal} motes · ${opts.record.bestPings} songs</span></div>`
+      : '';
     this.el.resultsStats.innerHTML = `
       <div class="stat-row"><span>Motes</span><span>${stats.motes} / ${stats.moteTotal}</span></div>
       <div class="stat-row"><span>Songs</span><span>${stats.pings}</span></div>
-      <div class="stat-row"><span>Time</span><span>${formatTime(stats.time)}</span></div>`;
+      <div class="stat-row"><span>Time</span><span>${formatTime(stats.time)}</span></div>
+      ${bestRow}`;
     this.el.btnNext.hidden = !!opts.finale || !opts.hasNext;
   }
 

@@ -123,6 +123,7 @@ class Shell {
             this.ui.fillResults(def.name, stars, stats, {
               hasNext: !!getLevel(def.id + 1),
               def,
+              record: this.save.data.levels[def.id],
             });
             for (let i = 0; i < stars; i++) {
               setTimeout(() => this.audio.star(i + 1), 780 + i * 380);

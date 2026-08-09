@@ -169,6 +169,11 @@ export class Game {
     }
   }
 
+  // Motes feed the lume's glow: aura widens with each one gathered this run.
+  effectiveAura() {
+    return this.auraScale * (1 + Math.min(this.ents.player.motes * 0.03, 0.45));
+  }
+
   // ---- input ----
   tapAt(wx, wy) {
     if (this.state !== 'play' && this.state !== 'intro') return;
@@ -257,10 +262,11 @@ export class Game {
 
     // ---- reveal decay + aura ----
     updateReveal(this.geom.store, dt, TUNING.pingRevealDecay * this.decayScale);
+    const auraNow = this.effectiveAura();
     auraReveal(this.geom.store, this.geom.hash, p.x, p.y,
-      TUNING.auraRadius * this.auraScale, TUNING.auraStrength);
+      TUNING.auraRadius * auraNow, TUNING.auraStrength);
     // Fairness: things close to the player are never fully invisible.
-    const auraR = TUNING.auraRadius * this.auraScale * 1.35;
+    const auraR = TUNING.auraRadius * auraNow * 1.35;
     const auraTouch = (e, scale = 1) => {
       const d = dist(e.x, e.y, p.x, p.y);
       if (d < auraR) e.reveal = Math.max(e.reveal, (1 - d / auraR) * scale);
