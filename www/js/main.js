@@ -56,8 +56,8 @@ class Shell {
   // ---- game callbacks ----
   _gameCallbacks() {
     return {
-      onPing: () => {
-        this.audio.ping();
+      onPing: (dirY) => {
+        this.audio.ping(dirY);
         this.haptics.tick();
         this.ui.setPings(this.game.ents.player.pings);
       },
@@ -163,6 +163,8 @@ class Shell {
     if (!def) return;
     this.currentLevelId = id;
     this.particles.clear();
+    // Each depth sings in its own key (D, E, F, G rotation).
+    this.audio.setRoot([293.66, 329.63, 349.23, 392.0][(id - 1) % 4]);
     this.game.startStory(def);
     const p = this.game.ents.player;
     this.renderer.cam.x = this.renderer.cam.targetX = p.x;
@@ -178,6 +180,7 @@ class Shell {
 
   startAbyss() {
     this.particles.clear();
+    this.audio.setRoot(293.66); // the Abyss sings in D
     this.game.startAbyss(1 + Math.floor(Math.random() * 100000));
     const p = this.game.ents.player;
     this.renderer.cam.x = this.renderer.cam.targetX = p.x;

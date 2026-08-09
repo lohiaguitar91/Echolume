@@ -183,7 +183,7 @@ export class Game {
     p.pings++;
     this.pingCooldown = TUNING.pingCooldown;
     this._emitPing(p.x, p.y, {});
-    if (this.cb.onPing) this.cb.onPing();
+    if (this.cb.onPing) this.cb.onPing(dy);
   }
 
   _emitPing(x, y, { free = false }) {

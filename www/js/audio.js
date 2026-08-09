@@ -16,6 +16,20 @@ export class AudioEngine {
     this._chordTimer = null;
     this._sparkleTimer = null;
     this._unlocked = false;
+    // Melodic state: taps walk a pentatonic scale rooted per level.
+    this.root = 293.66; // D4
+    this._pingDegree = 3;
+  }
+
+  // Minor-pentatonic ratios over the root (D F G A C, two octaves).
+  static SCALE = [1, 1.2, 1.35, 1.5, 1.8, 2, 2.4, 2.7];
+
+  setRoot(freq) { this.root = freq; this._pingDegree = 3; }
+
+  _scaleFreq(degree, octaveMult = 1) {
+    const R = AudioEngine.SCALE;
+    const d = Math.max(0, Math.min(R.length - 1, degree));
+    return this.root * octaveMult * R[d];
   }
 
   unlock() {
@@ -164,26 +178,37 @@ export class AudioEngine {
   _sfxReady() { return this.ctx && this.enabled.sound; }
 
   // ---- SFX ----
-  ping() {
+  // Each tap sings the next note of a wandering pentatonic line. Singing
+  // upward tends to rise, diving tends to fall, so movement writes melody.
+  ping(dirY = 0) {
     if (!this._sfxReady()) return;
+    let step = (Math.random() < 0.5 ? -1 : 1) * (Math.random() < 0.3 ? 2 : 1);
+    if (dirY < -0.3) step = Math.abs(step);
+    else if (dirY > 0.3) step = -Math.abs(step);
+    this._pingDegree = Math.max(0, Math.min(AudioEngine.SCALE.length - 1, this._pingDegree + step));
+    const f = this._scaleFreq(this._pingDegree, 2);
+    const jitter = 1 + (Math.random() - 0.5) * 0.015;
+
     const c = this.ctx, t = c.currentTime;
-    const jitter = 1 + (Math.random() - 0.5) * 0.07;
     const g = c.createGain();
     const bp = c.createBiquadFilter();
-    bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 1.1;
+    bp.type = 'bandpass'; bp.frequency.value = f * 1.5; bp.Q.value = 1.0;
     g.connect(bp); bp.connect(this.sfxGain);
     const send = c.createGain(); send.gain.value = 0.8;
     bp.connect(send); send.connect(this.verbSend);
     this._env(g, t, 0.008, 0.5, 0.34);
-    this._osc('triangle', 880 * jitter, t, t + 0.36, g, { glideTo: 330 * jitter });
-    this._osc('sine', 1320 * jitter, t, t + 0.22, g, { glideTo: 495 * jitter, detune: 6 });
+    // sonar chirp that lands ON the melody note, plus a soft pure tone of it
+    this._osc('triangle', f * 2.3 * jitter, t, t + 0.36, g, { glideTo: f * jitter });
+    const g2 = c.createGain(); g2.gain.value = 0.35; g2.connect(g);
+    this._osc('sine', f * jitter, t + 0.03, t + 0.3, g2, { detune: 5 });
   }
 
-  // Pentatonic ladder that climbs with combo — collecting builds a melody.
+  // Pentatonic ladder that climbs with combo — collecting builds a melody,
+  // in the same per-level key the pings sing in.
   mote(combo) {
     if (!this._sfxReady()) return;
-    const scale = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.7, 1318.5];
-    const f = scale[Math.min(combo - 1, scale.length - 1)] * (1 + (Math.random() - 0.5) * 0.004);
+    const f = this._scaleFreq(Math.min(combo - 1, AudioEngine.SCALE.length - 1), 2)
+      * (1 + (Math.random() - 0.5) * 0.004);
     const c = this.ctx, t = c.currentTime;
     const g = c.createGain();
     g.connect(this.sfxGain);
@@ -193,6 +218,10 @@ export class AudioEngine {
     this._osc('sine', f, t, t + 0.55, g);
     const g2 = c.createGain(); g2.gain.value = 0.12; g2.connect(g);
     this._osc('sine', f * 2, t, t + 0.3, g2);
+    if (combo >= 4) { // long chains earn a harmony voice
+      const g3 = c.createGain(); g3.gain.value = 0.1; g3.connect(g);
+      this._osc('sine', f * 1.5, t + 0.05, t + 0.4, g3);
+    }
   }
 
   thud(intensity) {
