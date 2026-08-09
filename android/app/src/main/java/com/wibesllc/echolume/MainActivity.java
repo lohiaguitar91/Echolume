@@ -1,4 +1,4 @@
-package com.kaush.echolume;
+package com.wibesllc.echolume;
 
 import com.getcapacitor.BridgeActivity;
 

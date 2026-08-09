@@ -45,7 +45,7 @@ Package.swift plugins). On a Mac:
 
 1. Clone/copy the project; `npm install`; `npx cap sync ios`.
 2. `npx cap open ios`
-3. In Xcode: set your Team under Signing & Capabilities (bundle id `com.kaush.echolume`).
+3. In Xcode: set your Team under Signing & Capabilities (bundle id `com.wibesllc.echolume`).
 4. Product → Archive → Distribute App → App Store Connect.
 
 Note: Apple requires builds with the current SDK (Xcode 26 / iOS 26 SDK as of April 2026).

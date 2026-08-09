@@ -50,7 +50,7 @@ Still to capture on a device (DOM UI isn't in the canvas captures):
 
 ## Apple App Store
 
-1. App Store Connect → My Apps → + → New App → bundle id `com.kaush.echolume`.
+1. App Store Connect → My Apps → + → New App → bundle id `com.wibesllc.echolume`.
 2. Fill listing from `store/listing-ios.md` (name, subtitle, description, keywords,
    support URL, privacy policy URL).
 3. App Privacy → "Data Not Collected" (accurate: no SDKs, no requests).
