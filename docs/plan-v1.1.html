@@ -61,7 +61,22 @@
 
 <h1>Echolume</h1>
 <div class="subtitle">v1.1 &middot; The Listening Deep &middot; iteration plan</div>
-<div class="meta">Pre-publish roadmap &middot; August 9, 2026 &middot; iteration 2 (flow &amp; session pass) &middot; no code changes made &mdash; design only</div>
+<div class="meta">Pre-publish roadmap &middot; August 9, 2026 &middot; iteration 3, converged &middot; no code changes made &mdash; design only</div>
+
+<!-- ============ 0. COLD OPEN ============ -->
+<h2><span class="n">0</span>The first minute &mdash; cold open</h2>
+<p>Our own guardrail says <em>nothing between the player and the water</em> &mdash; and then the first launch stacks
+three screens (About &rarr; title &rarr; How-to) before Depth 1. The plan's one self-contradiction, found on re-read.</p>
+<div class="card rec">
+  <p style="margin-bottom:6px"><span class="pill s">Effort S</span><span class="pill v11">Ship in v1.1</span>
+  <strong>Cold open:</strong> a brand-new install fades straight into Depth 1's water, dark and silent, with the story
+  line as an in-world caption: <em>"A small blind creature of the deep, who moves the only way it knows&hellip;"</em>
+  &mdash; then the first hint: <em>"Tap the water."</em> The first tap is the audio unlock, the first song, and the
+  tutorial's first beat all at once. The in-level hints already teach everything else; the How-to page and About stay
+  in the menu for anyone who wants them, and returning launches keep today's title screen.</p>
+  <p class="dim" style="margin-bottom:0">Every pre-play screen costs a measurable slice of first-session completion;
+  an atmosphere game's strongest first impression is the atmosphere itself, not text about it.</p>
+</div>
 
 <!-- ============ 1. ABYSS RECAP ============ -->
 <h2><span class="n">1</span>Abyss death recap &mdash; make the run mean something</h2>
@@ -231,7 +246,9 @@ none of it adds a second input.</p>
   <strong>Hearts stay at three.</strong> Raising punishment is the lazy axis; the fun axis is asking more of the same
   three hearts. Deeper levels instead hide <em>heart motes</em> (one per level, off the safe path, guarded) &mdash;
   recovery exists but must be earned through the game's own verbs. Boss levels checkpoint at the lair mouth,
-  so their difficulty is honest: the challenge is the room, not the walk back to it.</p>
+  so their difficulty is honest: the challenge is the room, not the walk back to it.
+  Sound identity scales with the chapter: the Trench sings the same pentatonic system in a darker mode, and each
+  leviathan lair has a signature drone &mdash; players should hear how deep they are before they read it.</p>
 </div>
 
 <!-- ============ 4. ECONOMY ============ -->
@@ -368,7 +385,11 @@ entirely on which product it wants to be:</p>
   <p><span class="pill s">Effort S&ndash;M</span><span class="pill v11">Medals v1.1</span><span class="pill v12">Currents v1.2</span>
   Medals are pure read-side work: every level already records <code>bestTime</code>; add hand-tuned par times to the level
   defs and a chip on results + level cards. The Currents board needs a screen, a daily seed, and quest templates that read
-  existing run stats &mdash; no new gameplay systems. Both feed the gem earn-side later without touching stars.</p>
+  existing run stats &mdash; no new gameplay systems.</p>
+  <p><strong>Reward consistency fix:</strong> the mock shows gem rewards, but gems only exist if the free SKU ships.
+  In the premium SKU, Currents pays <em>tide-marks</em> &mdash; a cosmetic-only tally that unlocks lume tints and song
+  timbres at fixed counts (same cosmetics catalog the gem economy would sell). If the F2P fork ever ships, tide-marks
+  convert 1:1 into that catalog and quests start paying gems. One reward pipe, two currencies, zero contradiction.</p>
 </div>
 
 <!-- ============ 6. FLOW ============ -->
@@ -425,19 +446,40 @@ close the gaps. The bar: <em>nothing between the player and the water, and alway
   is what "can't put it down" actually is.</p>
 </div>
 
-<!-- ============ 7. SEQUENCE ============ -->
-<h2><span class="n">7</span>Suggested sequence</h2>
+<!-- ============ 7. REACH ============ -->
+<h2><span class="n">7</span>Reach &mdash; who else gets to stay</h2>
+<div class="card">
+  <h3 style="margin-top:0">Accessibility that fits the fiction</h3>
+  <ul>
+    <li><strong>Visual threat option:</strong> the game speaks danger through audio (heartbeat proximity). A settings
+        toggle adds a soft screen-edge pulse that breathes with the same signal &mdash; deaf and hard-of-hearing players
+        get the same dread, drawn in light. <span class="pill s">Effort S</span><span class="pill v11">v1.1</span></li>
+    <li><strong>Chain colors carry a second channel:</strong> the &sect;2 hue ladder always pairs hue with size and
+        pulse-rate steps, so the chain reads without color vision. Adopted as a &sect;2 requirement, not an option.</li>
+    <li><strong>Already true, worth stating on the store page:</strong> one-thumb, either hand, no timed inputs
+        outside optional trials, reduced-motion and high-contrast modes.</li>
+  </ul>
+  <h3>Friends make depth mean something</h3>
+  <p style="margin-bottom:0">When the Game Center / Play Games bridge lands (v1.2), the Abyss recap's comparison line
+  prefers a friend over the global board: <em>"34 m past Disha's best."</em> Beating a stranger is a number; beating a
+  friend is a message you didn't have to send. Platform-provided, zero accounts of our own, consistent with the
+  privacy stance.</p>
+</div>
+
+<!-- ============ 8. SEQUENCE ============ -->
+<h2><span class="n">8</span>Suggested sequence</h2>
 <table>
   <tr><th>Release</th><th>Contents</th><th>Risk notes</th></tr>
   <tr>
     <td><strong>v1.1</strong> <span class="dim">(before store submission)</span></td>
-    <td>Abyss death recap &middot; mote color chains + bloom pulse &middot; trench medals (par times) &middot; glow bonus 3%&rarr;4%
-        &middot; the four flow fixes from &sect;6 (Continue chip, next-depth tease, deaths write records, title micro-goal)</td>
+    <td>Cold open (&sect;0) &middot; Abyss death recap &middot; mote color chains + bloom pulse &middot; trench medals (par times)
+        &middot; glow bonus 3%&rarr;4% &middot; the four flow fixes from &sect;6 &middot; visual-threat toggle (&sect;7)</td>
     <td>All read-side or cosmetic; no re-review risk; ~3&ndash;4 focused sessions of work</td>
   </tr>
   <tr>
     <td><strong>v1.2</strong></td>
-    <td>Currents quest board &middot; Game Center / Play Games bridge live &middot; heart motes in depths 10&ndash;14</td>
+    <td>Currents quest board (tide-mark rewards) &middot; Game Center / Play Games bridge live &middot; friend-relative
+        recap line &middot; heart motes in depths 10&ndash;14</td>
     <td>GC/PGS console setup (SHIP.md 3.5); leaderboard integrity rule for any future revive: revived runs don't post</td>
   </tr>
   <tr>
@@ -451,6 +493,16 @@ close the gaps. The bar: <em>nothing between the player and the water, and alway
     <td>IAP triggers store re-review + privacy label changes; keep the premium SKU untouched as the clean flagship</td>
   </tr>
 </table>
+
+<div class="card rec" style="margin-top:40px">
+  <h3 style="margin-top:0">Why this is the full set</h3>
+  <p style="margin-bottom:0">Three iterations covered the whole player journey with nothing doubled and nothing
+  contradicting: first minute (&sect;0), moment-to-moment feel (&sect;2), the run's ending (&sect;1), the reasons to
+  return (&sect;5, &sect;6), the content that keeps mastery growing (&sect;3), the money question answered without
+  touching any of it (&sect;4), and who else gets to stay (&sect;7) &mdash; all under one set of flow guardrails.
+  Anything added past this point is new scope wearing polish's clothes; the next correct step is building v1.1,
+  then letting real players amend the plan.</p>
+</div>
 
 <div class="footer">ECHOLUME &middot; move by sound &middot; see by light</div>
 </div>
