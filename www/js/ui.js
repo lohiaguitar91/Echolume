@@ -256,6 +256,7 @@ export class UI {
   fillAbyssRecap(stats, opts) {
     const { prevBest, isRecord, milestonesThisRun, nextMilestone } = opts;
     const $$ = (id) => document.getElementById(id);
+    $$('btn-recap-board').hidden = !opts.canShowLeaderboard;
     const badge = $$('recap-badge');
     badge.hidden = !isRecord;
 

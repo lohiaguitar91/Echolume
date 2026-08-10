@@ -120,6 +120,7 @@ class Shell {
             isRecord,
             milestonesThisRun: this.game.abyss.milestonesFired.size,
             nextMilestone: MILESTONES.find((m) => m > stats.depth) || null,
+            canShowLeaderboard: this.gs.canShowLeaderboard(),
           });
           this._show('abyssrecap');
           if (isRecord) {
@@ -287,6 +288,7 @@ class Shell {
   }
 
   _startAbyssNow() {
+    this.gs.signIn();  // no-op if already in, or if there's no native bridge
     this.particles.clear();
     this.audio.setRoot(293.66); // the Abyss sings in D
     this.game.startAbyss(1 + Math.floor(Math.random() * 100000));
@@ -375,6 +377,7 @@ class Shell {
     });
     click('btn-gameover-menu', () => this._show('title'));
     click('btn-recap-again', () => this._startAbyssNow());
+    click('btn-recap-board', () => this.gs.showLeaderboard());
     click('btn-recap-menu', () => this._show('title'));
     click('btn-credits-abyss', () => this.startAbyss());
     click('btn-credits-menu', () => this._show('title'));
