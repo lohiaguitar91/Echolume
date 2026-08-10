@@ -3,6 +3,7 @@
 // webview data eviction.
 
 import { SAVE_KEY } from './config.js';
+import { chapterOf, chapterGate, prevChapter } from './levels.js';
 
 const DEFAULTS = {
   version: 1,
@@ -99,10 +100,13 @@ export class Save {
 
   // The depth the Continue chip should send you to: first unlocked level
   // without a star, otherwise the furthest unlocked one.
+  // Skips locked depths rather than stopping at them: a chapter can open on
+  // stars while an earlier depth is still unbeaten, and Continue should point
+  // at the new water rather than the wall.
   nextDepth(levelCount) {
     let furthest = 1;
     for (let id = 1; id <= levelCount; id++) {
-      if (!this.isUnlocked(id)) break;
+      if (!this.isUnlocked(id)) continue;
       furthest = id;
       const rec = this.data.levels[id];
       if (!rec || rec.stars === 0) return id;
@@ -130,8 +134,23 @@ export class Save {
 
   isUnlocked(levelId) {
     if (levelId === 1) return true;
+    const chapter = chapterOf(levelId);
+    if (levelId === chapter.from) {
+      // A chapter opens on stars banked in the one before it, never on
+      // clearing every one of its depths.
+      const gate = chapterGate(chapter);
+      if (gate === null) return true;
+      const prev = prevChapter(chapter);
+      return this.starsIn(prev.from, prev.to) >= gate;
+    }
     const prev = this.data.levels[levelId - 1];
     return !!(prev && prev.stars > 0);
+  }
+
+  starsIn(from, to) {
+    let sum = 0;
+    for (let id = from; id <= to; id++) sum += this.data.levels[id]?.stars || 0;
+    return sum;
   }
 
   totalStars() {

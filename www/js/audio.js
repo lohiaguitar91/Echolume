@@ -19,15 +19,23 @@ export class AudioEngine {
     // Melodic state: taps walk a pentatonic scale rooted per level.
     this.root = 293.66; // D4
     this._pingDegree = 3;
+    this.scale = AudioEngine.SCALE;
   }
 
   // Minor-pentatonic ratios over the root (D F G A C, two octaves).
   static SCALE = [1, 1.2, 1.35, 1.5, 1.8, 2, 2.4, 2.7];
+  // The trench sings flatter: a minor second in place of the second degree
+  // sours every song sung down here. Players hear the chapter before reading it.
+  static SCALE_TRENCH = [1, 1.0667, 1.3333, 1.5, 1.6, 2, 2.1333, 2.6667];
+
+  static MODES = { shallows: AudioEngine.SCALE, trench: AudioEngine.SCALE_TRENCH };
 
   setRoot(freq) { this.root = freq; this._pingDegree = 3; }
 
+  setMode(name) { this.scale = AudioEngine.MODES[name] || AudioEngine.SCALE; }
+
   _scaleFreq(degree, octaveMult = 1) {
-    const R = AudioEngine.SCALE;
+    const R = this.scale;
     const d = Math.max(0, Math.min(R.length - 1, degree));
     return this.root * octaveMult * R[d];
   }
@@ -149,6 +157,71 @@ export class AudioEngine {
     });
   }
 
+  // A lure springing: wet, short, and far louder than anything the lume does.
+  lureSnap() {
+    if (!this._sfxReady()) return;
+    const c = this.ctx, t = c.currentTime;
+    const g = c.createGain();
+    const bp = c.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 1.4;
+    g.connect(bp); bp.connect(this.sfxGain);
+    const send = c.createGain(); send.gain.value = 1.2;
+    bp.connect(send); send.connect(this.verbSend);
+    this._env(g, t, 0.002, 0.6, 0.16);
+    this._osc('square', 520, t, t + 0.12, g, { glideTo: 90 });
+    const nb = this._noiseBurst(0.14, 0.5);
+    nb.connect(bp);
+  }
+
+  // A crystal answering a song: glass, not voice. Nothing in the dark turns
+  // toward it, so it stays airy and sits behind the mix.
+  crystalBloom() {
+    if (!this._sfxReady()) return;
+    const c = this.ctx, t = c.currentTime;
+    const g = c.createGain();
+    const send = c.createGain(); send.gain.value = 1.8;
+    g.connect(send); send.connect(this.verbSend);
+    g.connect(this.sfxGain);
+    this._env(g, t, 0.006, 0.16, 1.4);
+    this._osc('sine', this._scaleFreq(4, 4), t, t + 1.5, g);
+    this._osc('sine', this._scaleFreq(6, 4), t + 0.05, t + 1.4, g, { detune: -6 });
+    const g2 = c.createGain(); g2.gain.value = 0.18; g2.connect(g);
+    this._osc('triangle', this._scaleFreq(2, 8), t + 0.02, t + 0.7, g2);
+  }
+
+  // A heart mote taken: the lume's own pulse, answered.
+  heartMote() {
+    if (!this._sfxReady()) return;
+    const c = this.ctx, t = c.currentTime;
+    [0, 0.19].forEach((off, i) => {
+      const g = c.createGain();
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 620;
+      g.connect(lp); lp.connect(this.sfxGain);
+      this._env(g, t + off, 0.006, 0.34 - i * 0.1, 0.3);
+      this._osc('sine', 132, t + off, t + off + 0.34, g, { glideTo: 176 });
+    });
+    const g2 = c.createGain(); g2.gain.value = 0.22;
+    const send = c.createGain(); send.gain.value = 1.1;
+    g2.connect(send); send.connect(this.verbSend);
+    g2.connect(this.sfxGain);
+    this._env(g2, t + 0.16, 0.01, 0.3, 0.9);
+    this._osc('sine', this._scaleFreq(3, 2), t + 0.16, t + 1.0, g2);
+  }
+
+  // Something enormous turning over in the dark.
+  leviathanWake() {
+    if (!this._sfxReady()) return;
+    const c = this.ctx, t = c.currentTime;
+    const g = c.createGain();
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 210;
+    g.connect(lp); lp.connect(this.sfxGain);
+    const send = c.createGain(); send.gain.value = 1.4;
+    lp.connect(send); send.connect(this.verbSend);
+    this._env(g, t, 0.14, 0.5, 1.9);
+    this._osc('sawtooth', 34, t, t + 2.1, g, { glideTo: 52 });
+    this._osc('sine', 68, t + 0.1, t + 2.0, g, { glideTo: 96, detune: -9 });
+  }
+
   _resume() {
     if (this.ctx && this.ctx.state !== 'running') this.ctx.resume().catch(() => {});
   }
@@ -201,7 +274,7 @@ export class AudioEngine {
     let step = (Math.random() < 0.5 ? -1 : 1) * (Math.random() < 0.3 ? 2 : 1);
     if (dirY < -0.3) step = Math.abs(step);
     else if (dirY > 0.3) step = -Math.abs(step);
-    this._pingDegree = Math.max(0, Math.min(AudioEngine.SCALE.length - 1, this._pingDegree + step));
+    this._pingDegree = Math.max(0, Math.min(this.scale.length - 1, this._pingDegree + step));
     const f = this._scaleFreq(this._pingDegree, 2);
     const jitter = 1 + (Math.random() - 0.5) * 0.015;
 
@@ -223,7 +296,7 @@ export class AudioEngine {
   // in the same per-level key the pings sing in.
   mote(combo) {
     if (!this._sfxReady()) return;
-    const f = this._scaleFreq(Math.min(combo - 1, AudioEngine.SCALE.length - 1), 2)
+    const f = this._scaleFreq(Math.min(combo - 1, this.scale.length - 1), 2)
       * (1 + (Math.random() - 0.5) * 0.004);
     const c = this.ctx, t = c.currentTime;
     const g = c.createGain();

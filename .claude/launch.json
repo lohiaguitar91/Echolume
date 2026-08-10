@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "echolume",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["C:/Users/kaush/code-projects/echolume/server.js"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
       "port": 3852
     }
   ]

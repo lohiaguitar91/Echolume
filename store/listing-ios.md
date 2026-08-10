@@ -25,7 +25,7 @@ Every tap is a song. It pushes you through the water, and for a moment, it light
 ECHOLUME is a one-thumb atmosphere game about voice, light, and restraint.
 
 • One verb: tap to sing. Your song moves you, reveals the cave, and makes noise, all at once.
-• 14 handcrafted depths that teach the deep one danger at a time: thorn urchins, listening hunters, rivers that run upstream, water where light dies fast.
+• 28 handcrafted depths across two chapters, teaching the deep one danger at a time: thorn urchins, listening hunters, rivers that run upstream, false lights that bite, and two leviathans that hear everything.
 • The Abyss: an endless descent that is never the same twice. How far will you dare to sing?
 • Earn up to three stars per depth: reach the vent, gather the motes, and waste no songs.
 • A living soundscape, synthesized in real time: your motes build melodies, the cave echoes your voice, and your own heartbeat warns you what is near.
@@ -47,7 +47,7 @@ Host `store/privacy-policy.md` (e.g. GitHub Pages) and paste that URL.
 - Data collection: **No, we do not collect data from this app** (true: zero collection, zero SDKs).
 
 ## Review notes (paste into App Review Information)
-Echolume is a fully offline game with no accounts, no purchases, and no server component. All audio is synthesized on-device (no licensed music). Progress is stored locally. No demo credentials are needed; all 14 levels are reachable from a fresh install — completing a level unlocks the next.
+Echolume is a fully offline game with no accounts, no purchases, and no server component. All audio is synthesized on-device (no licensed music). Progress is stored locally. No demo credentials are needed; all 28 levels are reachable from a fresh install — completing a level unlocks the next, and chapter two opens on stars earned rather than on clearing every depth.
 
 ## What's New (v1.0.0)
-First dive. 14 depths, the endless Abyss, and a voice in the dark.
+First dive. 28 depths, the endless Abyss, and a voice in the dark.

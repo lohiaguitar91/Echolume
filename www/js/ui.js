@@ -1,6 +1,6 @@
 // DOM overlay: screens, HUD, toasts. Pure view layer — main.js wires events.
 
-import { LEVELS, parTime, teaser } from './levels.js';
+import { LEVELS, CHAPTERS, parTime, teaser, chapterOf, chapterGate, prevChapter } from './levels.js';
 import { formatTime } from './util.js';
 
 const $ = (id) => document.getElementById(id);
@@ -149,12 +149,34 @@ export class UI {
     const grid = this.el.levelGrid;
     grid.innerHTML = '';
     let motesGathered = 0, motesInGame = 0;
+    for (const chapter of CHAPTERS) {
+      const head = document.createElement('div');
+      head.className = 'level-chapter';
+      const gate = chapterGate(chapter);
+      const prev = prevChapter(chapter);
+      const open = save.isUnlocked(chapter.from);
+      // A shut chapter says exactly what opens it — the gate is a goal, not a wall.
+      const gateLine = (!open && gate !== null)
+        ? `<span class="chapter-gate">${save.starsIn(prev.from, prev.to)} / ${gate} stars to open</span>`
+        : '';
+      head.innerHTML = `<span>${chapter.id} · ${chapter.name}</span>${gateLine}`;
+      grid.appendChild(head);
+      this._buildChapterCells(grid, save, chapter, onPick, (got, total) => {
+        motesGathered += got; motesInGame += total;
+      });
+    }
+    const total = save.totalStars();
+    this.el.totalStars.textContent =
+      `${total} / ${LEVELS.length * 3} stars · ${motesGathered} / ${motesInGame} motes`;
+  }
+
+  _buildChapterCells(grid, save, chapter, onPick, tally) {
     for (const lvl of LEVELS) {
+      if (lvl.id < chapter.from || lvl.id > chapter.to) continue;
       const unlocked = save.isUnlocked(lvl.id);
       const rec = save.data.levels[lvl.id];
       const total = UI.moteTotal(lvl);
-      motesInGame += total;
-      if (rec) motesGathered += Math.min(rec.bestMotes, total);
+      tally(rec ? Math.min(rec.bestMotes, total) : 0, total);
       const btn = document.createElement('button');
       btn.className = 'level-cell' + (unlocked ? '' : ' locked');
       btn.disabled = !unlocked;
@@ -173,9 +195,6 @@ export class UI {
       if (unlocked) btn.addEventListener('click', () => onPick(lvl.id));
       grid.appendChild(btn);
     }
-    const total = save.totalStars();
-    this.el.totalStars.textContent =
-      `${total} / ${LEVELS.length * 3} stars · ${motesGathered} / ${motesInGame} motes`;
   }
 
   refreshAbyssButton(save) {
@@ -188,7 +207,9 @@ export class UI {
 
   // ---- results ----
   fillResults(defName, stars, stats, opts = {}) {
-    this.el.resultsTitle.textContent = opts.finale ? 'The deep opens' : 'Vent reached';
+    this.el.resultsTitle.textContent = opts.finale
+      ? 'The deep opens'
+      : opts.chapterEnd ? `${opts.chapterEnd} · cleared` : 'Vent reached';
     const starEls = this.el.resultsStars.querySelectorAll('.star');
     // Light each star by its own criterion, staggered among the earned ones.
     const earned = opts.breakdown
@@ -236,7 +257,12 @@ export class UI {
     const nextLine = nextDef ? teaser(nextDef.id) : null;
     if (opts.hasNext && nextDef && nextLine) {
       tease.hidden = false;
-      tease.innerHTML = `Next · <span class="accent">${nextDef.name}</span> — ${nextLine}`;
+      // Crossing into a new chapter names the chapter, not just the depth.
+      const nextChapter = chapterOf(nextDef.id);
+      const label = nextDef.id === nextChapter.from
+        ? `${nextChapter.name} · ${nextDef.name}`
+        : nextDef.name;
+      tease.innerHTML = `Next · <span class="accent">${label}</span> — ${nextLine}`;
     } else {
       tease.hidden = true;
     }
@@ -302,12 +328,19 @@ export class UI {
     }
   }
 
-  fillGameover(mode, stats) {
+  fillGameover(mode, stats, opts = {}) {
+    const lines = {
+      hunter: 'Sing softer this time.',
+      lure: 'Not everything that glows is food. Sing at it first.',
+      leviathan: 'It never saw you. It only heard you.',
+      urchin: 'The thorns do not listen. Sing before you rush.',
+    };
     this.el.gameoverSub.textContent = mode === 'abyss'
       ? `You reached ${stats.depth} m before the dark closed in.`
-      : stats.lastHit === 'hunter'
-        ? `Sing softer this time.`
-        : `The thorns do not listen. Sing before you rush.`;
+      : (lines[stats.lastHit] || lines.urchin);
+    // A banked lair mouth turns Retry into "carry on from where it took you".
+    document.getElementById('btn-retry').textContent =
+      opts.fromCheckpoint ? 'Back to the lair mouth' : 'Try again';
   }
 
   setVersion(v) { this.el.versionLine.textContent = `v${v}`; }

@@ -95,7 +95,50 @@ export function setupEntities(def, geom) {
     };
   });
 
+  // Lures: bait first, teeth second. `snapped` stays true once sprung so the
+  // level remembers which lights lied to you.
+  const lures = (def.lures || []).map((spec) => {
+    const p = resolvePos(spec, geom);
+    return {
+      x: p.x, y: p.y, homeX: p.x, homeY: p.y,
+      vx: 0, vy: 0,
+      state: 'bait', t: 0, snapped: false,
+      reveal: 0, phase: rng() * 6.28, driftPhase: rng() * 6.28,
+    };
+  });
+
+  // Bloom crystals: charged and waiting for a song to answer.
+  const crystals = (def.crystals || []).map((spec) => {
+    const p = resolvePos(spec, geom);
+    return { x: p.x, y: p.y, charge: 1, reveal: 0, phase: rng() * 6.28, spin: rng() * 6.28 };
+  });
+
+  // Heart motes: one per deep level, off the safe line, usually guarded.
+  const heartMotes = (def.heartMotes || []).map((spec) => {
+    const p = resolvePos(spec, geom);
+    return { x: p.x, y: p.y, taken: false, reveal: 0, phase: rng() * 6.28, beat: 0 };
+  });
+
+  // Leviathan: one per boss level, orbiting its lair on a readable loop.
+  const leviathans = (def.leviathans || []).map((spec) => {
+    const p = resolvePos(spec, geom);
+    const patrolR = spec.patrolR || 200;
+    const start = { x: p.x + patrolR, y: p.y };
+    return {
+      x: start.x, y: start.y, vx: 0, vy: 0,
+      homeX: p.x, homeY: p.y,
+      patrolR,
+      speedScale: spec.speedScale || 1,
+      angle: 0,
+      spin: spec.reverse ? -1 : 1,
+      state: 'patrol', alertT: 0,
+      targetX: start.x, targetY: start.y,
+      reveal: 0, phase: rng() * 6.28,
+      trail: Array.from({ length: TUNING.leviathanSegments }, () => ({ x: start.x, y: start.y })),
+    };
+  });
+
   const vent = { x: ventP.x, y: ventP.y, discovered: false, reveal: 0, phase: 0 };
 
-  return { player, motes, urchins, hunters, currents, vent };
+  return { player, motes, urchins, hunters, currents, lures, crystals, heartMotes, leviathans, vent };
 }

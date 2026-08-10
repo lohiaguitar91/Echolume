@@ -35,14 +35,14 @@ export class Game {
   }
 
   // ---- lifecycle ----
-  startStory(def) {
+  startStory(def, checkpoint = null) {
     this.mode = 'story';
     this.def = def;
     this.auraScale = def.auraScale || 1;
     this.decayScale = def.decayScale || 1;
     this.geom = buildLevelGeometry(def);
     this.ents = setupEntities(def, this.geom);
-    this._resetRun();
+    this._resetRun(checkpoint);
   }
 
   startAbyss(seed = 1) {
@@ -64,7 +64,7 @@ export class Game {
     this._resetRun();
   }
 
-  _resetRun() {
+  _resetRun(checkpoint = null) {
     this.pings.length = 0;
     this.time = 0;
     this.timeScale = 1;
@@ -75,8 +75,39 @@ export class Game {
     this.pingCooldown = 0;
     this.moteCombo = 0;
     this.chainDisplay = 0;
+    this.checkpoint = null;
+    this.checkpointArmed = this.mode === 'story' && this.def?.checkpoint != null;
+    if (checkpoint) this._restoreCheckpoint(checkpoint);
     // Free wake pulse so the player always starts seeing something.
     this._emitPing(this.ents.player.x, this.ents.player.y - 1, { free: true });
+  }
+
+  // A boss checkpoint is a save state, not a shortcut: the run resumes with the
+  // motes, songs and clock it had at the lair mouth. Only the hearts come back,
+  // so the fight is the room and never the swim back to it.
+  _snapshotAt(progress) {
+    const p = this.ents.player;
+    return {
+      x: p.x, y: p.y,
+      motes: p.motes, pings: p.pings, time: this.time,
+      progress,
+      hintsShown: [...this.hintsShown],
+      motesTaken: this.ents.motes.map((m) => m.taken),
+      heartsTaken: this.ents.heartMotes.map((m) => m.taken),
+    };
+  }
+
+  _restoreCheckpoint(cp) {
+    const p = this.ents.player;
+    p.x = cp.x; p.y = cp.y; p.vx = 0; p.vy = 0;
+    p.motes = cp.motes; p.pings = cp.pings;
+    this.time = cp.time;
+    this.lastProgress = cp.progress;
+    this.hintsShown = new Set(cp.hintsShown);
+    this.ents.motes.forEach((m, i) => { if (cp.motesTaken[i]) m.taken = true; });
+    this.ents.heartMotes.forEach((m, i) => { if (cp.heartsTaken[i]) m.taken = true; });
+    this.checkpoint = cp;      // still there if the room takes you again
+    this.checkpointArmed = false;
   }
 
   // ---- abyss generation ----
@@ -161,7 +192,9 @@ export class Game {
           breathe: 0, dead: false, facing: 0,
         },
         motes: newMotes, urchins: newUrchins, hunters: newHunters,
-        currents: [], vent: null,
+        // The Abyss speaks chapter 1's vocabulary only.
+        currents: [], lures: [], crystals: [], heartMotes: [], leviathans: [],
+        vent: null,
       };
     } else {
       const cullY = this.ents.player.y - 1600;
@@ -199,10 +232,26 @@ export class Game {
 
   _emitPing(x, y, { free = false }) {
     this.pings.push({ x, y, r: 6, prevR: 0, free });
-    if (!free) {
-      // Hunters hear the song.
-      for (const h of this.ents.hunters) {
-        if (dist(h.x, h.y, x, y) < TUNING.hunterSenseRadius) this._alertHunter(h, x, y);
+    // Free light — the wake pulse, a chain bloom, a crystal's answer — carries
+    // no sound, so nothing in the dark turns toward it.
+    if (!free) this._wakeListeners(x, y);
+  }
+
+  // Everything that listens, hears. Hunters within their own range; leviathans
+  // from much further, because the trench is theirs.
+  _wakeListeners(x, y, radius = 0, silent = false) {
+    for (const h of this.ents.hunters) {
+      if (dist(h.x, h.y, x, y) < (radius || TUNING.hunterSenseRadius)) {
+        this._alertHunter(h, x, y, silent);
+      }
+    }
+    for (const lv of this.ents.leviathans) {
+      if (dist(lv.x, lv.y, x, y) < (radius || TUNING.leviathanSenseRadius)) {
+        const wasCalm = lv.state !== 'hunt';
+        lv.state = 'hunt';
+        lv.alertT = 0;
+        lv.targetX = x; lv.targetY = y;
+        if (wasCalm && this.cb.onLeviathanWake) this.cb.onLeviathanWake(lv.x, lv.y);
       }
     }
   }
@@ -248,10 +297,8 @@ export class Game {
       const impact = this._resolveCircleWalls(p, TUNING.playerRadius, TUNING.wallBounce, TUNING.wallFriction);
       if (impact > TUNING.hardHitSpeed) {
         if (this.cb.onThud) this.cb.onThud(clamp(impact / TUNING.maxSpeed, 0, 1));
-        // Loud thud: nearby hunters investigate the noise.
-        for (const h of this.ents.hunters) {
-          if (dist(h.x, h.y, p.x, p.y) < 260) this._alertHunter(h, p.x, p.y, true);
-        }
+        // Loud thud: whatever is near investigates the noise.
+        this._wakeListeners(p.x, p.y, 260, true);
       }
       if (p.invuln > 0) p.invuln -= dt;
       p.breathe += dt;
@@ -281,6 +328,12 @@ export class Game {
     for (const m of this.ents.motes) if (!m.taken) auraTouch(m, 0.9);
     for (const u of this.ents.urchins) auraTouch(u, 0.95);
     for (const h of this.ents.hunters) auraTouch(h, 0.9);
+    // A baiting lure is deliberately exempt: your own glow shows you the light,
+    // but only a song's echo brings back the shape behind it.
+    for (const l of this.ents.lures) if (l.state !== 'bait') auraTouch(l, 0.95);
+    for (const c of this.ents.crystals) auraTouch(c, 1);
+    for (const m of this.ents.heartMotes) if (!m.taken) auraTouch(m, 0.9);
+    for (const lv of this.ents.leviathans) auraTouch(lv, 0.85);
     if (this.ents.vent) auraTouch(this.ents.vent, 1);
 
     // ---- motes ----
@@ -367,6 +420,123 @@ export class Game {
       }
     }
 
+    // ---- lures ----
+    // Bait, snap, haul back. The snap is the loudest thing in the level, so
+    // taking the bait is never just a heart — it tells the room where you are.
+    for (const l of this.ents.lures) {
+      if (l.reveal > 0) l.reveal = Math.max(0, l.reveal - dt * 0.2);
+      const d = dist(l.x, l.y, p.x, p.y);
+      if (l.state === 'bait') {
+        l.phase += dt;
+        if (!p.dead && this.state === 'play' && d < TUNING.lureBaitRadius) {
+          l.state = 'lunge';
+          l.t = TUNING.lureLungeTime;
+          l.snapped = true;
+          l.reveal = 1;
+          const inv = 1 / (d || 1);
+          l.vx = (p.x - l.x) * inv * TUNING.lureLungeSpeed;
+          l.vy = (p.y - l.y) * inv * TUNING.lureLungeSpeed;
+          this._wakeListeners(l.x, l.y, TUNING.lureNoiseRadius, true);
+          if (this.cb.onLureSnap) this.cb.onLureSnap(l.x, l.y);
+        }
+      } else if (l.state === 'lunge') {
+        l.t -= dt;
+        l.x += l.vx * dt;
+        l.y += l.vy * dt;
+        this._resolveCircleWalls(l, 8, 0, 0.5);
+        if (l.t <= 0) { l.state = 'recover'; l.t = TUNING.lureRecoverTime; }
+      } else {
+        l.t -= dt;
+        // Hauls back to its tether and goes dark until it's worth trusting again.
+        const k = damp(2.4, dt);
+        l.x += (l.homeX - l.x) * k;
+        l.y += (l.homeY - l.y) * k;
+        l.vx = 0; l.vy = 0;
+        if (l.t <= 0 && d > TUNING.lureBaitRadius * 1.25) l.state = 'bait';
+      }
+      if (l.state !== 'recover' && !p.dead && p.invuln <= 0 &&
+          dist(l.x, l.y, p.x, p.y) < TUNING.lureHitRadius + TUNING.playerRadius) {
+        this._damage(l.x, l.y, 'lure');
+        l.state = 'recover';
+        l.t = TUNING.lureRecoverTime;
+      }
+    }
+
+    // ---- bloom crystals ----
+    for (const c of this.ents.crystals) {
+      if (c.reveal > 0) c.reveal = Math.max(0, c.reveal - dt * 0.15);
+      c.phase += dt;
+      if (c.charge < 1) c.charge = Math.min(1, c.charge + dt / TUNING.crystalRecharge);
+    }
+
+    // ---- heart motes ----
+    for (const m of this.ents.heartMotes) {
+      if (m.taken) continue;
+      if (m.reveal > 0) m.reveal = Math.max(0, m.reveal - dt * 0.2);
+      m.beat += dt;
+      // Only takes if it's needed — a full lume leaves it beating for later.
+      if (!p.dead && this.state === 'play' && p.hearts < TUNING.maxHearts &&
+          dist(m.x, m.y, p.x, p.y) < TUNING.heartMoteCollectRadius) {
+        m.taken = true;
+        p.hearts++;
+        if (this.cb.onHeartMote) this.cb.onHeartMote(p.hearts, m.x, m.y);
+      }
+    }
+
+    // ---- leviathans ----
+    for (const lv of this.ents.leviathans) {
+      if (lv.reveal > 0) lv.reveal = Math.max(0, lv.reveal - dt * 0.12);
+      lv.phase += dt;
+      const speed = (lv.state === 'hunt' ? TUNING.leviathanHuntSpeed : TUNING.leviathanPatrolSpeed)
+        * lv.speedScale;
+      if (lv.state === 'patrol') {
+        // A readable orbit: learn the loop and you can cross behind it.
+        lv.angle += lv.spin * (speed / Math.max(lv.patrolR, 1)) * dt;
+        lv.targetX = lv.homeX + Math.cos(lv.angle) * lv.patrolR;
+        lv.targetY = lv.homeY + Math.sin(lv.angle) * lv.patrolR;
+      } else {
+        const dp = dist(lv.x, lv.y, p.x, p.y);
+        if (dp < 260 && !p.dead) { lv.targetX = p.x; lv.targetY = p.y; }
+        if (dist(lv.x, lv.y, lv.targetX, lv.targetY) < 50) {
+          lv.alertT += dt;
+          if (lv.alertT > TUNING.leviathanCalmTime) {
+            lv.state = 'patrol';
+            // Rejoin the orbit from wherever it drifted to, so the loop resumes
+            // from the near side instead of snapping across the lair.
+            lv.angle = Math.atan2(lv.y - lv.homeY, lv.x - lv.homeX);
+          }
+        }
+      }
+      let dx = lv.targetX - lv.x, dy = lv.targetY - lv.y;
+      const dl = Math.hypot(dx, dy);
+      if (dl > 6) {
+        dx /= dl; dy /= dl;
+        const k = damp(2.0, dt);
+        lv.vx += (dx * speed - lv.vx) * k;
+        lv.vy += (dy * speed - lv.vy) * k;
+      }
+      lv.x += lv.vx * dt;
+      lv.y += lv.vy * dt;
+      // Only the head collides, and softly — a body this size would wedge itself
+      // in the first narrow the lair offers.
+      this._resolveCircleWalls(lv, TUNING.leviathanBodyRadius, 0, 1);
+      // Body follows the head at a fixed spacing (a swimming chain, not a smear).
+      let px2 = lv.x, py2 = lv.y;
+      for (const seg of lv.trail) {
+        let sx = px2 - seg.x, sy = py2 - seg.y;
+        const sl = Math.hypot(sx, sy);
+        if (sl > 18) {
+          seg.x += sx * (1 - 18 / sl);
+          seg.y += sy * (1 - 18 / sl);
+        }
+        px2 = seg.x; py2 = seg.y;
+      }
+      if (!p.dead && p.invuln <= 0 &&
+          dist(lv.x, lv.y, p.x, p.y) < TUNING.leviathanHitRadius + TUNING.playerRadius) {
+        this._damage(lv.x, lv.y, 'leviathan', 460);
+      }
+    }
+
     // ---- vent / win ----
     const vent = this.ents.vent;
     if (vent) {
@@ -422,6 +592,26 @@ export class Game {
     for (const m of this.ents.motes) if (!m.taken) check(m, 8);
     for (const u of this.ents.urchins) check(u, TUNING.urchinVisualRadius);
     for (const h of this.ents.hunters) check(h, 14);
+    // A song that touches a lure shows the tether behind the light. Sing before
+    // you swallow and the trick stops working on you.
+    for (const l of this.ents.lures) check(l, 10);
+    for (const m of this.ents.heartMotes) if (!m.taken) check(m, 10);
+    for (const lv of this.ents.leviathans) check(lv, TUNING.leviathanHeadRadius);
+    // Crystals answer the song with light of their own: a free bloom from where
+    // they stand, silent, so it reaches around the corner without waking anything.
+    for (const c of this.ents.crystals) {
+      const d = dist(c.x, c.y, ping.x, ping.y);
+      if (d > ping.prevR - TUNING.crystalRadius && d <= ping.r + TUNING.crystalRadius) {
+        c.reveal = 1;
+        if (c.charge >= 1) {
+          c.charge = 0;
+          // Pushed onto this.pings, which the caller is walking backwards —
+          // the new ring starts expanding next frame, not inside this one.
+          this._emitPing(c.x, c.y, { free: true });
+          if (this.cb.onCrystalBloom) this.cb.onCrystalBloom(c.x, c.y);
+        }
+      }
+    }
     if (this.ents.vent) {
       const v = this.ents.vent;
       const d = dist(v.x, v.y, ping.x, ping.y);
@@ -478,6 +668,12 @@ export class Game {
     }
     if (this.mode === 'story' && bestCorr === 0 && bestT > this.lastProgress) {
       this.lastProgress = bestT;
+      // Boss levels bank the run at the lair mouth.
+      if (this.checkpointArmed && this.state === 'play' && bestT >= this.def.checkpoint) {
+        this.checkpointArmed = false;
+        this.checkpoint = this._snapshotAt(bestT);
+        if (this.cb.onCheckpoint) this.cb.onCheckpoint();
+      }
       if (this.def.hints) {
         for (const h of this.def.hints) {
           if (bestT >= h.t && !this.hintsShown.has(h.t)) {
@@ -489,15 +685,15 @@ export class Game {
     }
   }
 
-  _damage(srcX, srcY, source = 'urchin') {
+  _damage(srcX, srcY, source = 'urchin', knock = 270) {
     this.lastDamageSource = source;
     const p = this.ents.player;
     p.hearts--;
     p.invuln = TUNING.invulnTime;
     let dx = p.x - srcX, dy = p.y - srcY;
     const dl = Math.hypot(dx, dy) || 1;
-    p.vx += (dx / dl) * 270;
-    p.vy += (dy / dl) * 270;
+    p.vx += (dx / dl) * knock;
+    p.vy += (dy / dl) * knock;
     if (this.cb.onDamage) this.cb.onDamage(p.hearts, srcX, srcY);
     if (p.hearts <= 0) {
       p.dead = true;

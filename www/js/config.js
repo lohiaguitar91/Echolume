@@ -13,6 +13,16 @@ export const PALETTE = {
   urchinCore: '#ffd3e8',
   hunter: '#b14fff',
   hunterAlert: '#ff3b5c',
+  // Chapter 2 vocabulary. Lures wear the mote's amber while baiting (that's the
+  // trick) and only show these colours once they've been sung at or sprung.
+  lure: '#ff5fb0',
+  lureCore: '#ffd3e8',
+  crystal: '#dcefff',
+  crystalCore: '#ffffff',
+  heart: '#ff6f91',
+  heartCore: '#ffe9f0',
+  leviathan: '#9d7bff',
+  leviathanCore: '#e6dcff',
   player: '#eafcff',
   playerAura: '#7ef0ff',
   vent: '#5effc2',
@@ -32,6 +42,10 @@ export const PALETTE_CONTRAST = {
   urchin: '#ff6ab0',
   hunter: '#c76bff',
   vent: '#7dffd2',
+  lure: '#ff7cc2',
+  crystal: '#f2f9ff',
+  heart: '#ff89a6',
+  leviathan: '#b79bff',
 };
 
 export const TUNING = {
@@ -78,9 +92,39 @@ export const TUNING = {
   hunterCalmTime: 4.0,      // s after reaching ping site before calming
   hunterHitRadius: 16,
 
+  // Lures — chapter 2. A false mote on a tether: it wears the amber until you
+  // are close enough to swallow, then it snaps. The snap is loud.
+  // Bait radius is a lure's real footprint, not its hit radius: keep it well
+  // under a deep corridor's half-width or it walls the passage off entirely.
+  lureBaitRadius: 50,       // player distance that springs it
+  lureLungeSpeed: 320,
+  lureLungeTime: 0.5,       // s of committed lunge before it hauls back
+  lureHitRadius: 15,
+  lureRecoverTime: 3.4,     // s dark and harmless before it re-baits
+  lureNoiseRadius: 340,     // hunters and leviathans hear the snap
+
+  // Bloom crystals — chapter 2. A song that touches one is answered by a
+  // silent bloom of light from the crystal: reach without spending a song,
+  // and without waking anything.
+  crystalRadius: 13,
+  crystalRecharge: 7.0,     // s from spent to charged
+
+  // Leviathan — chapter boss. Blind, enormous, and patient. It cannot be
+  // killed; the room is the fight.
+  leviathanHeadRadius: 26,
+  leviathanHitRadius: 24,
+  leviathanBodyRadius: 14,  // what actually collides with rock, so it can swim
+  leviathanPatrolSpeed: 52,
+  leviathanHuntSpeed: 178,   // slower than a fleeing lume, faster than a hesitating one
+  leviathanSenseRadius: 900,
+  leviathanCalmTime: 5.5,   // s at the sound before it loses interest
+  leviathanSegments: 9,
+  leviathanThreatRadius: 520,
+
   // Health
   maxHearts: 3,
   invulnTime: 1.4,          // s of i-frames after damage
+  heartMoteCollectRadius: 22,
 
   // Camera
   camLerp: 6.5,             // per-second smoothing factor (keeps up with darts)

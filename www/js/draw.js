@@ -103,6 +103,115 @@ export function drawGame(R, game, particles, time, dt, palette) {
   }
   R.strokeGlowSegments(_spikeBatch, 1.5 * z, palette.urchin, palette.urchinCore);
 
+  // ---- bloom crystals ----
+  // Faceted, never hostile: a crystal reads by silhouette, so it can share the
+  // cave's cyan without being mistaken for a wall or a mote.
+  for (const c of game.ents.crystals) {
+    if (!R.inView(c.x, c.y, 60)) continue;
+    const charged = c.charge >= 1;
+    // A charged crystal is a gift, so it stays findable in the darkest levels;
+    // a spent one all but disappears until it recovers.
+    const idle = charged ? 0.30 + 0.08 * Math.sin(time * 1.1 + c.phase) : 0.07;
+    const vis = Math.max(c.reveal, idle);
+    const spin = c.spin + time * 0.35;
+    const rr = TUNING.crystalRadius * (charged ? 1 : 0.72);
+    const pts = [];
+    for (let k = 0; k < 4; k++) {
+      const a = spin + (k / 4) * Math.PI * 2;
+      const stretch = k % 2 === 0 ? 1 : 0.62;
+      pts.push(R.worldToScreen(c.x + Math.cos(a) * rr * stretch, c.y + Math.sin(a) * rr * stretch));
+    }
+    const facets = [];
+    for (let k = 0; k < 4; k++) {
+      const a = pts[k], b = pts[(k + 1) % 4];
+      facets.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, a: vis * 0.9 });
+    }
+    R.strokeGlowSegments(facets, 1.6 * z, palette.crystal, palette.crystalCore);
+    R.glowDot(c.x, c.y, charged ? 5.5 : 3, palette.crystal, vis * (charged ? 0.9 : 0.4), palette.crystalCore);
+    if (charged && Math.random() < 0.05) {
+      particles.spawn({
+        x: c.x + (Math.random() - 0.5) * 18, y: c.y + (Math.random() - 0.5) * 18,
+        vx: (Math.random() - 0.5) * 6, vy: -6 - Math.random() * 8,
+        life: 1.2, r: 1.5, color: palette.crystal, coreColor: palette.crystalCore,
+        alpha: 0.5 * vis, drag: 0.5,
+      });
+    }
+  }
+
+  // ---- heart motes ----
+  for (const m of game.ents.heartMotes) {
+    if (m.taken) continue;
+    const vis = Math.max(m.reveal, 0.16 + 0.05 * Math.sin(time * 1.4 + m.phase));
+    if (!R.inView(m.x, m.y, 50)) continue;
+    // Two thumps and a rest — legible without colour vision.
+    const bt = (m.beat * 1.15) % 1;
+    const thump = Math.exp(-bt * 9) + 0.62 * Math.exp(-Math.max(0, bt - 0.16) * 9);
+    R.glowDot(m.x, m.y, 6.5 + thump * 3.4, palette.heart, vis * 0.95, palette.heartCore);
+    R.ring(m.x, m.y, 13 + thump * 9, 1.3 * z, palette.heart, vis * 0.35 * thump);
+  }
+
+  // ---- lures ----
+  // While baiting it wears the field's own amber; the tether only shows once a
+  // song has come back off it, or once it has already bitten you.
+  for (const l of game.ents.lures) {
+    if (!R.inView(l.x, l.y, 70)) continue;
+    const baiting = l.state === 'bait';
+    const known = Math.max(l.reveal, l.snapped ? 0.12 + 0.05 * Math.sin(time * 1.9 + l.phase) : 0);
+    if (baiting) {
+      const tw = 0.8 + 0.2 * Math.sin(time * chain.pulse * 0.75 + l.phase);
+      const bob = Math.sin(time * 0.9 + l.driftPhase) * 2.0;
+      R.glowDot(l.x, l.y + bob, (4.6 + tw) * 1.15 * chain.scale, chain.color, 0.26 * tw + known * 0.3, chain.core);
+    }
+    if (known < 0.02 && baiting) continue;
+    const vis = baiting ? known : Math.max(known, l.state === 'lunge' ? 1 : 0.35);
+    // Body sits behind the bait on a tether that shortens as it lunges. At rest
+    // the lure hangs over its own body, anglerfish-fashion.
+    const back = l.state === 'lunge' ? 12 : 26;
+    let dx = l.x - l.homeX, dy = l.y - l.homeY;
+    const dl = Math.hypot(dx, dy);
+    if (dl < 2) { dx = 0; dy = -1; } else { dx /= dl; dy /= dl; }
+    const bx = l.x - dx * back;
+    const by = l.y - dy * back;
+    const s1 = R.worldToScreen(l.x, l.y);
+    const s2 = R.worldToScreen(bx, by);
+    R.strokeGlowSegments([{ x1: s1.x, y1: s1.y, x2: s2.x, y2: s2.y, a: vis * 0.5 }],
+      1.2 * z, palette.lure, palette.lureCore);
+    const gape = l.state === 'lunge' ? 1.35 : 1;
+    R.glowDot(bx, by, 9 * gape, palette.lure, vis * 0.85, palette.lureCore);
+    for (let k = 0; k < 5; k++) {
+      const a = Math.atan2(dy, dx) + (k - 2) * 0.34;
+      const t1 = R.worldToScreen(bx + Math.cos(a) * 7, by + Math.sin(a) * 7);
+      const t2 = R.worldToScreen(bx + Math.cos(a) * (7 + 7 * gape), by + Math.sin(a) * (7 + 7 * gape));
+      _spikeBatch.push({ x1: t1.x, y1: t1.y, x2: t2.x, y2: t2.y, a: vis * 0.7 });
+    }
+    R.strokeGlowSegments(_spikeBatch, 1.4 * z, palette.lure, palette.lureCore);
+    _spikeBatch.length = 0;
+  }
+
+  // ---- leviathans ----
+  for (const lv of game.ents.leviathans) {
+    const hunting = lv.state === 'hunt';
+    // Always faintly there: you are meant to learn its loop, not be ambushed.
+    const idle = 0.13 + 0.05 * Math.sin(time * 0.8 + lv.phase);
+    const vis = Math.max(lv.reveal, hunting ? 0.55 : idle);
+    const col = hunting ? palette.hunterAlert : palette.leviathan;
+    const core = hunting ? '#ffd9df' : palette.leviathanCore;
+    for (let k = lv.trail.length - 1; k >= 0; k--) {
+      const seg = lv.trail[k];
+      if (!R.inView(seg.x, seg.y, 60)) continue;
+      const taper = 1 - k / (lv.trail.length + 1);
+      const wig = Math.sin(lv.phase * 2.6 - k * 0.75) * 3.2;
+      R.glowDot(seg.x + wig * 0.3, seg.y, TUNING.leviathanHeadRadius * 0.8 * taper,
+        col, vis * (0.5 * taper + 0.12));
+    }
+    if (!R.inView(lv.x, lv.y, 90)) continue;
+    R.glowDot(lv.x, lv.y, TUNING.leviathanHeadRadius, col, vis * 0.8, core);
+    R.glowDot(lv.x, lv.y, TUNING.leviathanHeadRadius * 0.45, core, vis * 0.9, '#ffffff');
+    const ringT = (lv.phase % (hunting ? 1.4 : 3.2)) / (hunting ? 1.4 : 3.2);
+    R.ring(lv.x, lv.y, TUNING.leviathanHeadRadius + ringT * 90, 1.8 * z, col,
+      (1 - ringT) * (hunting ? 0.6 : 0.22) * vis);
+  }
+
   // ---- hunters ----
   for (const h of game.ents.hunters) {
     const alert = h.state === 'alert';

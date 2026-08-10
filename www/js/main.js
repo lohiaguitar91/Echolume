@@ -11,7 +11,7 @@ import { Save } from './save.js';
 import { UI } from './ui.js';
 import { Game, starBreakdown } from './game.js';
 import { GameServices, MILESTONES } from './gameservices.js';
-import { getLevel, LEVELS, parTime } from './levels.js';
+import { getLevel, LEVELS, parTime, chapterOf } from './levels.js';
 import { drawGame, drawMenuAmbient } from './draw.js';
 import { installDebug } from './debug.js';
 import { clamp } from './util.js';
@@ -40,6 +40,7 @@ class Shell {
     this._acc = 0;
     this._settingsReturn = 'title';
     this._resetArmed = false;
+    this._checkpoint = null;       // banked lair mouth, boss levels only
 
     this.game = new Game(this._gameCallbacks());
 
@@ -130,7 +131,9 @@ class Shell {
         }
         // A failed run still proves what you gathered — keep the haul.
         if (this.game.def) this.save.levelAttempt(this.game.def.id, stats);
-        this.ui.fillGameover(this.game.mode, stats);
+        this.ui.fillGameover(this.game.mode, stats, {
+          fromCheckpoint: this._checkpointFor(this.currentLevelId) !== null,
+        });
         this._show('gameover');
       },
       onWin: (stats) => {
@@ -156,6 +159,7 @@ class Shell {
               def,
               record: this.save.data.levels[def.id],
               breakdown,
+              chapterEnd: def.chapterEnd ? chapterOf(def.id).name : null,
             });
             for (let i = 0; i < stars; i++) {
               setTimeout(() => this.audio.star(i + 1), 780 + i * 380);
@@ -172,6 +176,33 @@ class Shell {
         this.particles.burst(p.x, p.y, this.palette.vent, 24, 150, 1.2, 3.2, this.palette.ventCore);
         this.ui.toast(`${m.toLocaleString()} m`, 2200);
         this.ui.hint(`Milestone: ${this.gs.unlockedCount()}/${this.gs.totalCount()} depths sung.`, 3000);
+      },
+      onLureSnap: (x, y) => {
+        this.audio.lureSnap();
+        this.haptics.warn();
+        this.renderer.addShake(0.3);
+        this.particles.burst(x, y, this.palette.lure, 16, 170, 0.7, 3.2, this.palette.lureCore);
+      },
+      onCrystalBloom: (x, y) => {
+        this.audio.crystalBloom();
+        this.particles.burst(x, y, this.palette.crystal, 18, 140, 1.0, 3, this.palette.crystalCore);
+      },
+      onHeartMote: (hearts, x, y) => {
+        this.audio.heartMote();
+        this.haptics.success();
+        this.ui.setHearts(hearts, TUNING.maxHearts);
+        this.ui.setDangerLow(hearts === 1);
+        this.particles.burst(x, y, this.palette.heart, 22, 140, 1.1, 3.2, this.palette.heartCore);
+        this.ui.hint('The beating light mends you.', 2400);
+      },
+      onLeviathanWake: () => {
+        this.audio.leviathanWake();
+        this.haptics.warn();
+        this.renderer.addShake(0.35);
+      },
+      onCheckpoint: () => {
+        this._checkpoint = { levelId: this.game.def.id, snap: this.game.checkpoint };
+        this.ui.toast('The lair mouth remembers you', 2400);
       },
       onAllMotes: (x, y) => {
         this.audio.allMotes();
@@ -224,7 +255,7 @@ class Shell {
   // Picks the nearest un-earned thing worth chasing.
   _microGoal() {
     for (const lvl of LEVELS) {
-      if (!this.save.isUnlocked(lvl.id)) break;
+      if (!this.save.isUnlocked(lvl.id)) continue;
       const rec = this.save.data.levels[lvl.id];
       if (!rec || rec.stars >= 3) continue;
       const total = UI.moteTotal(lvl);
@@ -255,24 +286,35 @@ class Shell {
   }
 
   // ---- level flow ----
+  // The banked lair mouth for a level, or null if there isn't one.
+  _checkpointFor(id) {
+    return this._checkpoint && this._checkpoint.levelId === id ? this._checkpoint.snap : null;
+  }
+
   startLevel(id, opts = {}) {
     const def = getLevel(id);
     if (!def) return;
+    const resume = opts.fromCheckpoint ? this._checkpointFor(id) : null;
+    if (!resume) this._checkpoint = null;
     this.currentLevelId = id;
     this.particles.clear();
-    // Each depth sings in its own key (D, E, F, G rotation).
+    // Each depth sings in its own key (D, E, F, G rotation), and each chapter
+    // in its own mode — the trench is audibly flatter than the shallows.
     this.audio.setRoot([293.66, 329.63, 349.23, 392.0][(id - 1) % 4]);
-    this.game.startStory(def);
+    this.audio.setMode(chapterOf(id).mode);
+    this.game.startStory(def, resume);
     const p = this.game.ents.player;
     this.renderer.cam.x = this.renderer.cam.targetX = p.x;
     this.renderer.cam.y = this.renderer.cam.targetY = p.y;
     this.ui.setLevelName(`${id} · ${def.name}`);
     this.ui.setHearts(p.hearts, TUNING.maxHearts);
-    this.ui.setMotes(0, this.game.ents.motes.length);
-    this.ui.setPings(0);
+    this.ui.setMotes(p.motes, this.game.ents.motes.length);
+    this.ui.setPings(p.pings);
     this.ui.hideDepth();
     this._show('playing');
-    if (!opts.silent) this.ui.toast(`Depth ${id} · ${def.name}`);
+    if (!opts.silent) {
+      this.ui.toast(resume ? 'The lair mouth' : `Depth ${id} · ${def.name}`);
+    }
   }
 
   startAbyss() {
@@ -290,7 +332,8 @@ class Shell {
   _startAbyssNow() {
     this.gs.signIn();  // no-op if already in, or if there's no native bridge
     this.particles.clear();
-    this.audio.setRoot(293.66); // the Abyss sings in D
+    this.audio.setRoot(293.66);      // the Abyss sings in D,
+    this.audio.setMode('shallows');  // in the shallows' own mode
     this.game.startAbyss(1 + Math.floor(Math.random() * 100000));
     const p = this.game.ents.player;
     this.renderer.cam.x = this.renderer.cam.targetX = p.x;
@@ -373,7 +416,7 @@ class Shell {
     click('btn-results-menu', () => this._show('levels'));
     click('btn-retry', () => {
       if (this.game.mode === 'abyss') this.startAbyss();
-      else this.startLevel(this.currentLevelId);
+      else this.startLevel(this.currentLevelId, { fromCheckpoint: true });
     });
     click('btn-gameover-menu', () => this._show('title'));
     click('btn-recap-again', () => this._startAbyssNow());
@@ -535,6 +578,13 @@ class Shell {
       for (const h of this.game.ents.hunters) {
         const d = Math.hypot(h.x - p.x, h.y - p.y);
         if (d < 340) threat = Math.max(threat, 1 - d / 340);
+      }
+      // A leviathan is felt from much further out, and never drops below a
+      // low dread while you share its room.
+      for (const lv of this.game.ents.leviathans) {
+        const d = Math.hypot(lv.x - p.x, lv.y - p.y);
+        const R2 = TUNING.leviathanThreatRadius;
+        if (d < R2) threat = Math.max(threat, 0.25 + 0.75 * (1 - d / R2));
       }
       const liveThreat = threat * (p.dead ? 0 : 1);
       this.audio.setThreat(liveThreat);

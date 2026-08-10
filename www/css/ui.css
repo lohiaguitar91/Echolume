@@ -214,6 +214,27 @@ html, body {
   gap: 12px;
   width: 100%;
 }
+.level-chapter {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 6px 2px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--panel-edge);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.level-chapter:first-child { margin-top: 0; }
+.chapter-gate {
+  letter-spacing: 0.08em;
+  text-transform: none;
+  color: var(--mote);
+  opacity: 0.85;
+}
 .level-cell {
   appearance: none;
   border: 1px solid var(--panel-edge);

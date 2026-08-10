@@ -15,7 +15,7 @@ Every tap is a song. It pushes you through the water, and for a moment, it light
 ECHOLUME is a one-thumb atmosphere game about voice, light, and restraint.
 
 ★ One verb: tap to sing. Your song moves you, reveals the cave, and makes noise, all at once.
-★ 14 handcrafted depths that teach the deep one danger at a time: thorn urchins, listening hunters, rivers that run upstream, water where light dies fast.
+★ 28 handcrafted depths across two chapters, teaching the deep one danger at a time: thorn urchins, listening hunters, rivers that run upstream, false lights that bite, and two leviathans that hear everything.
 ★ The Abyss: an endless descent that is never the same twice. How far will you dare to sing?
 ★ Earn up to three stars per depth: reach the vent, gather the motes, and waste no songs.
 ★ A living soundscape, synthesized in real time: your motes build melodies, the cave echoes your voice, and your own heartbeat warns you what is near.
@@ -44,4 +44,4 @@ Email: kaushlohia@gmail.com
 Privacy policy URL: host `store/privacy-policy.md` and paste the URL.
 
 ## Release notes (v1.0.0)
-First dive. 14 depths, the endless Abyss, and a voice in the dark.
+First dive. 28 depths, the endless Abyss, and a voice in the dark.

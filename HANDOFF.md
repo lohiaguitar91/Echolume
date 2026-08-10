@@ -1,8 +1,14 @@
 # Echolume — handoff state
 
-Written Aug 9, 2026, at the end of a long Windows session. Everything below is
-current as of the commit that added this file. Read this first, then `SHIP.md`
-for the ordered checklist.
+Written Aug 9, 2026, at the end of a long Windows session. Read this first, then
+`SHIP.md` for the ordered checklist.
+
+> **Picked up on macOS, Aug 9 2026.** Done since: the iOS project compiles
+> (`GameConnectPlugin.swift` needed four one-character fixes — see below), the
+> whole thing is synced to both native projects, and **chapter 2 · The Trench
+> (depths 15–28) is built and verified**. Still open: everything needing
+> Android Studio or a store console. Items below are marked **[done]** or
+> **[still open]**.
 
 **The short version:** the game is finished and verified. The web build is done,
 both native projects are scaffolded and wired, and a hand-written Game Center /
@@ -16,8 +22,21 @@ machine this was built on.
 
 ### Done and verified
 - **The game.** `www/` is the whole thing: vanilla JS ES modules, no build step.
-  14 hand-authored levels plus an endless Abyss. All 14 verified solvable by an
-  autoplay harness, zero console errors, ~0.7ms/frame at store resolution.
+  **28** hand-authored levels in two chapters, plus an endless Abyss. All 28
+  verified by the autoplay harness, zero console errors, ~0.7ms/frame at store
+  resolution.
+- **Chapter 2 · The Trench (15–28)**, built to `docs/plan-v1.1.html` §3. New
+  vocabulary is **lures** (false motes wearing the field's own amber; a song
+  shows the tether behind the light, and taking the bait is the loudest sound in
+  the level) and **bloom crystals** (a song that touches one is answered by a
+  free, silent bloom from where it stands — reach without spending a song, and
+  without waking anything). **Leviathan** bosses close both halves at 21 and 28,
+  patrolling readable orbits and checkpointing at the lair mouth. **Heart motes**
+  (one per depth, off the safe line) are the only healing, and only take if you
+  need them. Difficulty sawtooths: 15 opens at roughly depth 8's level and climbs
+  back past depth 13 by 27. Chapter 2 opens at 26 of the shallows' 42 stars
+  (~60%), never on clearing every depth. The trench also sings in its own mode —
+  a flatter scale, so you hear the chapter before you read it.
 - **v1.1 feature set** (all shipped, all verified in-browser):
   cold open (a fresh install fades straight into Depth 1 — no menus), Abyss death
   recap with record/near-miss + milestone progress, mote chain colour ladder
@@ -38,21 +57,20 @@ machine this was built on.
   screenshots rendered by the actual game. All in `store/`.
 
 ### Written but NOT compiled — expect to fix small things
-- **`ios/App/App/GameConnectPlugin.swift`** (GameKit). Never compiled; there is no
-  macOS here. It was written against the Capacitor 8 sources in
-  `node_modules/@capacitor/ios` and matches the framework's own reference plugins
-  (`Console.swift`) exactly: `@objc(...)`, `CAPPlugin, CAPBridgedPlugin`,
-  `public let identifier / jsName / pluginMethods`. Deployment target is iOS 15,
-  so every GameKit API used (all iOS 14+) is available. **It is already registered
-  in `App.xcodeproj`** — file reference, App group, and Sources build phase were
-  added programmatically and the project file was validated, so no Xcode file
-  wrangling is needed.
-- **Full `assembleDebug` never completed.** The only JDK on the Windows box was
-  PyCharm's bundled JBR, which ships without `jlink`/`jmods` — required by the
-  compileSdk-36 JDK-image transform. That is a local toolchain gap, not a project
-  one. Android Studio's bundled JBR has `jlink`, so the build should just work
-  on a normal setup.
-- **Never run on a real device**, either platform.
+- **[done] `ios/App/App/GameConnectPlugin.swift`** (GameKit) now compiles. The
+  prediction was right: four errors, all the same one — `@objc public funcsignIn`,
+  the space between `func` and the method name lost somewhere on the way out of
+  the Windows session (same class of damage as the backslashes in `Package.swift`).
+  With those fixed the file builds clean, no warnings. Verified with
+  `xcodebuild -project ios/App/App.xcodeproj -scheme App -sdk iphonesimulator
+  -configuration Debug CODE_SIGNING_ALLOWED=NO build` → **BUILD SUCCEEDED**.
+  Its registration in `App.xcodeproj` was correct as written.
+- **[still open] Full `assembleDebug` never completed.** No JDK on this Mac
+  either (`/usr/libexec/java_home` finds nothing), so Android is untouched here.
+  Android Studio's bundled JBR has `jlink`, so the build should just work there.
+- **[still open] Never run on a real device**, either platform. The iOS build
+  above is a simulator build with signing disabled; it proves the code compiles,
+  not that Game Center authenticates.
 
 ---
 
@@ -60,17 +78,21 @@ machine this was built on.
 
 ### 1. iOS (needs this Mac)
 ```bash
-git clone https://github.com/lohiaguitar91/Echolume.git
-cd Echolume && npm install && npx cap sync ios && npx cap open ios
+npm install && npx cap sync ios && npx cap open ios
 ```
-1. Signing & Capabilities → set your Team. Bundle id is `com.kaush.echolume`.
-2. Same panel → **+ Capability → Game Center**. This can't be pre-set in the repo
-   because it needs your signing team; one click writes the entitlement.
-3. Build. This is the first-ever compile of `GameConnectPlugin.swift` — fix
-   whatever it complains about.
-4. Run on a real iPhone and check: audio unlocks on the first tap, haptics fire,
-   60fps, safe-area insets on a notched phone, portrait lock holds.
-5. Product → Archive → App Store Connect.
+1. **[done]** Signing team is Wibes LLC (`RV5N43T74L`); bundle id is
+   `com.wibesllc.echolume`.
+2. **[still open]** Signing & Capabilities → **+ Capability → Game Center**.
+   Still the one manual step: the entitlement is only half of it — the App ID in
+   the developer portal needs the capability enabled too, which is what the Xcode
+   click actually does. Pre-committing an `.entitlements` file without that would
+   break device signing, so it was deliberately left alone.
+3. **[done]** It compiles — see above.
+4. **[still open]** Run on a real iPhone and check: audio unlocks on the first
+   tap, haptics fire, 60fps, safe-area insets on a notched phone, portrait lock
+   holds. (Per memory, `cap run`'s deploy step fails here; use
+   `xcrun devicectl device install app` / `... process launch`.)
+5. **[still open]** Product → Archive → App Store Connect.
 
 ### 2. Android (needs Android Studio)
 1. `npx cap open android`, let Gradle sync, then `assembleDebug` — resource
@@ -119,13 +141,30 @@ Hundred-Kilometre Song".
   browser pane throttles to 1–4fps. `__echo.renderNow()` forces a frame and
   `__echo.canvasShot()` returns a PNG data URL. That's how every screenshot in
   `store/` was produced without the pane ever compositing.
+- **The autoplay harness now lives in the repo** (`debug.js`), so it doesn't have
+  to be rebuilt from session notes each time. `__echo.verifyAll()` runs every
+  level and returns, per depth: whether every authored entity actually sits
+  inside the cave (`placementCheck` — an offset one number too large is invisible
+  until someone plays it), whether the vent is reachable at all (`autoplay` with
+  `god: true`), and whether a bot that steers around thorns and lures survives.
+  `__echo.autoplay(id)` alone gives times, songs and hearts for one depth; par
+  times are set at roughly 9× a clean god-mode run, which is what chapter 1's
+  pars already worked out to.
+- **A lure's footprint is its bait radius, not its hit radius.** `lureBaitRadius`
+  (50) is the distance at which it springs, so it has to stay well under a
+  corridor's half-width or it walls the passage off completely. This bit once
+  already, at 62 in the 76-wide deep corridors.
 - **Regenerating art:** run the dev server (`npm run dev`) and open
   `http://localhost:3852/__dev/gen`. It draws the icon, splash, and feature
   graphic in code and POSTs them to `assets-out/`. Then
   `npx capacitor-assets generate --ios` / `--android`.
-- **Versions are 1.0.0 everywhere** (`config.js` GAME_VERSION, `package.json`,
-  `sw.js` VERSION, `build.gradle` versionName), `versionCode 1`. The "v1.1" in
+- **Versions are still 1.0.0 everywhere** (`config.js` GAME_VERSION,
+  `package.json`, `build.gradle` versionName), `versionCode 1`. The "v1.1" in
   `docs/plan-v1.1.html` is an internal milestone name, not a store version.
+  **Chapter 2 did not bump any of them** — that's a release call, not a code
+  change. The one exception is `sw.js`, whose cache key is now
+  `echolume-v1.0.0-trench`: without a new key, returning PWA players would be
+  served the old fourteen levels out of cache forever.
 - **Game services degrade silently.** With no native bridge present, milestones
   still bank locally, the Leaderboard button hides itself, and nothing throws.
   Both paths were tested.
@@ -147,3 +186,12 @@ agreed over several rounds. The load-bearing decisions:
 - Chapters of 10–14 levels, each introducing one or two new "listeners" (lures,
   bloom crystals, hush zones, warm vents, brittle ice) with mid- and end-chapter
   leviathan bosses. Free content ends at depth 50.
+
+Chapter 2 is now built, which leaves **chapters 3–4 (depths 29–50)**: hush zones
+and brittle ice, then warm vents. The scaffolding they need already exists —
+add a `CHAPTERS` entry in `levels.js` (the star gate computes itself from the
+previous chapter's length), give it a scale in `audio.js` `MODES`, and author
+the defs. A new hazard is four small edits: an array in `setupEntities`, a block
+in `Game.update`, a block in `drawGame`, and a synthesized sound. Follow the
+lure/crystal pattern; `__echo.verifyAll()` will tell you if the placements are
+wrong before a human ever plays them.

@@ -4,7 +4,7 @@
 
 A one-thumb atmosphere game: you are a small blind creature of the deep who moves by
 singing — every tap pushes you through the water, lights the cave for a moment, and
-makes noise the deep can hear. 14 handcrafted depths + an endless Abyss.
+makes noise the deep can hear. 28 handcrafted depths across two chapters + an endless Abyss.
 
 Built as a deliberate answer to where AI-built mobile games usually fall short:
 real sound design (fully synthesized, zero audio files), real game-feel (glow, particles,
@@ -39,4 +39,6 @@ the world, and wakes the hunters. Escape/pause button pauses.
 With the dev server (not under Capacitor), `window.__echo` exposes a headless test API:
 `__echo.startLevel(n)`, `__echo.stats()`, `__echo.tapWorld(x,y)`, `__echo.godMode()`,
 `__echo.startAbyss()`, `__echo.grantAllStars()`, `__echo.resetSave()`.
-All 14 levels are solvable by the autoplay harness (see session notes).
+`__echo.verifyAll()` runs the built-in autoplay harness over every level and reports
+placement, reachability, and whether a bot that dodges the obvious survives. All 28
+levels pass.
