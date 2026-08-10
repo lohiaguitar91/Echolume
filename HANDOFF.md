@@ -158,13 +158,13 @@ Hundred-Kilometre Song".
   `http://localhost:3852/__dev/gen`. It draws the icon, splash, and feature
   graphic in code and POSTs them to `assets-out/`. Then
   `npx capacitor-assets generate --ios` / `--android`.
-- **Versions are still 1.0.0 everywhere** (`config.js` GAME_VERSION,
-  `package.json`, `build.gradle` versionName), `versionCode 1`. The "v1.1" in
-  `docs/plan-v1.1.html` is an internal milestone name, not a store version.
-  **Chapter 2 did not bump any of them** — that's a release call, not a code
-  change. The one exception is `sw.js`, whose cache key is now
-  `echolume-v1.0.0-trench`: without a new key, returning PWA players would be
-  served the old fourteen levels out of cache forever.
+- **Versions are 1.1.0 everywhere**, bumped for chapter 2: `config.js`
+  GAME_VERSION, `package.json`, `build.gradle` versionName, `sw.js` cache key,
+  and iOS `MARKETING_VERSION`. Android `versionCode` is 2, iOS
+  `CURRENT_PROJECT_VERSION` (build number) is 3. Bump the build number on every
+  upload — App Store Connect rejects a repeat of one it has already seen for a
+  given version string. `docs/plan-v1.1.html` is an internal milestone name that
+  now happens to match the store version; they are still unrelated.
 - **Game services degrade silently.** With no native bridge present, milestones
   still bank locally, the Leaderboard button hides itself, and nothing throws.
   Both paths were tested.
