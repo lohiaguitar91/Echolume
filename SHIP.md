@@ -4,8 +4,7 @@ Everything automatable is done and committed. These are the remaining human step
 Details for each live in docs/BUILDING.md and docs/PUBLISHING.md.
 
 ## 0. Repo
-- [ ] Grant push access (add `dishakoul94` as collaborator on lohiaguitar91/Echolume,
-      or `git credential-manager github login` as lohiaguitar91), then `git push -u origin main`.
+- [x] Pushed to github.com/lohiaguitar91/Echolume, `main` tracking `origin/main`.
 
 ## 1. Accounts (one-time)
 - [ ] Google Play Console account ($25 once)
@@ -43,8 +42,19 @@ Files: `ios/App/App/GameConnectPlugin.swift` (GameKit) ·
 `android/app/src/main/java/com/kaush/echolume/GameConnectPlugin.java` (Play Games v2,
 registered in `MainActivity.java`, dependency in `app/build.gradle`).
 
-**These native files have not been compiled** — no Xcode or Android SDK on the build
-machine. Expect to fix small things on first build.
+**Verification status.** The Android plugin **compiles clean** against the real
+Play Games Services 22.0.0 API (javac, JDK 21, `android-36` platform, real
+`classes.jar`s from the resolved AARs) — every call, generic and lambda type-checks,
+and `registerPlugin(Class<? extends Plugin>)` matches `BridgeActivity`. A full Gradle
+assemble could not finish on this machine because the only JDK available is PyCharm's
+JBR, which ships without `jlink` (needed by the compileSdk-36 JDK-image transform);
+that's a local toolchain gap, not a project one — Android Studio's bundled JBR has it.
+
+The **iOS plugin has not been compiled** (no macOS/Xcode). It was written against the
+Capacitor 8 sources in `node_modules/@capacitor/ios` and matches the framework's own
+reference plugins (`Console.swift` et al.) exactly: `@objc(...)`,
+`CAPPlugin, CAPBridgedPlugin`, `public let identifier/jsName/pluginMethods`. Deployment
+target is iOS 15, so every GameKit API used (all iOS 14+) is available.
 
 ### iOS
 - [x] `GameConnectPlugin.swift` is already registered in `App.xcodeproj` (file reference,

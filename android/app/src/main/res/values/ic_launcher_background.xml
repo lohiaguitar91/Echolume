@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- Echolume deep-water black. Matches the icon art's own background so the
+         adaptive foreground inset blends into it seamlessly. -->
+    <color name="ic_launcher_background">#030711</color>
 </resources>
