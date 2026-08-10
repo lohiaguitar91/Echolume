@@ -433,6 +433,69 @@ html, body {
 .panel p { font-size: 14.5px; line-height: 1.6; }
 .panel .dim { color: var(--text-dim); }
 
+/* ---------- title micro-goal + medals + tease ---------- */
+.micro-goal {
+  font-size: 12.5px; color: var(--text-dim); letter-spacing: 0.06em;
+  text-align: center; max-width: 300px; line-height: 1.5;
+}
+.micro-goal .accent { color: var(--accent); }
+.medal-chip {
+  font-size: 12.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(126, 240, 255, 0.1);
+  border: 1px solid rgba(126, 240, 255, 0.45);
+  border-radius: 999px; padding: 5px 16px;
+}
+.medal-chip.missed {
+  color: var(--text-dim); border-color: rgba(127, 151, 184, 0.3);
+  background: rgba(127, 151, 184, 0.08);
+}
+.next-tease { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+.next-tease .accent { color: var(--accent); }
+.level-medal { font-size: 9.5px; color: var(--accent); opacity: 0.85; letter-spacing: 0.04em; }
+
+/* ---------- visual threat (accessibility) ---------- */
+#threat-veil {
+  position: fixed; inset: 0; pointer-events: none; z-index: 30;
+  opacity: 0; transition: opacity 0.25s linear;
+  background: radial-gradient(ellipse at center, transparent 46%, rgba(255, 59, 92, 0.55) 100%);
+}
+
+/* ---------- abyss recap ---------- */
+.recap-badge {
+  font-size: 11.5px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--mint, #5effc2);
+  background: rgba(94, 255, 194, 0.14);
+  border: 1px solid rgba(94, 255, 194, 0.45);
+  border-radius: 999px; padding: 4px 16px;
+  animation: badgePop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+@keyframes badgePop { 0% { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+body.reduced-motion .recap-badge { animation: none; }
+.recap-depth {
+  font-size: 50px; font-weight: 200; letter-spacing: 0.02em; line-height: 1;
+  color: #eafcff; text-shadow: 0 0 26px rgba(126, 240, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+.recap-unit { font-size: 22px; color: var(--text-dim); margin-left: 6px; }
+.recap-compare { font-size: 13px; color: var(--text-dim); margin-top: -8px; }
+.recap-bar {
+  position: relative; width: 100%; height: 6px; border-radius: 3px;
+  background: rgba(127, 151, 184, 0.2); overflow: visible;
+}
+.recap-bar-fill {
+  height: 100%; border-radius: 3px; width: 0;
+  background: linear-gradient(90deg, rgba(126, 240, 255, 0.7), var(--accent));
+  transition: width 0.9s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.recap-bar-fill.record { background: linear-gradient(90deg, rgba(94, 255, 194, 0.6), #5effc2); }
+.recap-bar-mark {
+  position: absolute; top: -4px; width: 2px; height: 14px;
+  background: var(--text-dim); border-radius: 1px; left: 0; display: none;
+}
+.recap-next { font-size: 12.5px; color: var(--text-dim); }
+.recap-next .accent { color: var(--accent); }
+
 /* ---------- results stars ---------- */
 .stars-row { display: flex; gap: 18px; align-items: flex-start; }
 .star-col { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 72px; }

@@ -1,10 +1,10 @@
 // In-level game logic: physics, ping/reveal, AI, damage, win/lose, drawing.
 // The shell (main.js) owns screens/audio/haptics and listens via callbacks.
 
-import { TUNING } from './config.js';
+import { TUNING, CHAIN_BLOOM_AT, chainTierIndex } from './config.js';
 import { buildLevelGeometry, updateReveal, pingRevealSweep, auraReveal } from './level.js';
 import { setupEntities } from './entities.js';
-import { closestOnSegment, dist, clamp, mulberry32 } from './util.js';
+import { closestOnSegment, dist, clamp, mulberry32, damp } from './util.js';
 import { MILESTONES } from './gameservices.js';
 
 const _q = [];
@@ -27,6 +27,7 @@ export class Game {
     this.rescueT = 0;
     this.moteCombo = 0;
     this.comboT = 0;
+    this.chainDisplay = 0;   // fractional tier index; rises fast, cools slow
     this.auraScale = 1;
     this.decayScale = 1;
     // Abyss
@@ -73,6 +74,7 @@ export class Game {
     this.hintsShown = new Set();
     this.pingCooldown = 0;
     this.moteCombo = 0;
+    this.chainDisplay = 0;
     // Free wake pulse so the player always starts seeing something.
     this._emitPing(this.ents.player.x, this.ents.player.y - 1, { free: true });
   }
@@ -171,7 +173,8 @@ export class Game {
 
   // Motes feed the lume's glow: aura widens with each one gathered this run.
   effectiveAura() {
-    return this.auraScale * (1 + Math.min(this.ents.player.motes * 0.03, 0.45));
+    const bonus = Math.min(this.ents.player.motes * TUNING.moteGlowPerMote, TUNING.moteGlowCap);
+    return this.auraScale * (1 + bonus);
   }
 
   // ---- input ----
@@ -222,6 +225,10 @@ export class Game {
     if (this.state === 'play') this.time += dt;
     if (this.pingCooldown > 0) this.pingCooldown -= rawDt;
     if (this.comboT > 0) { this.comboT -= dt; if (this.comboT <= 0) this.moteCombo = 0; }
+    // Chain color rises the instant you collect, then cools over ~2s.
+    const targetTier = chainTierIndex(this.moteCombo);
+    const rate = targetTier > this.chainDisplay ? 16 : 1.7;
+    this.chainDisplay += (targetTier - this.chainDisplay) * damp(rate, dt);
 
     // ---- player physics ----
     if (!p.dead) {
@@ -294,6 +301,12 @@ export class Game {
         this.comboT = 2.4;
         if (this.mode === 'abyss') this.abyss.motesScore++;
         if (this.cb.onMote) this.cb.onMote(this.moteCombo, m.x, m.y);
+        // Deep chains bloom: a silent reveal pulse. Light, not noise —
+        // it costs no song and wakes nothing.
+        if (this.moteCombo >= CHAIN_BLOOM_AT && (this.moteCombo - CHAIN_BLOOM_AT) % 4 === 0) {
+          this._emitPing(p.x, p.y, { free: true });
+          if (this.cb.onChainBloom) this.cb.onChainBloom(this.moteCombo, p.x, p.y);
+        }
         if (this.mode === 'story' && p.motes === this.ents.motes.length &&
             this.cb.onAllMotes) this.cb.onAllMotes(m.x, m.y);
       }

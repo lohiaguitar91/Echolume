@@ -19,6 +19,7 @@ const DEFAULTS = {
     haptics: true,
     reducedMotion: false,
     highContrast: false,
+    visualThreat: false,
   },
 };
 
@@ -77,6 +78,40 @@ export class Save {
       bestTime: Math.min(prev.bestTime ?? Infinity, stats.time),
     };
     this.persist();
+  }
+
+  // A failed run still proves you gathered something. Records the haul so a
+  // retry never feels like erasure. Time and stars stay win-only — a death
+  // isn't a fast clear.
+  levelAttempt(id, stats) {
+    const prev = this.data.levels[id];
+    if (!prev) {
+      this.data.levels[id] = {
+        stars: 0, bestMotes: stats.motes, bestPings: Infinity, bestTime: Infinity,
+      };
+    } else if (stats.motes > prev.bestMotes) {
+      prev.bestMotes = stats.motes;
+    } else {
+      return;
+    }
+    this.persist();
+  }
+
+  // The depth the Continue chip should send you to: first unlocked level
+  // without a star, otherwise the furthest unlocked one.
+  nextDepth(levelCount) {
+    let furthest = 1;
+    for (let id = 1; id <= levelCount; id++) {
+      if (!this.isUnlocked(id)) break;
+      furthest = id;
+      const rec = this.data.levels[id];
+      if (!rec || rec.stars === 0) return id;
+    }
+    return furthest;
+  }
+
+  hasProgress() {
+    return Object.keys(this.data.levels).length > 0;
   }
 
   abyssResult(depth) {

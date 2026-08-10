@@ -118,6 +118,22 @@ export class AudioEngine {
     this._currentGain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.18);
   }
 
+  // Deep chain bloom: a wide, breathy shimmer — the sound of light spreading.
+  chainBloom() {
+    if (!this._sfxReady()) return;
+    const c = this.ctx, t = c.currentTime;
+    const g = c.createGain();
+    const send = c.createGain(); send.gain.value = 1.5;
+    g.connect(send); send.connect(this.verbSend);
+    g.connect(this.sfxGain);
+    this._env(g, t, 0.02, 0.26, 1.1);
+    // a stacked fifth over the current root, two octaves up
+    this._osc('sine', this._scaleFreq(0, 4), t, t + 1.2, g);
+    this._osc('sine', this._scaleFreq(3, 4), t + 0.04, t + 1.2, g, { detune: 4 });
+    const g2 = c.createGain(); g2.gain.value = 0.25; g2.connect(g);
+    this._osc('triangle', this._scaleFreq(5, 4), t + 0.08, t + 0.9, g2);
+  }
+
   // Every mote in the level gathered: a little rising bloom.
   allMotes() {
     if (!this._sfxReady()) return;

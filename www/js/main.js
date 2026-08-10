@@ -1,7 +1,7 @@
 // App shell: owns screens, loop, and wiring between game logic and
 // renderer/audio/haptics/save/UI.
 
-import { PALETTE, PALETTE_CONTRAST, TUNING, GAME_VERSION } from './config.js';
+import { PALETTE, PALETTE_CONTRAST, TUNING, GAME_VERSION, chainStyle } from './config.js';
 import { Renderer } from './renderer.js';
 import { Particles } from './particles.js';
 import { Input } from './input.js';
@@ -10,8 +10,8 @@ import { Haptics } from './haptics.js';
 import { Save } from './save.js';
 import { UI } from './ui.js';
 import { Game, starBreakdown } from './game.js';
-import { GameServices } from './gameservices.js';
-import { getLevel, LEVELS } from './levels.js';
+import { GameServices, MILESTONES } from './gameservices.js';
+import { getLevel, LEVELS, parTime } from './levels.js';
 import { drawGame, drawMenuAmbient } from './draw.js';
 import { installDebug } from './debug.js';
 import { clamp } from './util.js';
@@ -48,11 +48,15 @@ class Shell {
     this._wireInput();
     this._wireLifecycle();
     this.ui.setVersion(GAME_VERSION);
-    // Very first launch opens on the story; every launch after, the title.
+    // Cold open: the very first launch fades straight into the water. The
+    // story is a caption, the first tap is the tutorial, and no screen stands
+    // between a new player and the game.
     if (!this.save.data.aboutSeen) {
       this.save.data.aboutSeen = true;
+      this.save.data.tutorialSeen = true;
       this.save.persist();
-      this._show('about');
+      this.startLevel(1, { silent: true });
+      this.ui.toast('A small blind creature of the deep', 3600);
     } else {
       this._show('title');
     }
@@ -75,7 +79,16 @@ class Shell {
         this.haptics.collect();
         const p = this.game.ents.player;
         this.ui.setMotes(p.motes, this.game.mode === 'abyss' ? 0 : this.game.ents.motes.length);
-        this.particles.burst(x, y, this.palette.mote, 10, 90, 0.7, 3, this.palette.moteCore);
+        const chain = chainStyle(this.game.chainDisplay);
+        this.particles.burst(x, y, chain.color, 10 + Math.min(combo, 8), 90, 0.7, 3, chain.core);
+      },
+      onChainBloom: (combo, x, y) => {
+        this.audio.chainBloom();
+        this.haptics.warn();
+        const chain = chainStyle(this.game.chainDisplay);
+        this.particles.burst(x, y, chain.color, 26, 170, 1.1, 3.4, chain.core);
+        this.renderer.addShake(0.12);
+        this.ui.toast(`×${combo} bloom`, 1500);
       },
       onDamage: (hearts, sx, sy) => {
         this.audio.damage();
@@ -97,9 +110,25 @@ class Shell {
       },
       onDeathDone: (stats) => {
         if (this.game.mode === 'abyss') {
+          // Read the old best before the save overwrites it.
+          const prevBest = this.save.data.abyssBestDepth;
+          const isRecord = stats.depth > prevBest;
           this.save.abyssResult(stats.depth);
           this.gs.submitDepth(stats.depth);
+          this.ui.fillAbyssRecap(stats, {
+            prevBest,
+            isRecord,
+            milestonesThisRun: this.game.abyss.milestonesFired.size,
+            nextMilestone: MILESTONES.find((m) => m > stats.depth) || null,
+          });
+          this._show('abyssrecap');
+          if (isRecord) {
+            setTimeout(() => { this.audio.star(3); this.haptics.success(); }, 420);
+          }
+          return;
         }
+        // A failed run still proves what you gathered — keep the haul.
+        if (this.game.def) this.save.levelAttempt(this.game.def.id, stats);
         this.ui.fillGameover(this.game.mode, stats);
         this._show('gameover');
       },
@@ -171,6 +200,7 @@ class Shell {
     }
     if (name === 'title') {
       this.ui.refreshAbyssButton(this.save);
+      this._refreshTitle();
     }
     const inGame = name === 'playing' || name === 'paused';
     if (!inGame) {
@@ -182,8 +212,49 @@ class Shell {
     document.body.classList.toggle('in-game', inGame);
   }
 
+  // Title front door: Continue chip + one concrete next goal.
+  _refreshTitle() {
+    const hasProgress = this.save.hasProgress();
+    const next = this.save.nextDepth(LEVELS.length);
+    this.ui.setContinueChip(hasProgress ? `Continue · Depth ${next}` : 'Dive', hasProgress);
+    this.ui.setMicroGoal(this._microGoal());
+  }
+
+  // Picks the nearest un-earned thing worth chasing.
+  _microGoal() {
+    for (const lvl of LEVELS) {
+      if (!this.save.isUnlocked(lvl.id)) break;
+      const rec = this.save.data.levels[lvl.id];
+      if (!rec || rec.stars >= 3) continue;
+      const total = UI.moteTotal(lvl);
+      const need = Math.ceil((lvl.stars?.motePct || 1) * total);
+      if (rec.bestMotes < need) {
+        const gap = need - rec.bestMotes;
+        return `Depth ${lvl.id} · <span class="accent">${gap} more mote${gap === 1 ? '' : 's'}</span> for its second star`;
+      }
+      const maxPings = lvl.stars?.maxPings;
+      if (maxPings && rec.bestPings > maxPings) {
+        return `Depth ${lvl.id} · finish in <span class="accent">${maxPings} songs</span> for its third star`;
+      }
+      const par = parTime(lvl.id);
+      if (par && rec.bestTime > par) {
+        return `Depth ${lvl.id} · beat <span class="accent">${par}s</span> for its trench medal`;
+      }
+    }
+    if (this.save.data.abyssUnlocked) {
+      const best = this.save.data.abyssBestDepth;
+      const next = MILESTONES.find((m) => m > best);
+      if (next) {
+        return `The Abyss · <span class="accent">${(next - best).toLocaleString()} m</span> to your next milestone`;
+      }
+    }
+    const stars = this.save.totalStars();
+    if (stars > 0) return `<span class="accent">${stars}</span> of ${LEVELS.length * 3} stars gathered`;
+    return null;
+  }
+
   // ---- level flow ----
-  startLevel(id) {
+  startLevel(id, opts = {}) {
     const def = getLevel(id);
     if (!def) return;
     this.currentLevelId = id;
@@ -200,7 +271,7 @@ class Shell {
     this.ui.setPings(0);
     this.ui.hideDepth();
     this._show('playing');
-    this.ui.toast(`Depth ${id} · ${def.name}`);
+    if (!opts.silent) this.ui.toast(`Depth ${id} · ${def.name}`);
   }
 
   startAbyss() {
@@ -247,9 +318,14 @@ class Shell {
     const click = (id, fn) => $(id).addEventListener('click', () => { this.audio.ui(); fn(); });
 
     click('btn-play', () => {
-      // First dive ever: teach the song before the deep does.
-      this._show(this.save.data.tutorialSeen ? 'levels' : 'howto');
+      // Returning players go straight back in; the grid is one link away.
+      if (this.save.hasProgress()) {
+        this.startLevel(this.save.nextDepth(LEVELS.length));
+      } else {
+        this._show(this.save.data.tutorialSeen ? 'levels' : 'howto');
+      }
     });
+    click('btn-depths', () => this._show('levels'));
     click('btn-howto', () => this._show('howto'));
     click('btn-howto-dive', () => {
       if (!this.save.data.tutorialSeen) {
@@ -298,6 +374,8 @@ class Shell {
       else this.startLevel(this.currentLevelId);
     });
     click('btn-gameover-menu', () => this._show('title'));
+    click('btn-recap-again', () => this._startAbyssNow());
+    click('btn-recap-menu', () => this._show('title'));
     click('btn-credits-abyss', () => this.startAbyss());
     click('btn-credits-menu', () => this._show('title'));
 
@@ -318,6 +396,7 @@ class Shell {
     bind('set-haptics', 'haptics', () => { if (s.haptics) this.haptics.tick(); });
     bind('set-reduced', 'reducedMotion');
     bind('set-contrast', 'highContrast');
+    bind('set-visualthreat', 'visualThreat');
 
     // Two-tap reset (no ugly confirm())
     const resetBtn = $('btn-reset-save');
@@ -350,6 +429,7 @@ class Shell {
     $('set-haptics').checked = s.haptics;
     $('set-reduced').checked = s.reducedMotion;
     $('set-contrast').checked = s.highContrast;
+    $('set-visualthreat').checked = s.visualThreat;
   }
 
   _applySettings() {
@@ -453,7 +533,12 @@ class Shell {
         const d = Math.hypot(h.x - p.x, h.y - p.y);
         if (d < 340) threat = Math.max(threat, 1 - d / 340);
       }
-      this.audio.setThreat(threat * (p.dead ? 0 : 1));
+      const liveThreat = threat * (p.dead ? 0 : 1);
+      this.audio.setThreat(liveThreat);
+      // Danger is spoken in sound; this draws it too, for players who can't hear it.
+      this.ui.setThreatVeil(this.save.data.settings.visualThreat
+        ? liveThreat * (0.55 + 0.45 * Math.sin(this.time * 5.2))
+        : 0);
 
       // Hear the world before you see it: vent shimmer + current whoosh
       const vent = this.game.ents.vent;
@@ -478,6 +563,7 @@ class Shell {
       this.audio.setThreat(0);
       this.audio.setVentNear(0);
       this.audio.setCurrentIn(0);
+      this.ui.setThreatVeil(0);
     }
 
     R.begin();

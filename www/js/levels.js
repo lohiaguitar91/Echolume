@@ -194,3 +194,35 @@ export const LEVELS = [
 export function getLevel(id) {
   return LEVELS.find((l) => l.id === id) || null;
 }
+
+// Par times in seconds for trench medals. Tuned at roughly 2.5x a clean
+// autoplay run: reachable without rushing, but it rewards knowing the route.
+const PAR_TIMES = {
+  1: 35, 2: 50, 3: 40, 4: 45, 5: 45, 6: 40, 7: 45,
+  8: 50, 9: 55, 10: 60, 11: 55, 12: 50, 13: 55, 14: 70,
+};
+
+export function parTime(id) {
+  return PAR_TIMES[id] || null;
+}
+
+// One line of anticipation for the level ahead, shown on the results screen.
+const TEASERS = {
+  2: 'side passages, and more to gather',
+  3: 'pink thorns that do not listen',
+  4: 'something in it listens',
+  5: 'a fork: the rich way or the safe way',
+  6: 'water that moves on its own',
+  7: 'the walls close in',
+  8: 'two of them now',
+  9: 'a garden in full bloom',
+  10: 'the river runs upstream',
+  11: 'thorns and ears together',
+  12: 'light dies faster this deep',
+  13: 'the throat of the deep',
+  14: 'one last dive',
+};
+
+export function teaser(id) {
+  return TEASERS[id] || null;
+}
