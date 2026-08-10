@@ -9,7 +9,7 @@ const ASSETS = [
   'js/main.js', 'js/config.js', 'js/util.js', 'js/input.js', 'js/renderer.js',
   'js/particles.js', 'js/level.js', 'js/levels.js', 'js/entities.js',
   'js/game.js', 'js/draw.js', 'js/audio.js', 'js/haptics.js', 'js/save.js',
-  'js/ui.js', 'js/debug.js',
+  'js/ui.js', 'js/debug.js', 'js/gameservices.js',
   'icons/favicon.svg', 'icons/icon-180.png', 'icons/icon-192.png',
   'icons/icon-512.png', 'icons/icon-512-maskable.png',
 ];

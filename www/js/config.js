@@ -1,5 +1,7 @@
 // Central palette + tuning. All gameplay feel lives here so it can be tuned in one place.
 
+import { clamp, lerp, hexLerp } from './util.js';
+
 export const PALETTE = {
   bgTop: '#030711',
   bgBottom: '#071427',
@@ -63,6 +65,8 @@ export const TUNING = {
   moteMagnetRadius: 52,
   moteMagnetPull: 340,      // u/s^2 toward player inside magnet radius
   moteCollectRadius: 17,
+  moteGlowPerMote: 0.04,    // aura growth per mote eaten this run
+  moteGlowCap: 0.45,
 
   // Hazards
   urchinHitRadius: 20,
@@ -99,6 +103,37 @@ export const TUNING = {
   abyssMinWidth: 120,
   abyssDepthPerMeter: 10,   // world units per displayed meter
 };
+
+// Mote chain ladder. Hue, radius, and pulse rate all step together so the
+// chain is legible without color vision.
+export const CHAIN_TIERS = [
+  { at: 0, color: '#ffc45e', core: '#fff2d0', scale: 1.00, pulse: 2.2 },
+  { at: 3, color: '#ffe08a', core: '#fffaf0', scale: 1.10, pulse: 3.0 },
+  { at: 4, color: '#5effc2', core: '#eafff6', scale: 1.22, pulse: 3.8 },
+  { at: 6, color: '#7ef0ff', core: '#eafcff', scale: 1.34, pulse: 4.8 },
+  { at: 8, color: '#b14fff', core: '#f0dcff', scale: 1.48, pulse: 6.0 },
+];
+export const CHAIN_BLOOM_AT = 8;
+
+export function chainTierIndex(combo) {
+  let idx = 0;
+  for (let i = 0; i < CHAIN_TIERS.length; i++) if (combo >= CHAIN_TIERS[i].at) idx = i;
+  return idx;
+}
+
+// Interpolated style for a fractional tier position (lets the chain cool smoothly).
+export function chainStyle(displayIndex) {
+  const d = clamp(displayIndex, 0, CHAIN_TIERS.length - 1);
+  const i0 = Math.floor(d), i1 = Math.min(CHAIN_TIERS.length - 1, i0 + 1);
+  const t = d - i0;
+  const a = CHAIN_TIERS[i0], b = CHAIN_TIERS[i1];
+  return {
+    color: hexLerp(a.color, b.color, t),
+    core: hexLerp(a.core, b.core, t),
+    scale: lerp(a.scale, b.scale, t),
+    pulse: lerp(a.pulse, b.pulse, t),
+  };
+}
 
 export const GAME_VERSION = '1.0.0';
 export const SAVE_KEY = 'echolume.save.v1';

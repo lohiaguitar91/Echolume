@@ -1,7 +1,7 @@
 // All in-world drawing. Reads game state, writes pixels. No game logic here.
 
-import { TUNING } from './config.js';
-import { clamp, lerp, dist } from './util.js';
+import { TUNING, chainStyle } from './config.js';
+import { clamp, lerp, dist, hexLerp } from './util.js';
 
 const _wallBatch = [];
 const _spikeBatch = [];
@@ -72,12 +72,15 @@ export function drawGame(R, game, particles, time, dt, palette) {
   }
 
   // ---- motes ----
+  // The whole field wears the current chain color, so a long chain is
+  // unmistakable at a glance; size and pulse rate step with it too.
+  const chain = chainStyle(game.chainDisplay);
   for (const m of game.ents.motes) {
     if (m.taken) continue;
     const bob = Math.sin(time * 1.3 + m.driftPhase) * 2.5;
-    const tw = 0.8 + 0.2 * Math.sin(time * 2.2 + m.phase);
+    const tw = 0.8 + 0.2 * Math.sin(time * chain.pulse + m.phase);
     const vis = clamp(0.26 + m.reveal * 0.74, 0, 1);
-    R.glowDot(m.x, m.y + bob, (4.6 + tw) * 1.15, palette.mote, vis * tw, palette.moteCore);
+    R.glowDot(m.x, m.y + bob, (4.6 + tw) * 1.15 * chain.scale, chain.color, vis * tw, chain.core);
   }
 
   // ---- urchins ----
@@ -138,8 +141,11 @@ export function drawGame(R, game, particles, time, dt, palette) {
     const breathe = 0.92 + 0.08 * Math.sin(p.breathe * 2.4);
     let alpha = 1;
     if (p.invuln > 0) alpha = 0.45 + 0.55 * Math.abs(Math.sin(p.invuln * 14));
-    R.glowDot(p.x, p.y, 20 * breathe * game.effectiveAura() + 4, palette.playerAura, 0.28 * alpha);
-    R.glowDot(p.x, p.y, 10.5, palette.playerAura, 0.75 * alpha);
+    // Aura and tail take on the chain color, but never lose the lume's identity.
+    const chainMix = clamp(game.chainDisplay / 4, 0, 1) * 0.75;
+    const auraCol = hexLerp(palette.playerAura, chain.color, chainMix);
+    R.glowDot(p.x, p.y, 20 * breathe * game.effectiveAura() + 4, auraCol, 0.28 * alpha);
+    R.glowDot(p.x, p.y, 10.5, auraCol, 0.75 * alpha);
     R.glowDot(p.x, p.y, 5.2, palette.player, alpha, '#ffffff');
     // motion tail
     if (speed > 70 && Math.random() < clamp(speed / 500, 0.12, 0.6)) {
@@ -147,7 +153,7 @@ export function drawGame(R, game, particles, time, dt, palette) {
         x: p.x - (p.vx / speed) * 8, y: p.y - (p.vy / speed) * 8,
         vx: -p.vx * 0.12 + (Math.random() - 0.5) * 14,
         vy: -p.vy * 0.12 + (Math.random() - 0.5) * 14,
-        life: 0.55, r: 2.6, color: palette.playerAura, alpha: 0.7,
+        life: 0.55, r: 2.6, color: auraCol, alpha: 0.7,
       });
     }
   }

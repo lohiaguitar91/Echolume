@@ -4,4 +4,8 @@
     <string name="title_activity_main">Echolume</string>
     <string name="package_name">com.wibesllc.echolume</string>
     <string name="custom_url_scheme">com.wibesllc.echolume</string>
+    <!-- Play Console > Play Games Services > Configuration: the numeric project ID.
+         Leave the REPLACE prefix until you have it; the plugin stays dormant while
+         it's a placeholder instead of crashing at startup. -->
+    <string name="game_services_project_id">REPLACE_WITH_PLAY_GAMES_PROJECT_ID</string>
 </resources>

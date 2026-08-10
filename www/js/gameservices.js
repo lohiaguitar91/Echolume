@@ -24,6 +24,7 @@ export class GameServices {
     this.save = save;
     this.plugin = window.Capacitor?.Plugins?.GameConnect || null;
     this.signedIn = false;
+    this._signingIn = false;
     this.isAndroid = window.Capacitor?.getPlatform?.() === 'android';
   }
 
@@ -41,11 +42,45 @@ export class GameServices {
   }
 
   async signIn() {
-    if (!this.plugin || this.signedIn) return;
+    if (!this.plugin || this.signedIn || this._signingIn) return;
+    this._signingIn = true;
     try {
-      await this.plugin.signIn();
-      this.signedIn = true;
-    } catch (e) { /* declined or unavailable — stay local */ }
+      const res = await this.plugin.signIn();
+      // Native resolves { authenticated }; treat a missing flag as success so a
+      // future plugin revision that resolves bare doesn't lock us out.
+      this.signedIn = !res || res.authenticated !== false;
+      if (this.signedIn) this._flushPending();
+    } catch (e) {
+      this.signedIn = false;      // declined or unavailable — stay local
+    } finally {
+      this._signingIn = false;
+    }
+  }
+
+  // Anything earned before sign-in completes is replayed once it does.
+  _flushPending() {
+    for (const id of this.save.data.achievements) {
+      const meters = parseInt(id.split('_')[1], 10);
+      if (!Number.isNaN(meters)) {
+        this.plugin.unlockAchievement({ achievementID: this._platformAchievementId(meters) })
+          .catch(() => {});
+      }
+    }
+    if (this.save.data.abyssBestDepth > 0) this.submitDepth(this.save.data.abyssBestDepth);
+  }
+
+  canShowLeaderboard() { return !!this.plugin && this.signedIn; }
+
+  async showLeaderboard() {
+    if (!this.plugin) return false;
+    if (!this.signedIn) await this.signIn();
+    if (!this.signedIn) return false;
+    try {
+      await this.plugin.showLeaderboard({ leaderboardID: this._platformLeaderboardId() });
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   // Returns true if this milestone was newly earned (caller shows the moment).

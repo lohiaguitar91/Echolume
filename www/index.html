@@ -20,6 +20,7 @@
 </head>
 <body>
 <canvas id="game" aria-hidden="true"></canvas>
+<div id="threat-veil" aria-hidden="true"></div>
 
 <div id="ui">
 
@@ -62,7 +63,9 @@
         <button id="btn-play" class="btn primary">Dive</button>
         <button id="btn-abyss" class="btn" disabled>The Abyss</button>
       </div>
+      <p class="micro-goal" id="micro-goal" hidden></p>
       <div class="menu-links">
+        <button id="btn-depths" class="link-btn" hidden>Depths</button>
         <button id="btn-howto" class="link-btn">How to sing</button>
         <button id="btn-settings" class="link-btn">Settings</button>
         <button id="btn-about" class="link-btn">About</button>
@@ -154,6 +157,7 @@
         <label class="setting-row"><span>Haptics</span><input type="checkbox" id="set-haptics" class="toggle"></label>
         <label class="setting-row"><span>Reduced motion</span><input type="checkbox" id="set-reduced" class="toggle"></label>
         <label class="setting-row"><span>High-contrast palette</span><input type="checkbox" id="set-contrast" class="toggle"></label>
+        <label class="setting-row"><span>Show danger on screen</span><input type="checkbox" id="set-visualthreat" class="toggle"></label>
       </div>
       <div class="settings-actions">
         <button id="btn-reset-save" class="btn danger ghost">Reset progress</button>
@@ -201,7 +205,9 @@
         <div class="star-col"><span class="star" data-star="2"></span><span class="star-label" data-starlabel="2"></span></div>
         <div class="star-col"><span class="star" data-star="3"></span><span class="star-label" data-starlabel="3"></span></div>
       </div>
+      <div class="medal-chip" id="medal-chip" hidden></div>
       <div class="results-stats" id="results-stats"></div>
+      <div class="next-tease" id="next-tease" hidden></div>
       <div class="menu-buttons">
         <button id="btn-next" class="btn primary">Next depth</button>
         <button id="btn-replay" class="btn ghost">Replay</button>
@@ -218,6 +224,24 @@
       <div class="menu-buttons">
         <button id="btn-retry" class="btn primary">Try again</button>
         <button id="btn-gameover-menu" class="btn ghost">Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Abyss run recap (replaces the generic game over in the Abyss) -->
+  <div class="screen overlay" id="screen-abyss-recap" hidden>
+    <div class="panel">
+      <h2>The dark closed in</h2>
+      <div id="recap-badge" class="recap-badge" hidden>New record</div>
+      <div class="recap-depth"><span id="recap-depth">0</span><span class="recap-unit">m</span></div>
+      <div class="recap-compare" id="recap-compare"></div>
+      <div class="recap-bar"><div class="recap-bar-fill" id="recap-bar-fill"></div><div class="recap-bar-mark" id="recap-bar-mark"></div></div>
+      <div class="results-stats" id="recap-stats"></div>
+      <div class="recap-next" id="recap-next"></div>
+      <div class="menu-buttons">
+        <button id="btn-recap-again" class="btn primary">Dive again</button>
+        <button id="btn-recap-board" class="btn ghost" hidden>Leaderboard</button>
+        <button id="btn-recap-menu" class="btn ghost">Menu</button>
       </div>
     </div>
   </div>
