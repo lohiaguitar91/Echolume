@@ -281,7 +281,20 @@ export class Game {
         this._alertHunter(h, x, y, silent);
       }
     }
+    // A warden does not chase what it hears — it aims at it, and commits.
+    for (const w of this.ents.wardens || []) {
+      if (dist(w.x, w.y, x, y) > TUNING.wardenReach * 1.6) continue;
+      w.heardX = x; w.heardY = y;
+      if (w.state === 'listen') {
+        w.state = 'wind';
+        w.t = TUNING.wardenWindup;
+        if (this.cb.onWardenWake) this.cb.onWardenWake(w.x, w.y);
+      }
+    }
     for (const lv of this.ents.leviathans) {
+      // A deaf leviathan ignores song entirely; only a shatter reaches it.
+      // `loud` is set by breaking ice, which is the only thing it can feel.
+      if (lv.deaf && !this._loudWake) continue;
       if (dist(lv.x, lv.y, x, y) < (radius || TUNING.leviathanSenseRadius)) {
         const wasCalm = lv.state !== 'hunt';
         lv.state = 'hunt';
@@ -413,7 +426,10 @@ export class Game {
       if (dist(p.x, p.y, ice.x, ice.y) < TUNING.iceRadius + TUNING.playerRadius) {
         ice.broken = true;
         ice.t = 0;
+        // A shatter is felt, not heard — it is the one thing a deaf boss notices.
+        this._loudWake = true;
         this._wakeListeners(ice.x, ice.y, TUNING.iceNoiseRadius);
+        this._loudWake = false;
         if (this.cb.onIceBreak) this.cb.onIceBreak(ice.x, ice.y);
       }
     }
@@ -553,6 +569,47 @@ export class Game {
         p.hearts++;
         if (this.cb.onHeartMote) this.cb.onHeartMote(p.hearts, m.x, m.y);
       }
+    }
+
+    // ---- wardens ----
+    // Anchored, so it cannot be outrun — only out-thought. It listens, aims at
+    // your last song, telegraphs, then strikes down that line. Sing where you
+    // are not and the whole fight opens up.
+    for (const w of this.ents.wardens || []) {
+      if (w.reveal > 0) w.reveal = Math.max(0, w.reveal - dt * 0.1);
+      w.phase += dt;
+      w.t -= dt;
+      if (w.state === 'listen' || w.state === 'wind') {
+        // Track the last thing it heard, but only so fast: a late song can pull
+        // the jaw off you if you time it.
+        w.wantAim = Math.atan2(w.heardY - w.y, w.heardX - w.x);
+        let diff = ((w.wantAim - w.aim + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+        const step = TUNING.wardenTurnRate * dt;
+        w.aim += clamp(diff, -step, step);
+      }
+      if (w.state === 'wind' && w.t <= 0) {
+        w.state = 'strike'; w.t = TUNING.wardenStrike;
+        if (this.cb.onWardenStrike) this.cb.onWardenStrike(w.x, w.y);
+      } else if (w.state === 'strike') {
+        w.reach = TUNING.wardenReach * (1 - Math.max(0, w.t) / TUNING.wardenStrike);
+        if (w.t <= 0) { w.state = 'recover'; w.t = TUNING.wardenRecover; }
+      } else if (w.state === 'recover') {
+        w.reach += (0 - w.reach) * damp(6, dt);   // jaw draws back in
+        if (w.t <= 0) { w.state = 'listen'; w.reach = 0; }
+      }
+      if (p.dead || p.invuln > 0) continue;
+      // The body is always solid.
+      if (dist(w.x, w.y, p.x, p.y) < TUNING.wardenRadius + TUNING.playerRadius) {
+        this._damage(w.x, w.y, 'warden');
+        continue;
+      }
+      // The strike only bites inside the open arc, and only while striking.
+      if (w.state !== 'strike') continue;
+      const d = dist(w.x, w.y, p.x, p.y);
+      if (d > w.reach) continue;
+      const toP = Math.atan2(p.y - w.y, p.x - w.x);
+      let off = ((toP - w.aim + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+      if (Math.abs(off) < TUNING.wardenJawWidth * 0.5) this._damage(w.x, w.y, 'warden');
     }
 
     // ---- leviathans ----

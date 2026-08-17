@@ -190,22 +190,37 @@ export const LEVELS = [
   },
   {
     id: 14, name: 'Still Water', seed: 1414,
+    // The shallows' boss. A warden is anchored in the wide chamber: it cannot
+    // chase, it only listens, aims at your last song, and strikes down that
+    // line. Every depth so far taught "move away from your song"; this asks the
+    // sharper version, "sing where you are not."
+    boss: {
+      name: 'The Listener',
+      tell: 'It cannot move, and it cannot chase. It strikes where you last sang.',
+    },
     path: [[0, 0], [100, 280], [-20, 560], [140, 840], [340, 1000], [560, 940], [700, 700], [900, 620], [1100, 720], [1180, 980], [1080, 1260], [1180, 1540], [1080, 1820], [1140, 2100]],
-    width: [95, 110, 130, 96, 120],
-    extraPaths: [
-      { path: [[340, 1000], [300, 1300], [420, 1560], [640, 1660], [900, 1580], [1080, 1260]], width: [80, 90, 80] },
-    ],
+    width: [95, 110, 240, 300, 300, 150, 110],
+    checkpoint: 0.42,
     moteCount: 18,
-    extraMotes: [{ branch: 1, count: 8 }],
-    urchins: [{ t: 0.38, off: -40 }, { t: 0.52, off: 40 }, { branch: 1, t: 0.5, off: 0 }],
-    hunters: [{ t: 0.45, off: 0, wanderR: 200 }, { branch: 1, t: 0.6, off: 0, wanderR: 160 }],
-    currents: [{ t: 0.7, off: 0, r: 150, mode: 'along', strength: 0.9 }],
-    stars: { motePct: 0.75, maxPings: 60 },
+    // Everything hostile sits BEFORE the arena. Past the boss the swim to the
+    // vent is a victory lap — a stray hunter back there just dilutes the fight
+    // and was killing five runs in twelve.
+    urchins: [{ t: 0.18, off: -40 }, { t: 0.26, off: 40 }, { t: 0.34, off: -38 }],
+    hunters: [{ t: 0.3, off: 0, wanderR: 170 }],
+    // Off the centre line on purpose: the arena is wide, and a lane past it
+    // must exist for a player who has not yet worked out the misdirection.
+    wardens: [{ t: 0.56, off: -70 }],
+    currents: [{ t: 0.78, off: 0, r: 150, mode: 'along', strength: 0.9 }],
+    stars: { motePct: 0.7, maxPings: 60 },
     hints: [
       { t: 0.05, text: 'The shallows end here, little lume.',
-        plain: 'Last depth of chapter one.' },
+        plain: 'Last depth of chapter one, and the first thing that is waiting for you.' },
+      { t: 0.4, text: 'The mouth of the chamber. Whatever happens past here, you wake here again.',
+        plain: 'Checkpoint. Any death past this point returns you here.' },
+      { t: 0.5, text: 'It is anchored to the floor, and it is listening.',
+        plain: 'It aims at your last song and strikes along that line. Sing wide, then swim the other way.' },
       { t: 0.93, text: 'The water ahead is still. Sing it home.',
-        plain: 'No current past this point. Your songs carry their full distance again.' },
+        plain: 'Nothing left between you and the vent.' },
     ],
     chapterEnd: true,
   },
@@ -437,6 +452,10 @@ export const LEVELS = [
   },
   {
     id: 28, name: 'The Trench Mouth', seed: 2828,
+    boss: {
+      name: 'The Twins',
+      tell: 'Two orbits, crossing. There is a gap where both have turned away.',
+    },
     path: [[0, 0], [80, 300], [-40, 620], [30, 980], [0, 1360], [70, 1740], [-30, 2080], [40, 2380]],
     width: [92, 88, 160, 285, 285, 150, 100, 88],
     checkpoint: 0.44,
@@ -567,12 +586,12 @@ export const LEVELS = [
   {
     id: 34, name: 'The Quiet Field', seed: 3434,
     path: [[0, 0], [-60, 340], [60, 680], [-50, 1020], [50, 1360], [-40, 1700], [30, 2020]],
-    width: [108, 100, 96],
+    width: [114, 106, 100],
     moteCount: 16,
     hushZones: [{ t: 0.52, off: 0, r: 170, depth: 0.7 }, { t: 0.84, off: 0, r: 155, depth: 0.66 }],
-    lures: [{ t: 0.3, off: 46 }, { t: 0.74, off: -46 }],
+    lures: [{ t: 0.3, off: 48 }, { t: 0.74, off: -48 }],
     hunters: [{ t: 0.62, off: 0, wanderR: 155 }],
-    urchins: [{ t: 0.34, off: -34 }, { t: 0.58, off: 34 }, { t: 0.86, off: -32 }],
+    urchins: [{ t: 0.36, off: -40 }, { t: 0.62, off: 40 }],
     heartMotes: [{ t: 0.7, off: -44 }],
     stars: { motePct: 0.65, maxPings: 48 },
     hints: [
@@ -610,10 +629,10 @@ export const LEVELS = [
     moteCount: 15,
     hushZones: [{ t: 0.46, off: 0, r: 190, depth: 0.8 }, { t: 0.78, off: 0, r: 160, depth: 0.7 }],
     crystals: [{ t: 0.38, off: -34 }, { t: 0.58, off: 34 }, { t: 0.74, off: 0 }],
-    ice: [{ t: 0.5, off: -36 }, { t: 0.72, off: 36 }],
-    hunters: [{ t: 0.56, off: 0, wanderR: 160 }],
+    ice: [{ t: 0.52, off: -38 }, { t: 0.78, off: 38 }],
+    hunters: [{ t: 0.6, off: 0, wanderR: 150 }],
     urchins: [
-      { t: 0.2, off: 36 }, { t: 0.34, off: -36 }, { t: 0.5, off: 34 }, { t: 0.86, off: -34 },
+      { t: 0.2, off: 38 }, { t: 0.36, off: -38 }, { t: 0.88, off: 36 },
     ],
     heartMotes: [{ t: 0.28, off: 42 }],
     stars: { motePct: 0.7, maxPings: 50 },
@@ -721,13 +740,19 @@ export const LEVELS = [
   },
   {
     id: 42, name: 'The Deep Hush', seed: 4242,
+    // Deaf, which inverts the whole game: singing is finally free, and the only
+    // thing that can betray you is the ice you blunder into.
+    boss: {
+      name: 'The Deaf God',
+      tell: 'It cannot hear you sing. It feels the glass break.',
+    },
     path: [[0, 0], [70, 320], [-50, 660], [40, 1020], [0, 1400], [60, 1780], [-30, 2120], [30, 2420]],
     width: [92, 86, 165, 285, 285, 150, 98, 88],
     checkpoint: 0.46,
     moteCount: 18,
     leviathans: [
-      { t: 0.52, off: 0, patrolR: 195, speedScale: 1.2 },
-      { t: 0.58, off: 0, patrolR: 100, speedScale: 1.35, reverse: true },
+      { t: 0.52, off: 0, patrolR: 195, speedScale: 1.2, deaf: true },
+      { t: 0.58, off: 0, patrolR: 100, speedScale: 1.35, reverse: true, deaf: true },
     ],
     hushZones: [{ t: 0.54, off: 0, r: 250, depth: 0.82 }],
     crystals: [{ t: 0.34, off: 0 }, { t: 0.74, off: 0 }],
@@ -892,6 +917,12 @@ export const LEVELS = [
   },
   {
     id: 50, name: 'The Warm Dark', seed: 5050,
+    // The finale is now a gate in its own right — it used to fall between the
+    // sevens, so the climax of the game arrived with no announcement at all.
+    boss: {
+      name: 'The Warm Dark',
+      tell: 'Two of them, and water that will carry you past both if you let it.',
+    },
     path: [[0, 0], [80, 340], [-50, 700], [40, 1080], [0, 1480], [70, 1860], [-30, 2220], [30, 2540]],
     width: [94, 90, 175, 300, 300, 160, 104, 92],
     checkpoint: 0.46,
@@ -945,10 +976,22 @@ export function chapterOf(levelId) {
 // becomes a grind wall, which is the thing we refused when we dropped gems.
 export const GATE_EVERY = 7;
 
+// Boss-ness is a property of the level, not of arithmetic.
+//
+// It used to be `id % 14 === 0`, which drifted out of step with the content:
+// depth 14 announced a boss and contained an ordinary corridor, depth 21 was
+// labelled a challenge while holding the most boss-like fight in the game, and
+// the finale at 50 was not a gate at all so the climax went unannounced. A def
+// that declares `boss` is a boss; nothing else can be.
 export function gateKind(id) {
-  if (id % (GATE_EVERY * 2) === 0) return 'boss';
+  const def = LEVELS.find((l) => l.id === id);
+  if (def?.boss) return 'boss';
   if (id % GATE_EVERY === 0) return 'challenge';
   return null;
+}
+
+export function bossOf(id) {
+  return LEVELS.find((l) => l.id === id)?.boss || null;
 }
 
 // The depths that feed a gate: the seven behind it, never the gate itself.

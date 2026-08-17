@@ -31,6 +31,11 @@ export const PALETTE = {
   //           crystal's bright #dcefff so the two never trade places.
   //   warm  — a large rising zone. Warm hues are busy (mote, lure, heart), so
   //           this one is only ever a region, never a point you could collect.
+  //   warden — bone white, and the only thing in the game that is not a glow.
+  //           It reads as structure rather than creature until it opens.
+  warden: '#d8d0c4',
+  wardenCore: '#fffaf0',
+  wardenJaw: '#ff3b5c',
   hush: '#2a3350',
   hushEdge: '#4a5a80',
   ice: '#9fb8c8',
@@ -169,6 +174,24 @@ export const TUNING = {
   iceRadius: 15,            // shard body
   iceNoiseRadius: 470,      // how far the shatter carries — further than a song
   iceShatterTime: 0.8,      // fragments fly for this long
+
+  // ---- wardens (the depth-14 boss) ----
+  // Anchored, enormous, and blind even by this game's standards. It cannot
+  // chase: it opens toward wherever your last song landed and strikes down that
+  // line. Every other threat rewards moving away from your song; this one
+  // rewards singing somewhere you are not, which is the whole lesson of the
+  // shallows asked as a question.
+  wardenRadius: 42,          // the body, which is solid and hurts
+  // Tuned for a human, not for the autoplay bot: the bot sings exactly where it
+  // swims, which is the one thing this boss punishes, so its survival rate says
+  // nothing here. (It never actually died to the warden — the killer was a
+  // hunter placed past the arena, since removed.)
+  wardenReach: 280,          // how far the strike travels down the open line
+  wardenJawWidth: 0.5,       // radians of the killing arc
+  wardenWindup: 1.35,        // it telegraphs for this long before striking
+  wardenStrike: 0.42,        // the strike itself
+  wardenRecover: 1.5,        // and then it is harmless and open
+  wardenTurnRate: 2.2,       // radians/sec it can re-aim while winding up
 
   // ---- chapter 4: warm vents ----
   // Rising water that carries you without a song, and glows enough to see by.

@@ -113,6 +113,21 @@ export function setupEntities(def, geom) {
     return { x: p.x, y: p.y, charge: 1, reveal: 0, phase: rng() * 6.28, spin: rng() * 6.28 };
   });
 
+  // Wardens: anchored bosses. They never move, so `homeX/Y` is also `x/y`.
+  // `aim` is the direction the jaw currently faces; it tracks your last song
+  // while winding up, then locks for the strike.
+  const wardens = (def.wardens || []).map((spec) => {
+    const p = resolvePos(spec, geom);
+    return {
+      x: p.x, y: p.y,
+      aim: Math.PI / 2, wantAim: Math.PI / 2,
+      state: 'listen',            // listen | wind | strike | recover
+      t: 0, reach: 0,
+      reveal: 0, phase: rng() * 6.28,
+      heardX: p.x, heardY: p.y + 200,
+    };
+  });
+
   // Hush zones: water that swallows song. Always visible as an absence, because
   // walking blind into one you never saw would be a trap, not a puzzle.
   const hushZones = (def.hushZones || []).map((spec) => {
@@ -166,6 +181,7 @@ export function setupEntities(def, geom) {
       spin: spec.reverse ? -1 : 1,
       state: 'patrol', alertT: 0,
       targetX: start.x, targetY: start.y,
+      deaf: !!spec.deaf,          // ignores song; only a shatter reaches it
       reveal: 0, phase: rng() * 6.28,
       trail: Array.from({ length: TUNING.leviathanSegments }, () => ({ x: start.x, y: start.y })),
     };
@@ -175,6 +191,6 @@ export function setupEntities(def, geom) {
 
   return {
     player, motes, urchins, hunters, currents, lures, crystals, heartMotes,
-    leviathans, hushZones, ice, warmVents, vent,
+    leviathans, wardens, hushZones, ice, warmVents, vent,
   };
 }

@@ -102,7 +102,22 @@ SDK declares its own domains. That reading matches Apple's aggregation model,
 but I could not test it against a real submission — if the validator complains,
 that is the first place to look.
 
-### 5. Chapter 3's difficulty is unmeasured
+### 5. Play the bosses, and watch the boon chip
+Two things were rebuilt because they were real but invisible, and both need a
+human to confirm they now read:
+
+- **Bosses.** There are four, each a different creature with a different
+  counter. Depth 14's is new: an anchored *warden* that strikes along the line
+  to your **last song**, so you beat it by singing somewhere you are not. Its
+  telegraph is a red arc that widens during windup — the whole fight is whether
+  that arc is legible in time. The bot cannot judge this, because it sings
+  exactly where it swims.
+- **The boon chip.** Carried light used to be promised at the gate and then
+  never shown. There is now a chip above the HUD naming the active boon, with
+  pips that darken as silent songs are spent, plus a flash and a burst when one
+  goes. Check that the spend actually reads at a glance.
+
+### 6. Chapter 3's difficulty is unmeasured
 The bot navigates by corridor geometry, not by what it can see, so it is
 structurally blind to how hard a hush zone is — a hush level that is miserable
 for a human scores the same as an easy one. Someone has to actually play 29–42.

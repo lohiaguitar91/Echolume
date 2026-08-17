@@ -56,6 +56,23 @@ already cost time, and the design rules that must not be broken.
 - `www/js/ads.js` is dormant by design: fill `AD_IDS` / `IAP_PRODUCT_ID` to enable. Turning
   ads on also means a privacy-manifest and store data-safety update, and the iOS ATT prompt.
 
+## Bosses
+- **Boss-ness is declared by the level, not by arithmetic.** A def with a `boss: { name,
+  tell }` block is a boss; `gateKind` reads it. It used to be `id % 14 === 0`, which drifted
+  out of step with the content — depth 14 announced a boss and contained an ordinary
+  corridor, and the finale at 50 was not a gate at all. `verifyAll` now fails a level that
+  declares a boss without a boss creature, so the two cannot separate again.
+- Four bosses, four different creatures and four different counters: **The Listener** (14,
+  an anchored `warden` that strikes where you last *sang*, so you win by misdirection),
+  **The Twins** (28, crossing orbits, won by timing), **The Deaf God** (42, leviathans with
+  `deaf: true` that ignore song entirely and wake only on breaking ice), and **The Warm
+  Dark** (50). Reusing the leviathan a fourth time is what made bosses feel samey.
+- Every boss needs an arena (a widened corridor segment), a `checkpoint` at its mouth, and
+  **nothing hostile after it** — a stray hunter past the arena dilutes the fight and was
+  killing five runs in twelve on depth 14.
+- The autoplay bot sings exactly where it swims, which is the one thing a warden punishes,
+  so **its survival rate says nothing about warden difficulty**. Tune that boss for humans.
+
 ## Verifying level content (learned the hard way)
 - **`autoplay` is not deterministic.** Hunter wander uses `Math.random()`, so a single
   `verifyAll()` pass proves nothing for a marginal level. Run 9–11 trials and look at the

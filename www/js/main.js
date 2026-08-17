@@ -223,7 +223,25 @@ class Shell {
         this.renderer.addShake(0.28);
         this.particles.burst(x, y, this.palette.ice, 20, 190, 0.8, 3, this.palette.iceCore);
       },
-      onSilentSong: () => this.haptics.tick?.(),
+      // Spending banked light should be visible and felt, not silently counted.
+      onSilentSong: (remaining) => {
+        this.haptics.tick?.();
+        this.ui.spendBoonPip(remaining);
+        this.audio.crystalBloom?.();
+        const p = this.game.ents.player;
+        this.particles.burst(p.x, p.y, this.palette.mote, 10, 90, 0.6, 2.6, this.palette.moteCore);
+      },
+      onWardenWake: (x, y) => {
+        this.audio.leviathanWake();
+        this.haptics.warn();
+        this.renderer.addShake(0.3);
+      },
+      onWardenStrike: (x, y) => {
+        this.audio.thud(2);
+        this.haptics.warn();
+        this.renderer.addShake(0.5);
+        this.particles.burst(x, y, this.palette.wardenJaw, 20, 200, 0.7, 3.2, this.palette.wardenCore);
+      },
       onLeviathanWake: () => {
         this.audio.leviathanWake();
         this.haptics.warn();
@@ -357,9 +375,16 @@ class Shell {
     this.ui.setPings(p.pings);
     this.ui.hideDepth();
     this._show('playing');
+    // Show what the carried light is actually doing, for as long as it lasts.
+    this.ui.showBoon(this.game.boon);
+    this.ui.hideBossCard();
     if (!opts.silent) {
       this.ui.toast(resume ? 'The lair mouth' : `Depth ${id} · ${def.name}`);
       this.ui.showGoals(targets.motes, targets.pings);
+      // A boss names itself, after the level card has cleared.
+      if (def.boss) {
+        setTimeout(() => this.ui.showBossCard(def.boss.name, def.boss.tell), 2400);
+      }
     }
   }
 

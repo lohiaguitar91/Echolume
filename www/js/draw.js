@@ -265,6 +265,57 @@ export function drawGame(R, game, particles, time, dt, palette) {
     _spikeBatch.length = 0;
   }
 
+  // ---- wardens ----
+  // Always visible: an anchored thing you cannot outrun has to be readable from
+  // across the room, and the fight is about where you sing, not about spotting it.
+  for (const w of game.ents.wardens || []) {
+    if (!R.inView(w.x, w.y, TUNING.wardenReach + 80)) continue;
+    const winding = w.state === 'wind';
+    const striking = w.state === 'strike';
+    const half = TUNING.wardenJawWidth * 0.5;
+
+    // The line it is about to take. This is the whole tell, so it is loud.
+    if (winding || striking) {
+      const charge = winding ? 1 - Math.max(0, w.t) / TUNING.wardenWindup : 1;
+      const len = striking ? w.reach : TUNING.wardenReach * (0.35 + charge * 0.5);
+      const a0 = w.aim - half, a1 = w.aim + half;
+      const s = R.worldToScreen(w.x, w.y);
+      const ctx = R.ctx;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = striking ? 0.5 : 0.13 + charge * 0.22;
+      ctx.fillStyle = palette.wardenJaw;
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.arc(s.x, s.y, len * R.cam.zoom, a0, a1);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // The body: plates rather than a glow, so it reads as structure.
+    const vis = Math.max(w.reveal, 0.5 + 0.06 * Math.sin(time * 0.9 + w.phase));
+    const open = striking ? 1 : (winding ? 0.55 : 0.18);
+    for (let i = 0; i < 10; i++) {
+      const a = w.aim + (i / 10) * Math.PI * 2;
+      const inner = TUNING.wardenRadius * 0.42;
+      const outer = TUNING.wardenRadius * (1 + 0.16 * Math.sin(time * 1.1 + i));
+      const spread = Math.abs(((a - w.aim + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < half * 1.8
+        ? 1 + open * 0.55 : 1;
+      const s0 = R.worldToScreen(w.x + Math.cos(a) * inner, w.y + Math.sin(a) * inner);
+      const s1 = R.worldToScreen(w.x + Math.cos(a) * outer * spread, w.y + Math.sin(a) * outer * spread);
+      _spikeBatch.push({ x1: s0.x, y1: s0.y, x2: s1.x, y2: s1.y, a: vis * 0.9 });
+    }
+    R.strokeGlowSegments(_spikeBatch, 2.1 * z, palette.warden, palette.wardenCore);
+    _spikeBatch.length = 0;
+    R.glowDot(w.x, w.y, TUNING.wardenRadius * 0.45, palette.warden, vis * 0.5, palette.wardenCore);
+    // A slow pulse marks the moment it is safe to be close.
+    if (w.state === 'recover') {
+      R.ring(w.x, w.y, TUNING.wardenRadius * (1.4 + (1 - w.t / TUNING.wardenRecover) * 1.2),
+             1.2 * z, palette.warden, 0.3 * (w.t / TUNING.wardenRecover));
+    }
+  }
+
   // ---- leviathans ----
   // Banked light traces the loop it will swim, for as long as the light lasts.
   // Knowing the orbit is the whole fight; this buys you time to read it.

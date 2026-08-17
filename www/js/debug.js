@@ -2,6 +2,7 @@
 // inspected headlessly (used for automated end-to-end verification).
 
 import { LEVELS } from './levels.js';
+import { TUNING } from './config.js';
 
 export function installDebug(shell) {
   const api = {
@@ -112,6 +113,8 @@ export function installDebug(shell) {
           };
           for (const u of g.ents.urchins) shove(u);
           for (const l of g.ents.lures) if (l.state !== 'recover') shove(l);
+          // A warden is a large solid anchor; swimming into one proves nothing.
+          for (const w of g.ents.wardens || []) shove(w);
           // Never steer so hard it aims into rock.
           const cap = g.geom.main.w[ti] * 0.65;
           const ol = Math.hypot(ox, oy);
@@ -169,6 +172,20 @@ export function installDebug(shell) {
       chk('urchin', g.ents.urchins, 4);
       chk('hunter', g.ents.hunters, 6);
       chk('vent', [g.ents.vent], 20);
+      // A warden is anchored and solid, so its whole body has to sit clear of
+      // the wall or it silently plugs the corridor it is supposed to guard.
+      chk('warden', g.ents.wardens || [], TUNING.wardenRadius + 10);
+      // ...and it needs a lane past it: an anchored boss filling the seam is
+      // not a fight, it is a wall.
+      (g.ents.wardens || []).forEach((w, i) => {
+        let widest = -Infinity;
+        for (let a = 0; a < Math.PI * 2; a += 0.1) {
+          const px = w.x + Math.cos(a) * (TUNING.wardenRadius + TUNING.playerRadius + 18);
+          const py = w.y + Math.sin(a) * (TUNING.wardenRadius + TUNING.playerRadius + 18);
+          widest = Math.max(widest, -clearance(px, py));
+        }
+        if (widest < 26) bad.push({ kind: 'wardenLane', i, gap: +widest.toFixed(1) });
+      });
       // A leviathan's whole orbit has to fit its lair, not just its centre.
       g.ents.leviathans.forEach((lv, i) => {
         let worst = -Infinity, worstAng = 0;

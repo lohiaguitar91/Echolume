@@ -95,6 +95,74 @@ export class UI {
 
   setGateBuys(line) { this.el.gateBuys.textContent = line; }
 
+  // Carried light, made visible while you play. The gate used to promise
+  // something the fight never showed: silent songs decremented with no readout,
+  // a wider glow was indistinguishable from a normal one. Countable boons get
+  // pips that go dark as they are spent; continuous ones just say they are on.
+  showBoon(boon) {
+    const el = document.getElementById('hud-boon');
+    if (!el) return;
+    if (!boon) { el.hidden = true; return; }
+    const label = document.getElementById('hud-boon-label');
+    const pips = document.getElementById('hud-boon-pips');
+    let text = null, count = 0;
+    if (boon.silentSongs > 0) { text = 'Silent songs'; count = boon.silentSongs; }
+    else if (boon.orbitSecs > 0) { text = 'Orbits traced'; count = 0; }
+    else if (boon.revealLures) { text = 'False lights shown'; count = 0; }
+    else if (boon.iceSteady) { text = 'Holding your line'; count = 0; }
+    else if (boon.hushRelief > 0.05) { text = 'Voice carries'; count = 0; }
+    else if (boon.aura > 0.05) { text = 'Glow carried'; count = 0; }
+    if (!text) { el.hidden = true; return; }
+    label.textContent = text;
+    pips.innerHTML = '';
+    this._boonMax = count;
+    for (let i = 0; i < count; i++) pips.appendChild(document.createElement('i'));
+    el.classList.remove('empty');
+    el.hidden = false;
+  }
+
+  // Called every time a silent song is spent: darken one pip and flash the chip
+  // so the cost is felt rather than merely tracked.
+  spendBoonPip(remaining) {
+    const el = document.getElementById('hud-boon');
+    const pips = document.getElementById('hud-boon-pips');
+    if (!el || el.hidden || !pips) return;
+    [...pips.children].forEach((p, i) => p.classList.toggle('spent', i >= remaining));
+    el.classList.toggle('empty', remaining <= 0);
+    el.classList.remove('spend');
+    void el.offsetWidth;
+    el.classList.add('spend');
+  }
+
+  hideBoon() {
+    const el = document.getElementById('hud-boon');
+    if (el) el.hidden = true;
+  }
+
+  // A boss should announce itself. Depth 14 used to declare a boss on the gate
+  // screen and then hand the player an ordinary corridor.
+  showBossCard(name, tell, ms = 4200) {
+    const el = document.getElementById('boss-card');
+    if (!el || !name) return;
+    document.getElementById('boss-card-name').textContent = name;
+    document.getElementById('boss-card-tell').textContent = tell || '';
+    clearTimeout(this._bossTimer);
+    el.hidden = false;
+    el.classList.remove('visible');
+    void el.offsetWidth;
+    el.classList.add('visible');
+    this._bossTimer = setTimeout(() => {
+      el.classList.remove('visible');
+      setTimeout(() => { el.hidden = true; }, 700);
+    }, ms);
+  }
+
+  hideBossCard() {
+    clearTimeout(this._bossTimer);
+    const el = document.getElementById('boss-card');
+    if (el) { el.classList.remove('visible'); el.hidden = true; }
+  }
+
   // Motes lost their star, so this is where they report instead: what you just
   // banked, and how full the run into the next gate is. Nothing is spent here.
   fillLightBank(save, levelId) {
