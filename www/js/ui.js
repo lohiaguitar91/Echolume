@@ -94,6 +94,23 @@ export class UI {
 
   setGateBuys(line) { this.el.gateBuys.textContent = line; }
 
+  // The two verbs, shown while the level waits for your first touch. Driven
+  // per-frame from the shell off game.state, so it needs no timers and can
+  // never linger into play.
+  setControlsVisible(on) {
+    if (this._controlsOn === on) return;
+    this._controlsOn = on;
+    const el = document.getElementById('hud-controls');
+    if (!el) return;
+    if (on) {
+      el.hidden = false;
+      requestAnimationFrame(() => el.classList.add('visible'));
+    } else {
+      el.classList.remove('visible');
+      setTimeout(() => { if (!this._controlsOn) el.hidden = true; }, 850);
+    }
+  }
+
   // Carried light, made visible while you play. The gate used to promise
   // something the fight never showed: silent songs decremented with no readout,
   // a wider glow was indistinguishable from a normal one. Countable boons get

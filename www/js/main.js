@@ -699,6 +699,9 @@ class Shell {
         this._acc -= TUNING.fixedDt;
       }
       this._nudgeIfIdle(dt);
+      // The verbs stand across the water while the level waits; your first act
+      // dismisses them.
+      this.ui.setControlsVisible(this.game.state === 'intro');
       // Teach a thing the moment it is genuinely on screen, never before.
       if (this.game.mode === 'story' && this.game.state === 'play') {
         this.teacher.update(this.game.ents, (x, y, r) => R.inView(x, y, r || 40));

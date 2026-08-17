@@ -710,6 +710,35 @@ body.reduced-motion .star.earned { animation: none; }
   .obj-val { font-size: 11.5px; }
 }
 
+/* ---------- controls (intro + pause) ---------- */
+/* Same voice as everything else in the HUD: letterspaced caps, dim ink, glow
+   glyphs. Across the screen while the water waits; gone on your first act. */
+.hud-controls {
+  position: absolute;
+  left: 50%; top: 58%;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 26px;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  pointer-events: none;
+}
+.hud-controls.visible { opacity: 1; }
+.ctl { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.ctl-glyph { width: 44px; height: 44px; }
+.ctl-name {
+  font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase;
+  color: #eafcff; text-shadow: 0 0 14px rgba(126, 240, 255, 0.45);
+  margin-left: 0.3em;   /* recenter letterspaced caps */
+}
+.ctl-what { font-size: 11.5px; letter-spacing: 0.08em; color: var(--dim); }
+.ctl-divider { width: 1px; height: 44px; background: var(--edge, rgba(126,240,255,0.16)); }
+
+.pause-controls {
+  display: flex; align-items: center; justify-content: center; gap: 22px;
+  padding: 4px 0 2px;
+}
+.pause-controls .ctl-glyph { width: 36px; height: 36px; }
+
 /* ---------- boss card ---------- */
 .boss-card {
   position: absolute;
