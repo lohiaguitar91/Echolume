@@ -102,7 +102,19 @@ SDK declares its own domains. That reading matches Apple's aggregation model,
 but I could not test it against a real submission — if the validator complains,
 that is the first place to look.
 
-### 5. Play the bosses, and watch the boon chip
+### 5. Play with the new verb: hold to throw your voice
+Casting is the biggest gameplay change since the gate economy, and it is tuned
+entirely by eye. Hold past ~320ms and release: the song lands where you held,
+everything listening goes there, and you go nowhere. Things only a human can
+judge:
+- does 320ms feel right as the threshold, or do taps trigger casts by accident?
+- tap now fires on pointer RELEASE (so tap and cast cannot collide), adding the
+  finger's contact time (~80-120ms) to every tap. Does tap still feel snappy?
+- is the aim thread legible while your thumb is on the screen?
+- try a silent cast (carry banked light into 14): it should light distant water
+  and wake nothing. That interaction is load-bearing — keep it.
+
+### 6. Play the bosses, and watch the boon chip
 Two things were rebuilt because they were real but invisible, and both need a
 human to confirm they now read:
 

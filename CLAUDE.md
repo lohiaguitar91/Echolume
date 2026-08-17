@@ -56,6 +56,19 @@ already cost time, and the design rules that must not be broken.
 - `www/js/ads.js` is dormant by design: fill `AD_IDS` / `IAP_PRODUCT_ID` to enable. Turning
   ads on also means a privacy-manifest and store data-safety update, and the iOS ATT prompt.
 
+## The two verbs
+- **Tap** sings from yourself: move + light + noise, welded together. **Hold + release
+  casts**: the song leaves from the held point (clamped to `castRange`), lights the world
+  there, and everything with ears turns THERE — it moves you nowhere, costs a full song,
+  and has a longer cooldown. The game had one verb and therefore no decisions; casting is
+  what makes hunters, wardens, hush zones and the song budget playable instead of passive.
+- A **silent cast** (banked silent songs apply to casts too) wakes nothing — reach without
+  telling anyone. This composes from the rules; keep it working.
+- The autoplay bot only taps. Its survival rates prove casting broke nothing; they say
+  NOTHING about how casting changes difficulty for a human. All tuning is now a floor.
+- Input: tap fires on pointer RELEASE now (sub-320ms press). The added latency is the
+  finger's contact time, ~80-120ms. If anyone reports tap feeling soft, this is why.
+
 ## Guidance and HUD layout
 - **One transient slot.** Hints, boss cards and first-encounter teaches all queue through
   `ui.hint()` into a single element, so two messages can never sit on top of each other.

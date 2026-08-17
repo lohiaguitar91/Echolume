@@ -36,6 +36,13 @@ export const TEACH = {
     lead: 'It hears you',
     plain: 'It swims to where your last song landed. Stop singing and drift to lose it.',
   },
+  // Taught right after the hunter: the moment you know things chase your song
+  // is the moment throwing it somewhere else becomes an idea worth having.
+  cast: {
+    glyph: g(`<circle cx="8" cy="22" r="4" fill="#eafcff"/><path d="M12 20q6-6 12-9" stroke="#8ef4ff" stroke-width="1.6" stroke-dasharray="2 4" stroke-linecap="round"/><circle cx="26" cy="9" r="5" stroke="#8ef4ff" stroke-width="1.8"/>`),
+    lead: 'Throw your voice',
+    plain: 'Hold, then let go. The song lands where you held — and so does everything listening.',
+  },
   current: {
     glyph: g(`<g stroke="#3f6fff" stroke-width="2" stroke-linecap="round"><path d="M5 11q6-4 11 0t11 0M5 20q6-4 11 0t11 0"/></g>`),
     lead: 'Moving water',
@@ -90,6 +97,7 @@ const SOURCES = [
   ['vent', () => 1],
   ['urchin', (e) => e.urchins.length],
   ['hunter', (e) => e.hunters.length],
+  ['cast', (e) => e.hunters.length],   // the counter arrives with the threat
   ['current', (e) => e.currents.length],
   ['lure', (e) => e.lures.length],
   ['crystal', (e) => e.crystals.length],
@@ -141,6 +149,7 @@ export class Teacher {
       case 'vent': return inView(e.vent.x, e.vent.y, 40);
       case 'urchin': return any(e.urchins);
       case 'hunter': return any(e.hunters, 60);
+      case 'cast': return any(e.hunters, 60);
       case 'current': return (e.currents || []).some((c) => inView(c.x, c.y, c.r));
       case 'lure': return any(e.lures, 50);
       case 'crystal': return any(e.crystals);

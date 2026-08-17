@@ -233,6 +233,19 @@ class Shell {
         const p = this.game.ents.player;
         this.particles.burst(p.x, p.y, this.palette.mote, 10, 90, 0.6, 2.6, this.palette.moteCore);
       },
+      // A cast reads differently from a song: the voice visibly travels from
+      // you to where it lands, so the lie is legible the first time you tell it.
+      onCast: (fromX, fromY, toX, toY) => {
+        this.audio.ping(0.4);
+        this.haptics.tick?.();
+        this.ui.setPings(this.game.ents.player.pings);
+        const steps = 7;
+        for (let i = 1; i <= steps; i++) {
+          const t = i / steps;
+          const x = fromX + (toX - fromX) * t, y = fromY + (toY - fromY) * t;
+          setTimeout(() => this.particles.burst(x, y, this.palette.ping, 3, 40, 0.35, 2.2), i * 28);
+        }
+      },
       onWardenWake: (x, y) => {
         this.audio.leviathanWake();
         this.haptics.warn();
@@ -592,13 +605,16 @@ class Shell {
       const w = this.renderer.screenToWorld(cx, cy);
       this.game.tapAt(w.x, w.y);
     };
-    // New players often press-and-hold expecting to steer; teach the verb once.
-    this._holdHinted = false;
-    this.input.onHold = () => {
-      if (this._holdHinted || this.state !== 'playing') return;
-      if (this.game.mode !== 'story' || this.game.def.id !== 1) return;
-      this._holdHinted = true;
-      this.ui.hint('Short taps, little one. A song, not a shout.');
+    // Hold + release: throw your voice to the held point.
+    this.input.onCast = (cx, cy) => {
+      if (this.state !== 'playing') return;
+      const w = this.renderer.screenToWorld(cx, cy);
+      this.game.castAt(w.x, w.y);
+    };
+    // While aiming, the world shows where the voice would land.
+    this.input.onCastAim = (cx, cy) => {
+      if (cx === null || this.state !== 'playing') { this._castAim = null; return; }
+      this._castAim = this.renderer.screenToWorld(cx, cy);
     };
     // Keyboard fallback (desktop testing / accessibility)
     window.addEventListener('keydown', (e) => {
@@ -742,6 +758,30 @@ class Shell {
     if (inGame && this.game.ents) {
       drawGame(R, this.game, this.particles, this.time,
         this.state === 'paused' ? 0 : dt, this.palette);
+      // Cast aim: a thread from you to where the voice would land, clamped to
+      // range, so the reach of the lie is visible before you commit to it.
+      if (this._castAim && this.state === 'playing') {
+        const p = this.game.ents.player;
+        const a = this._castAim;
+        const d = Math.hypot(a.x - p.x, a.y - p.y);
+        const max = TUNING.castRange;
+        const tx = d > max ? p.x + (a.x - p.x) * (max / d) : a.x;
+        const ty = d > max ? p.y + (a.y - p.y) * (max / d) : a.y;
+        const s0 = R.worldToScreen(p.x, p.y);
+        const s1 = R.worldToScreen(tx, ty);
+        const ctx = R.ctx;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.strokeStyle = this.palette.ping;
+        ctx.globalAlpha = 0.35;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 7]);
+        ctx.lineDashOffset = -this.time * 40;
+        ctx.beginPath(); ctx.moveTo(s0.x, s0.y); ctx.lineTo(s1.x, s1.y); ctx.stroke();
+        ctx.restore();
+        const pulse = 0.5 + 0.3 * Math.sin(this.time * 6);
+        R.ring(tx, ty, 14 + pulse * 5, 1.4 * R.cam.zoom, this.palette.ping, 0.5 + pulse * 0.3);
+      }
     } else {
       drawMenuAmbient(R, this.particles, this.time, dt, this.palette);
     }

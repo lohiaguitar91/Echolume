@@ -266,6 +266,32 @@ export class Game {
     return Math.max(TUNING.hushMinFactor, f);
   }
 
+  // Cast: throw your voice. The song leaves from the held point, not from you —
+  // it lights the world THERE and everything with ears turns THERE. It moves
+  // you nowhere and costs a full song: a lie you pay for with locomotion.
+  castAt(wx, wy) {
+    if (this.state !== 'play' && this.state !== 'intro') return false;
+    if (this.state === 'intro') { this.state = 'play'; this.stateT = 0; }
+    if (this.pingCooldown > 0) return false;
+    const p = this.ents.player;
+    // Range is generous but real; past it the voice dies before arriving.
+    const d = dist(p.x, p.y, wx, wy);
+    const max = TUNING.castRange;
+    let cx = wx, cy = wy;
+    if (d > max) { cx = p.x + (wx - p.x) * (max / d); cy = p.y + (wy - p.y) * (max / d); }
+    p.pings++;
+    this.pingCooldown = TUNING.pingCooldown * 1.35;   // slower than a step: can't spam lies
+    p.facing = Math.atan2(cy - p.y, cx - p.x);
+    const quiet = this.silentSongs > 0;
+    if (quiet) {
+      this.silentSongs--;
+      if (this.cb.onSilentSong) this.cb.onSilentSong(this.silentSongs);
+    }
+    this._emitPing(cx, cy, { free: quiet });
+    if (this.cb.onCast) this.cb.onCast(p.x, p.y, cx, cy);
+    return true;
+  }
+
   _emitPing(x, y, { free = false }) {
     this.pings.push({ x, y, r: 6, prevR: 0, free, strength: this.hushFactor(x, y) });
     // Free light — the wake pulse, a chain bloom, a crystal's answer — carries

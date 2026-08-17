@@ -175,6 +175,13 @@ export const TUNING = {
   iceNoiseRadius: 470,      // how far the shatter carries — further than a song
   iceShatterTime: 0.8,      // fragments fly for this long
 
+  // ---- casting (hold + release: throw your voice) ----
+  // The one deliberate lie in the player's kit. Costs a full song, moves you
+  // nowhere, and lands where you held — so hunters chase the empty water there
+  // instead of you. Range is bounded or every fight would be solved from the
+  // far end of the corridor.
+  castRange: 420,
+
   // ---- wardens (the depth-14 boss) ----
   // Anchored, enormous, and blind even by this game's standards. It cannot
   // chase: it opens toward wherever your last song landed and strikes down that
