@@ -23,6 +23,20 @@ export const PALETTE = {
   heartCore: '#ffe9f0',
   leviathan: '#9d7bff',
   leviathanCore: '#e6dcff',
+  // Chapter 3-4 vocabulary. The palette is crowded, so each of these is
+  // separated by shape and scale first and colour only second — the chain
+  // ladder taught us what happens when two things share a hex.
+  //   hush  — a large dim region, drawn as absence. Nothing else is this dark.
+  //   ice   — angular facets in cold steel, deliberately duller than the
+  //           crystal's bright #dcefff so the two never trade places.
+  //   warm  — a large rising zone. Warm hues are busy (mote, lure, heart), so
+  //           this one is only ever a region, never a point you could collect.
+  hush: '#2a3350',
+  hushEdge: '#4a5a80',
+  ice: '#9fb8c8',
+  iceCore: '#e8f4fa',
+  warm: '#ff8a3d',
+  warmCore: '#ffd9b0',
   player: '#eafcff',
   playerAura: '#7ef0ff',
   vent: '#5effc2',
@@ -146,6 +160,21 @@ export const TUNING = {
   abyssStartWidth: 260,
   abyssMinWidth: 120,
   abyssDepthPerMeter: 10,   // world units per displayed meter
+
+  // ---- chapter 3: hush zones and brittle ice ----
+  // A hush zone eats the song you sing inside it. `depth` is how much of the
+  // reveal it swallows at the centre, so 0.85 leaves you nearly blind. Sing at
+  // the edge and reach in, or carry light through on your aura.
+  hushMinFactor: 0.08,      // never zero: a song always does *something*
+  iceRadius: 15,            // shard body
+  iceNoiseRadius: 470,      // how far the shatter carries — further than a song
+  iceShatterTime: 0.8,      // fragments fly for this long
+
+  // ---- chapter 4: warm vents ----
+  // Rising water that carries you without a song, and glows enough to see by.
+  // The light it gives is free light: it makes no sound, so nothing turns.
+  warmForce: 620,
+  warmPingEvery: 0.55,
 };
 
 // Mote chain ladder.
@@ -192,5 +221,5 @@ export function chainStyle(displayIndex) {
   };
 }
 
-export const GAME_VERSION = '1.1.0';
+export const GAME_VERSION = '1.2.0';
 export const SAVE_KEY = 'echolume.save.v1';

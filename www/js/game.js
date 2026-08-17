@@ -249,8 +249,25 @@ export class Game {
     if (this.cb.onPing) this.cb.onPing(dy);
   }
 
+  // How much of a song survives being sung here. A hush zone swallows most of
+  // it, so the answer is baked in at the moment of emission rather than while
+  // the ring travels — you are punished for singing *inside* the hush, not for
+  // the ring happening to cross one on its way out.
+  hushFactor(x, y) {
+    let f = 1;
+    for (const h of this.ents.hushZones || []) {
+      const d = dist(x, y, h.x, h.y);
+      if (d < h.r) f = Math.min(f, 1 - h.depth * (1 - d / h.r));
+    }
+    // Light carried in from the depths behind a gate keeps part of your voice
+    // alive in water that would otherwise swallow all of it.
+    const relief = this.boon?.hushRelief || 0;
+    if (relief > 0) f = f + (1 - f) * relief;
+    return Math.max(TUNING.hushMinFactor, f);
+  }
+
   _emitPing(x, y, { free = false }) {
-    this.pings.push({ x, y, r: 6, prevR: 0, free });
+    this.pings.push({ x, y, r: 6, prevR: 0, free, strength: this.hushFactor(x, y) });
     // Free light — the wake pulse, a chain bloom, a crystal's answer — carries
     // no sound, so nothing in the dark turns toward it.
     if (!free) this._wakeListeners(x, y);
@@ -329,7 +346,7 @@ export class Game {
       const ping = this.pings[i];
       ping.prevR = ping.r;
       ping.r += TUNING.pingRingSpeed * dt;
-      pingRevealSweep(this.geom.store, ping.x, ping.y, ping.prevR, ping.r, 1);
+      pingRevealSweep(this.geom.store, ping.x, ping.y, ping.prevR, ping.r, ping.strength ?? 1);
       this._revealEntities(ping);
       if (ping.r > TUNING.pingMaxRadius) this.pings.splice(i, 1);
     }
@@ -353,6 +370,7 @@ export class Game {
     for (const l of this.ents.lures) if (l.state !== 'bait') auraTouch(l, 0.95);
     for (const c of this.ents.crystals) auraTouch(c, 1);
     for (const m of this.ents.heartMotes) if (!m.taken) auraTouch(m, 0.9);
+    for (const ice of this.ents.ice || []) if (!ice.broken) auraTouch(ice, 1);
     for (const lv of this.ents.leviathans) auraTouch(lv, 0.85);
     if (this.ents.vent) auraTouch(this.ents.vent, 1);
 
@@ -382,6 +400,40 @@ export class Game {
         }
         if (this.mode === 'story' && p.motes === this.ents.motes.length &&
             this.cb.onAllMotes) this.cb.onAllMotes(m.x, m.y);
+      }
+    }
+
+    // ---- brittle ice ----
+    // Costs no hearts and blocks nothing. It just breaks, loudly, and every ear
+    // in the level turns toward the sound you did not choose to make.
+    for (const ice of this.ents.ice || []) {
+      if (ice.broken) { ice.t += dt; continue; }
+      if (ice.reveal > 0) ice.reveal = Math.max(0, ice.reveal - dt * 0.2);
+      if (this.state !== 'play' || p.dead) continue;
+      if (dist(p.x, p.y, ice.x, ice.y) < TUNING.iceRadius + TUNING.playerRadius) {
+        ice.broken = true;
+        ice.t = 0;
+        this._wakeListeners(ice.x, ice.y, TUNING.iceNoiseRadius);
+        if (this.cb.onIceBreak) this.cb.onIceBreak(ice.x, ice.y);
+      }
+    }
+
+    // ---- warm vents ----
+    // Rising water: it carries you where a song would have, and the warmth
+    // itself is light. Free light, so it makes no sound and nothing turns.
+    for (const w of this.ents.warmVents || []) {
+      const d = dist(p.x, p.y, w.x, w.y);
+      if (d < w.r && !p.dead) {
+        // Carried light lets you hold your line instead of being thrown.
+        const steady = this.boon?.iceSteady ? 0.55 : 1;
+        const f = 1 - d / w.r;
+        p.vx += w.dirX * w.strength * f * dt * steady;
+        p.vy += w.dirY * w.strength * f * dt * steady;
+      }
+      w.emitT -= dt;
+      if (w.emitT <= 0) {
+        w.emitT = TUNING.warmPingEvery;
+        this._emitPing(w.x, w.y, { free: true });
       }
     }
 
@@ -617,6 +669,9 @@ export class Game {
     for (const l of this.ents.lures) check(l, 10);
     for (const m of this.ents.heartMotes) if (!m.taken) check(m, 10);
     for (const lv of this.ents.leviathans) check(lv, TUNING.leviathanHeadRadius);
+    // Ice has to be findable by song, or breaking it is bad luck rather than a
+    // mistake you could have avoided.
+    for (const ice of this.ents.ice || []) if (!ice.broken) check(ice, TUNING.iceRadius);
     // Crystals answer the song with light of their own: a free bloom from where
     // they stand, silent, so it reaches around the corner without waking anything.
     for (const c of this.ents.crystals) {

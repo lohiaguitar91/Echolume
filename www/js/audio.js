@@ -28,7 +28,19 @@ export class AudioEngine {
   // sours every song sung down here. Players hear the chapter before reading it.
   static SCALE_TRENCH = [1, 1.0667, 1.3333, 1.5, 1.6, 2, 2.1333, 2.6667];
 
-  static MODES = { shallows: AudioEngine.SCALE, trench: AudioEngine.SCALE_TRENCH };
+  // The hush sings narrow: a whole-tone run with no leading note, so nothing
+  // ever resolves. Fits water that gives you nothing back.
+  static SCALE_HUSH = [1, 1.1225, 1.2599, 1.4142, 1.5874, 1.7818, 2, 2.2449];
+  // The warm dark opens back up — a major pentatonic, the only bright scale in
+  // the game. You have earned it by depth 43.
+  static SCALE_WARM = [1, 1.125, 1.25, 1.5, 1.6875, 2, 2.25, 2.5];
+
+  static MODES = {
+    shallows: AudioEngine.SCALE,
+    trench: AudioEngine.SCALE_TRENCH,
+    hush: AudioEngine.SCALE_HUSH,
+    warm: AudioEngine.SCALE_WARM,
+  };
 
   setRoot(freq) { this.root = freq; this._pingDegree = 3; }
 
@@ -158,6 +170,46 @@ export class AudioEngine {
   }
 
   // A lure springing: wet, short, and far louder than anything the lume does.
+  // Ice breaking: the loudest thing you can do by accident. Bright, wide and
+  // ugly on purpose, because everything with ears just turned toward you.
+  iceBreak() {
+    if (!this._sfxReady()) return;
+    const c = this.ctx, t = c.currentTime;
+    const g = c.createGain();
+    const hp = c.createBiquadFilter();
+    hp.type = 'highpass'; hp.frequency.value = 1400;
+    g.connect(hp); hp.connect(this.sfxGain);
+    const send = c.createGain(); send.gain.value = 1.6;   // rings out, travels
+    hp.connect(send); send.connect(this.verbSend);
+    this._env(g, t, 0.001, 0.9, 0.24);
+    const nb = this._noiseBurst(0.5, 0.85);
+    nb.connect(hp);
+    // Three shards of pitched glass over the crack.
+    for (let i = 0; i < 3; i++) {
+      const gi = c.createGain(); gi.gain.value = 0.12; gi.connect(g);
+      this._osc('triangle', 2100 + i * 900, t + i * 0.012, t + 0.2 + i * 0.05, gi,
+        { glideTo: 1200 + i * 400 });
+    }
+  }
+
+  // A warm vent: breath, not voice. Low and continuous, so it reads as a place
+  // rather than an event, and never competes with a song.
+  warmVent(intensity = 1) {
+    if (!this._sfxReady()) return;
+    const c = this.ctx, t = c.currentTime;
+    const g = c.createGain();
+    const lp = c.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 420;
+    g.connect(lp); lp.connect(this.sfxGain);
+    const send = c.createGain(); send.gain.value = 0.7;
+    lp.connect(send); send.connect(this.verbSend);
+    this._env(g, t, 0.12, 0.55 * intensity, 0.5);
+    const nb = this._noiseBurst(0.7, 0.3 * intensity);
+    nb.connect(lp);
+    const g2 = c.createGain(); g2.gain.value = 0.08 * intensity; g2.connect(g);
+    this._osc('sine', this.root * 0.5, t, t + 0.7, g2, { glideTo: this.root * 0.62 });
+  }
+
   lureSnap() {
     if (!this._sfxReady()) return;
     const c = this.ctx, t = c.currentTime;

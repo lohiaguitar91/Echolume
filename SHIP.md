@@ -17,7 +17,8 @@ Details for each live in docs/BUILDING.md and docs/PUBLISHING.md.
       safe-area insets on a notched phone, portrait lock.
 - [ ] Build → Generate Signed App Bundle; create keystore, BACK IT UP.
 - [ ] Play Console: internal testing → upload .aab → test → promote to production.
-- [ ] Store listing from `store/listing-android.md`; data safety = no collection;
+- [ ] Store listing from `store/listing-android.md`; data safety = no collection
+      (**true only while ads stay dormant** — see 3.6);
       icon `assets-out/pwa/icon-512.png` (regenerate via `/__dev/gen` if missing);
       feature graphic `store/feature-graphic.png`; screenshots `store/screenshots/`.
 
@@ -40,7 +41,7 @@ death, a Leaderboard button on the recap, and a replay of anything earned offlin
 sign-in completes. With no bridge present it silently stays local-only.
 
 Files: `ios/App/App/GameConnectPlugin.swift` (GameKit) ·
-`android/app/src/main/java/com/kaush/echolume/GameConnectPlugin.java` (Play Games v2,
+`android/app/src/main/java/com/wibesllc/echolume/GameConnectPlugin.java` (Play Games v2,
 registered in `MainActivity.java`, dependency in `app/build.gradle`).
 
 **Verification status.** The Android plugin **compiles clean** against the real
@@ -86,11 +87,42 @@ target is iOS 15, so every GameKit API used (all iOS 14+) is available.
       Then `npx cap sync`.
 - [ ] Add testers in Play Games Services → Testers, or sign-in fails before publishing.
 
+## 3.6 Ads and the one purchase (v1.2 surface, currently dormant)
+
+`www/js/ads.js` is written, wired into the real flow, and **inert until the IDs exist**.
+`Ads.maybeInterstitial()` is called on every level win and `Ads.offerRevive()` on every
+boss death; both return false while `AD_IDS` are null, so shipping it dormant is safe.
+
+The placement rules are enforced **inside `ads.js`**, not at the call sites, so they hold
+no matter who calls them later:
+- Interstitial **only** after clearing a gate depth (every 7th), on the win screen.
+- **Never** after a death, a failed gate, on the gate warning, or on first launch.
+- Rewarded revive is offered at bosses only, once per attempt, never auto-played.
+- `remove_ads` kills interstitials permanently; the revive stays as a player choice.
+
+To turn it on:
+- [ ] `npm i @capacitor-community/admob` (8.1.0 supports Capacitor 8 — verified against
+      the registry; no hand-written bridge needed this time).
+- [ ] AdMob account → register both apps → fill `AD_IDS` in `www/js/ads.js` with the
+      per-platform app id and the interstitial/rewarded unit ids.
+- [ ] Create the `remove_ads` non-consumable in **both** App Store Connect and Play
+      Console, then set `IAP_PRODUCT_ID`. Pick a purchase plugin
+      (`@revenuecat/purchases-capacitor` 13.x declares `@capacitor/core >=8.0.0`).
+- [ ] **Store metadata changes the moment ads ship** — do not skip this:
+      - iOS `PrivacyInfo.xcprivacy` must declare the ad SDK's collection, and the app
+        needs an App Tracking Transparency prompt before any tracking request.
+      - App Privacy in App Store Connect stops being "Data Not Collected".
+      - Play Data Safety stops being "no collection".
+      - `store/privacy-policy.md` needs an advertising section, and both listings need
+        the updated URL.
+- [ ] `npx cap sync`, then re-test that a death never produces an interstitial.
+
 ## 4. Final sanity before each submit
 - [ ] Version stamps agree: `www/js/config.js` GAME_VERSION, `package.json`,
-      `www/sw.js` VERSION, `android/app/build.gradle` versionName, Xcode target version.
-      All are 1.0.0 — this is the first store release. ("v1.1" in `docs/plan-v1.1.html`
-      is the internal milestone name for the feature set inside it, not a store version.)
+      `www/sw.js` VERSION, `android/app/build.gradle` versionName, Xcode
+      MARKETING_VERSION. All are **1.2.0**; Android `versionCode 3`, iOS build number 4.
+      Bump the build number on every upload — App Store Connect rejects a repeat.
+      (The `docs/plan-v1.*.html` names are internal milestones, not store versions.)
 - [ ] Name check: "Echolume" still free on both stores.
 - [ ] Privacy policy URL is live and linked in both listings.
 

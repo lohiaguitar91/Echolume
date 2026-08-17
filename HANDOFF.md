@@ -10,6 +10,16 @@ Written Aug 9, 2026, at the end of a long Windows session. Read this first, then
 > Android Studio or a store console. Items below are marked **[done]** or
 > **[still open]**.
 
+> **Chapters 3-4 built on Windows, Aug 16 2026 — depths 29-50.** The Hush
+> (29-42) introduces hush zones, water that swallows the song you sing inside
+> it, and brittle ice, which costs no hearts but is the loudest mistake in the
+> game. The Warm Dark (43-50) introduces warm vents: rising water that carries
+> you where a song would have, and glows enough to see by, for free. Gates land
+> at 35, 42 and 49 on the existing cadence. **All 50 depths verified**, and two
+> design rules came out of it that are written into `CLAUDE.md`: `autoplay` is
+> non-deterministic so pass *rates* are the only meaningful measure, and a warm
+> vent pins you to the centre line so hazards in vent levels must hug the wall.
+
 > **v1.2 built on Windows, Aug 16 2026 — the gate economy.** Motes became
 > *stored light*. Every 7th depth is a gate and every 14th a boss; the motes
 > banked across the seven depths behind it decide how much margin you carry in.

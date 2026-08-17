@@ -461,6 +461,463 @@ export const LEVELS = [
         plain: 'The vent is close. Finish the swim.' },
     ],
     chapterEnd: true,
+  },
+
+  // ===========================================================================
+  // Chapter 3 · The Hush (29-42)
+  //
+  // The trench taught you to spend songs carefully. The hush takes the song
+  // itself: water that swallows what you sing, so the tool you have leaned on
+  // for 28 depths stops working exactly where it matters. Brittle ice arrives
+  // beside it as the opposite problem — noise you make by accident.
+  //
+  // Corridors run 84-108, in step with chapter 2 rather than wider. Lures hug
+  // the wall at |off| near the half-width, which is what leaves a passable gap
+  // on the far side: the bait radius is 50 and would otherwise wall the seam.
+  // ===========================================================================
+  {
+    id: 29, name: 'Thin Water', seed: 2929,
+    path: [[0, 0], [70, 300], [-40, 600], [50, 920], [-30, 1240], [60, 1560], [0, 1880]],
+    width: [104, 98, 94],
+    moteCount: 14,
+    hushZones: [{ t: 0.44, off: 0, r: 175, depth: 0.62 }, { t: 0.76, off: 0, r: 160, depth: 0.58 }],
+    urchins: [
+      { t: 0.18, off: -30 }, { t: 0.28, off: 28 }, { t: 0.4, off: -26 }, { t: 0.5, off: 26 },
+      { t: 0.62, off: -28 }, { t: 0.72, off: 26 }, { t: 0.84, off: -24 }, { t: 0.92, off: 24 },
+    ],
+    stars: { motePct: 0.7, maxPings: 42 },
+    hints: [
+      { t: 0.12, text: 'The water here is thick, and it is hungry for sound.',
+        plain: 'The dim patch ahead swallows any song sung inside it.' },
+      { t: 0.4, text: 'Sing at its edge and let the light lean in.',
+        plain: 'Sing just outside a hush zone. A song from within barely lights anything.' },
+    ],
+  },
+  {
+    id: 30, name: 'The Swallow', seed: 3030,
+    path: [[0, 0], [-80, 320], [40, 640], [-60, 960], [50, 1280], [-40, 1600], [30, 1920]],
+    width: [100, 94, 90],
+    moteCount: 14,
+    hushZones: [
+      { t: 0.26, off: 0, r: 160, depth: 0.66 },
+      { t: 0.54, off: 0, r: 165, depth: 0.68 },
+      { t: 0.82, off: 0, r: 155, depth: 0.64 },
+    ],
+    urchins: [
+      { t: 0.34, off: -28 }, { t: 0.42, off: 26 }, { t: 0.48, off: -24 }, { t: 0.6, off: 26 },
+      { t: 0.7, off: -26 }, { t: 0.78, off: 24 }, { t: 0.9, off: -22 },
+    ],
+    stars: { motePct: 0.7, maxPings: 44 },
+    hints: [
+      { t: 0.16, text: 'Three mouthfuls of silence, and thorns between them.',
+        plain: 'Light each gap from outside before you cross into it.' },
+    ],
+  },
+  {
+    id: 31, name: 'First Ice', seed: 3131,
+    path: [[0, 0], [60, 300], [-50, 620], [40, 940], [-40, 1260], [50, 1580], [-20, 1900]],
+    width: [98, 92, 88],
+    moteCount: 14,
+    hushZones: [{ t: 0.58, off: 0, r: 165, depth: 0.64 }],
+    ice: [{ t: 0.24, off: 0 }, { t: 0.36, off: -26 }, { t: 0.5, off: 24 }, { t: 0.66, off: -22 }, { t: 0.8, off: 22 }],
+    urchins: [
+      { t: 0.3, off: 26 }, { t: 0.44, off: -24 }, { t: 0.56, off: 22 },
+      { t: 0.72, off: -22 }, { t: 0.86, off: 22 }, { t: 0.94, off: -20 },
+    ],
+    stars: { motePct: 0.7, maxPings: 42 },
+    hints: [
+      { t: 0.14, text: 'Pale glass, and it is not the helpful kind.',
+        plain: 'Brittle ice. It costs no hearts, but breaking it is very loud.' },
+      { t: 0.42, text: 'Nothing here has heard you yet. Keep it that way.',
+        plain: 'A song shows you ice before you reach it. Steer around it, not through.' },
+    ],
+  },
+  {
+    id: 32, name: 'Careful', seed: 3232,
+    path: [[0, 0], [-70, 320], [50, 640], [-60, 980], [40, 1320], [-30, 1660], [40, 1980]],
+    width: [96, 90, 86],
+    moteCount: 14,
+    ice: [{ t: 0.26, off: 24 }, { t: 0.38, off: -24 }, { t: 0.52, off: 22 }, { t: 0.64, off: -22 }, { t: 0.78, off: 20 }],
+    hunters: [{ t: 0.44, off: 0, wanderR: 150 }, { t: 0.8, off: 0, wanderR: 145 }],
+    urchins: [{ t: 0.32, off: -22 }, { t: 0.58, off: 22 }, { t: 0.88, off: -20 }],
+    stars: { motePct: 0.7, maxPings: 44 },
+    hints: [
+      { t: 0.18, text: 'Two things down here are already listening. Do not hand them a reason.',
+        plain: 'A shatter calls both hunters straight to where it happened.' },
+    ],
+  },
+  {
+    id: 33, name: 'Muffled', seed: 3333,
+    path: [[0, 0], [70, 320], [-40, 660], [60, 1000], [-50, 1340], [40, 1680], [-20, 2000]],
+    width: [96, 90, 86],
+    moteCount: 15,
+    hushZones: [{ t: 0.4, off: 0, r: 180, depth: 0.72 }, { t: 0.74, off: 0, r: 165, depth: 0.68 }],
+    ice: [{ t: 0.36, off: -24 }, { t: 0.46, off: 22 }, { t: 0.58, off: -22 }, { t: 0.7, off: 22 }, { t: 0.82, off: -20 }],
+    urchins: [
+      { t: 0.26, off: 24 }, { t: 0.44, off: -22 }, { t: 0.52, off: 22 },
+      { t: 0.64, off: -20 }, { t: 0.78, off: 20 }, { t: 0.9, off: -20 },
+    ],
+    heartMotes: [{ t: 0.6, off: 40 }],
+    stars: { motePct: 0.7, maxPings: 46 },
+    hints: [
+      { t: 0.22, text: 'Ice inside the silence. You will not hear it until you feel it.',
+        plain: 'Songs barely reach in here, so light the ice from outside the hush first.' },
+    ],
+  },
+  {
+    id: 34, name: 'The Quiet Field', seed: 3434,
+    path: [[0, 0], [-60, 340], [60, 680], [-50, 1020], [50, 1360], [-40, 1700], [30, 2020]],
+    width: [108, 100, 96],
+    moteCount: 16,
+    hushZones: [{ t: 0.52, off: 0, r: 170, depth: 0.7 }, { t: 0.84, off: 0, r: 155, depth: 0.66 }],
+    lures: [{ t: 0.3, off: 46 }, { t: 0.74, off: -46 }],
+    hunters: [{ t: 0.62, off: 0, wanderR: 155 }],
+    urchins: [{ t: 0.34, off: -34 }, { t: 0.58, off: 34 }, { t: 0.86, off: -32 }],
+    heartMotes: [{ t: 0.7, off: -44 }],
+    stars: { motePct: 0.65, maxPings: 48 },
+    hints: [
+      { t: 0.18, text: 'False lights, in water that will not answer you.',
+        plain: 'Checking a lure costs a song, and songs die in the hush. Check from outside it.' },
+    ],
+  },
+  {
+    id: 35, name: 'The Long Silence', seed: 3535,
+    path: [[0, 0], [80, 340], [-50, 700], [60, 1060], [-40, 1420], [50, 1760], [0, 2100]],
+    width: [100, 94, 88],
+    moteCount: 16,
+    hushZones: [
+      { t: 0.26, off: 0, r: 180, depth: 0.75 },
+      { t: 0.56, off: 0, r: 190, depth: 0.78 },
+      { t: 0.84, off: 0, r: 170, depth: 0.72 },
+    ],
+    ice: [{ t: 0.36, off: -24 }, { t: 0.48, off: 22 }, { t: 0.66, off: -22 }, { t: 0.8, off: 22 }],
+    hunters: [{ t: 0.62, off: 0, wanderR: 160 }],
+    urchins: [
+      { t: 0.2, off: 24 }, { t: 0.42, off: -22 }, { t: 0.52, off: 22 },
+      { t: 0.7, off: -20 }, { t: 0.78, off: 20 }, { t: 0.88, off: -20 }, { t: 0.94, off: 20 },
+    ],
+    heartMotes: [{ t: 0.34, off: -42 }],
+    stars: { motePct: 0.65, maxPings: 54 },
+    hints: [
+      { t: 0.1, text: 'Three silences, end to end. The trench is asking how well you remember.',
+        plain: 'Long stretches where songs barely work. Light each gap before you cross it.' },
+    ],
+  },
+  {
+    id: 36, name: 'Glass and Silence', seed: 3636,
+    path: [[0, 0], [-70, 340], [60, 680], [-50, 1020], [60, 1360], [-40, 1700], [40, 2040]],
+    width: [112, 106, 100],
+    moteCount: 15,
+    hushZones: [{ t: 0.46, off: 0, r: 190, depth: 0.8 }, { t: 0.78, off: 0, r: 160, depth: 0.7 }],
+    crystals: [{ t: 0.38, off: -34 }, { t: 0.58, off: 34 }, { t: 0.74, off: 0 }],
+    ice: [{ t: 0.5, off: -36 }, { t: 0.72, off: 36 }],
+    hunters: [{ t: 0.56, off: 0, wanderR: 160 }],
+    urchins: [
+      { t: 0.2, off: 36 }, { t: 0.34, off: -36 }, { t: 0.5, off: 34 }, { t: 0.86, off: -34 },
+    ],
+    heartMotes: [{ t: 0.28, off: 42 }],
+    stars: { motePct: 0.7, maxPings: 50 },
+    hints: [
+      { t: 0.2, text: 'The good glass still answers, even where your own voice will not.',
+        plain: 'Crystals bloom from where they stand, so their light works inside a hush.' },
+    ],
+  },
+  {
+    id: 37, name: 'Cold Company', seed: 3737,
+    path: [[0, 0], [60, 320], [-60, 660], [50, 1000], [-50, 1340], [60, 1680], [-20, 2020]],
+    width: [108, 100, 94],
+    moteCount: 15,
+    ice: [
+      { t: 0.22, off: 26 }, { t: 0.34, off: -26 }, { t: 0.46, off: 24 },
+      { t: 0.6, off: -24 }, { t: 0.76, off: 24 },
+    ],
+    hunters: [{ t: 0.3, off: -18, wanderR: 160 }, { t: 0.66, off: 18, wanderR: 160 }],
+    urchins: [{ t: 0.4, off: 22 }, { t: 0.52, off: -22 }, { t: 0.86, off: 20 }],
+    heartMotes: [{ t: 0.48, off: 40 }],
+    stars: { motePct: 0.65, maxPings: 50 },
+    hints: [
+      { t: 0.14, text: 'Three ears, and a floor made of noise.',
+        plain: 'Every shard you break pulls all three. Thread between them.' },
+    ],
+  },
+  {
+    id: 38, name: 'Deaf Water', seed: 3838,
+    path: [[0, 0], [-80, 340], [50, 700], [-60, 1040], [50, 1380], [-40, 1720], [30, 2060]],
+    width: [100, 94, 88],
+    moteCount: 15,
+    hushZones: [
+      { t: 0.3, off: 0, r: 190, depth: 0.84 },
+      { t: 0.6, off: 0, r: 180, depth: 0.82 },
+      { t: 0.86, off: 0, r: 160, depth: 0.76 },
+    ],
+    ice: [{ t: 0.42, off: -22 }, { t: 0.56, off: 22 }, { t: 0.76, off: -20 }],
+    urchins: [
+      { t: 0.24, off: 24 }, { t: 0.36, off: -22 }, { t: 0.48, off: 22 },
+      { t: 0.64, off: -20 }, { t: 0.8, off: 20 }, { t: 0.92, off: -20 },
+    ],
+    heartMotes: [{ t: 0.56, off: 40 }],
+    stars: { motePct: 0.65, maxPings: 56 },
+    hints: [
+      { t: 0.12, text: 'The deepest silence yet, and it is full of thorns.',
+        plain: 'Almost nothing you sing inside comes back. Map it from the edges.' },
+    ],
+  },
+  {
+    id: 39, name: 'The Cracking', seed: 3939,
+    path: [[0, 0], [70, 320], [-50, 660], [60, 1000], [-40, 1340], [50, 1680], [-20, 2020]],
+    width: [102, 96, 90],
+    moteCount: 15,
+    ice: [
+      { t: 0.18, off: 0 }, { t: 0.28, off: -24 }, { t: 0.38, off: 24 }, { t: 0.48, off: 0 },
+      { t: 0.58, off: -22 }, { t: 0.7, off: 22 }, { t: 0.84, off: -22 },
+    ],
+    hunters: [{ t: 0.4, off: 0, wanderR: 175, fast: true }, { t: 0.78, off: 0, wanderR: 160 }],
+    urchins: [{ t: 0.32, off: 24 }, { t: 0.52, off: -22 }, { t: 0.66, off: 22 }, { t: 0.9, off: -20 }],
+    heartMotes: [{ t: 0.6, off: 38 }],
+    stars: { motePct: 0.65, maxPings: 54 },
+    hints: [
+      { t: 0.1, text: 'A floor of glass, and fast things walking on it.',
+        plain: 'Eight shards and three hunters, one of them quick. Drift, do not dash.' },
+    ],
+  },
+  {
+    id: 40, name: 'Undertow', seed: 4040,
+    path: [[0, 0], [-60, 340], [60, 700], [-60, 1040], [50, 1400], [-40, 1740], [40, 2080]],
+    width: [102, 94, 90],
+    moteCount: 16,
+    hushZones: [{ t: 0.58, off: 0, r: 175, depth: 0.76 }, { t: 0.86, off: 0, r: 150, depth: 0.68 }],
+    currents: [
+      { t: 0.26, off: 0, r: 160, mode: 'against', strength: 1.1 },
+      { t: 0.5, off: 0, r: 155, mode: 'across', strength: 1.05 },
+      { t: 0.76, off: 0, r: 150, mode: 'against', strength: 1.1 },
+    ],
+    lures: [{ t: 0.34, off: 44 }, { t: 0.48, off: -42 }, { t: 0.64, off: 42 }, { t: 0.78, off: -40 },
+            { t: 0.9, off: 40 }],
+    hunters: [{ t: 0.42, off: 0, wanderR: 165 }, { t: 0.82, off: 0, wanderR: 155 }],
+    urchins: [{ t: 0.3, off: -20 }, { t: 0.7, off: 20 }],
+    heartMotes: [{ t: 0.54, off: -44 }],
+    stars: { motePct: 0.65, maxPings: 58 },
+    hints: [
+      { t: 0.16, text: 'The water pushes, the silence eats, and the lights lie.',
+        plain: 'A current can shove you into a lure you had no song left to check.' },
+    ],
+  },
+  {
+    id: 41, name: 'Everything Listens', seed: 4141,
+    path: [[0, 0], [80, 340], [-60, 700], [60, 1060], [-50, 1420], [60, 1780], [-20, 2120]],
+    width: [110, 102, 96],
+    moteCount: 16,
+    hushZones: [{ t: 0.36, off: 0, r: 180, depth: 0.8 }, { t: 0.72, off: 0, r: 165, depth: 0.74 }],
+    ice: [{ t: 0.28, off: -26 }, { t: 0.44, off: 26 }, { t: 0.62, off: -24 }, { t: 0.88, off: 24 }],
+    lures: [{ t: 0.52, off: 48 }, { t: 0.7, off: -46 }, { t: 0.9, off: 46 }],
+    hunters: [{ t: 0.42, off: 0, wanderR: 170 }, { t: 0.82, off: 0, wanderR: 160 }],
+    urchins: [{ t: 0.22, off: 26 }, { t: 0.58, off: -24 }],
+    heartMotes: [{ t: 0.24, off: 44 }],
+    stars: { motePct: 0.6, maxPings: 60 },
+    hints: [
+      { t: 0.1, text: 'Everything the hush taught you, all at once.',
+        plain: 'Silence, ice, lures and two hunters. Nothing new — just no room for error.' },
+    ],
+  },
+  {
+    id: 42, name: 'The Deep Hush', seed: 4242,
+    path: [[0, 0], [70, 320], [-50, 660], [40, 1020], [0, 1400], [60, 1780], [-30, 2120], [30, 2420]],
+    width: [92, 86, 165, 285, 285, 150, 98, 88],
+    checkpoint: 0.46,
+    moteCount: 18,
+    leviathans: [
+      { t: 0.52, off: 0, patrolR: 195, speedScale: 1.2 },
+      { t: 0.58, off: 0, patrolR: 100, speedScale: 1.35, reverse: true },
+    ],
+    hushZones: [{ t: 0.54, off: 0, r: 250, depth: 0.82 }],
+    crystals: [{ t: 0.34, off: 0 }, { t: 0.74, off: 0 }],
+    ice: [{ t: 0.26, off: -22 }, { t: 0.36, off: 22 }, { t: 0.82, off: -20 }],
+    urchins: [{ t: 0.2, off: 22 }, { t: 0.88, off: -20 }, { t: 0.94, off: 20 }],
+    heartMotes: [{ t: 0.44, off: -66 }],
+    stars: { motePct: 0.6, maxPings: 58 },
+    hints: [
+      { t: 0.22, text: 'They sleep in the quietest water in the world. Of course they do.',
+        plain: 'Two leviathans inside a deep hush. Your songs will barely reach them.' },
+      { t: 0.44, text: 'The mouth. Whatever happens past here, you wake here again.',
+        plain: 'Checkpoint. Any death past this point returns you here.' },
+      { t: 0.6, text: 'The glass is your voice down here. Let it do the singing.',
+        plain: 'Crystals still work inside the hush. Use them to see where the orbits cross.' },
+    ],
+    chapterEnd: true,
+  },
+
+  // ===========================================================================
+  // Chapter 4 · The Warm Dark (43-50)
+  //
+  // After the hush, relief — and the game's only bright scale. Warm vents carry
+  // you where a song would have, and glow enough to see by, for free. The
+  // chapter is about learning to spend nothing at all, which is why it can hold
+  // more threat than anything before it without feeling unfair.
+  // ===========================================================================
+  {
+    id: 43, name: 'Warmth', seed: 4343,
+    path: [[0, 0], [60, 320], [-50, 640], [50, 960], [-40, 1280], [50, 1600], [0, 1900]],
+    width: [118, 110, 104],
+    moteCount: 14,
+    warmVents: [{ t: 0.36, off: 0, r: 160, strength: 1.0 }, { t: 0.72, off: 0, r: 155, strength: 1.0 }],
+    hushZones: [{ t: 0.56, off: 0, r: 150, depth: 0.6 }],
+    ice: [{ t: 0.28, off: 37 }, { t: 0.46, off: -37 }, { t: 0.66, off: 37 }, { t: 0.82, off: -37 }],
+    hunters: [{ t: 0.5, off: 0, wanderR: 155 }, { t: 0.88, off: 0, wanderR: 145 }],
+    urchins: [
+      { t: 0.16, off: 37 }, { t: 0.24, off: -37 }, { t: 0.38, off: 37 }, { t: 0.54, off: -37 },
+      { t: 0.7, off: 37 }, { t: 0.78, off: -37 }, { t: 0.94, off: 37 },
+    ],
+    stars: { motePct: 0.7, maxPings: 42 },
+    hints: [
+      { t: 0.12, text: 'Warm water, rising. Something down here is still alive.',
+        plain: 'Orange zones carry you along and light the walls for free. No song needed.' },
+      { t: 0.4, text: 'Let it lift you. Save your voice.',
+        plain: 'Drift into a vent and it moves you. Fewer songs means an easier star.' },
+    ],
+  },
+  {
+    id: 44, name: 'The Updraft', seed: 4444,
+    path: [[0, 0], [-70, 340], [60, 680], [-50, 1020], [60, 1360], [-40, 1700], [30, 2020]],
+    width: [114, 106, 100],
+    moteCount: 15,
+    warmVents: [{ t: 0.3, off: 0, r: 155, strength: 1.15 }, { t: 0.66, off: 0, r: 155, strength: 1.15 }],
+    hushZones: [{ t: 0.5, off: 0, r: 160, depth: 0.66 }],
+    ice: [{ t: 0.4, off: -36 }, { t: 0.62, off: 36 }, { t: 0.86, off: -36 }],
+    hunters: [{ t: 0.46, off: 0, wanderR: 160 }],
+    urchins: [{ t: 0.22, off: 36 }, { t: 0.34, off: -36 }, { t: 0.66, off: 36 },
+              { t: 0.92, off: -36 }],
+    heartMotes: [{ t: 0.48, off: 42 }],
+    stars: { motePct: 0.7, maxPings: 44 },
+    hints: [
+      { t: 0.18, text: 'It gives freely, and it does not steer.',
+        plain: 'A vent sets your speed, not your direction. Line up before you enter.' },
+    ],
+  },
+  {
+    id: 45, name: 'Rising', seed: 4545,
+    path: [[0, 0], [70, 340], [-60, 680], [50, 1020], [-50, 1360], [60, 1700], [-20, 2040]],
+    width: [106, 100, 94],
+    moteCount: 15,
+    warmVents: [{ t: 0.32, off: 0, r: 155, strength: 1.2 }, { t: 0.7, off: 0, r: 150, strength: 1.2 }],
+    hushZones: [{ t: 0.52, off: 0, r: 160, depth: 0.7 }],
+    ice: [{ t: 0.42, off: -34 }, { t: 0.6, off: 34 }, { t: 0.84, off: -34 }],
+    hunters: [{ t: 0.38, off: -18, wanderR: 165 }, { t: 0.74, off: 18, wanderR: 160 }],
+    urchins: [{ t: 0.24, off: 34 }, { t: 0.5, off: -34 }, { t: 0.68, off: 34 },
+              { t: 0.92, off: -34 }],
+    heartMotes: [{ t: 0.56, off: -40 }],
+    stars: { motePct: 0.65, maxPings: 48 },
+    hints: [
+      { t: 0.14, text: 'Ride it past them. A song would only introduce you.',
+        plain: 'Vents move you silently, so you can cross all three hunters without singing.' },
+    ],
+  },
+  {
+    id: 46, name: 'Thermals', seed: 4646,
+    path: [[0, 0], [-60, 340], [60, 700], [-60, 1040], [50, 1380], [-40, 1720], [40, 2060]],
+    width: [104, 98, 92],
+    moteCount: 15,
+    warmVents: [{ t: 0.26, off: 0, r: 150, strength: 1.25 }, { t: 0.64, off: 0, r: 155, strength: 1.25 }],
+    hushZones: [{ t: 0.48, off: 0, r: 155, depth: 0.7 }],
+    ice: [
+      { t: 0.34, off: -33 }, { t: 0.44, off: 33 }, { t: 0.56, off: -33 },
+      { t: 0.72, off: 33 }, { t: 0.88, off: -33 },
+    ],
+    hunters: [{ t: 0.44, off: 0, wanderR: 165 }, { t: 0.8, off: 0, wanderR: 155 }],
+    urchins: [{ t: 0.2, off: 33 }, { t: 0.32, off: -33 }, { t: 0.62, off: 33 }, { t: 0.94, off: -33 }],
+    heartMotes: [{ t: 0.36, off: 40 }],
+    stars: { motePct: 0.65, maxPings: 50 },
+    hints: [
+      { t: 0.16, text: 'The warmth will carry you straight into the glass if you let it.',
+        plain: 'A vent adds speed you did not ask for. Ice ahead means steering early.' },
+    ],
+  },
+  {
+    id: 47, name: 'The Chimney', seed: 4747,
+    path: [[0, 0], [80, 340], [-50, 700], [60, 1060], [-40, 1420], [50, 1760], [0, 2100]],
+    width: [114, 106, 100],
+    moteCount: 16,
+    warmVents: [{ t: 0.3, off: 0, r: 155, strength: 1.3 }, { t: 0.72, off: 0, r: 150, strength: 1.2 }],
+    currents: [{ t: 0.48, off: 0, r: 160, mode: 'across', strength: 1.1 },
+               { t: 0.84, off: 0, r: 150, mode: 'against', strength: 1.05 }],
+    lures: [{ t: 0.38, off: 50 }, { t: 0.56, off: -48 }, { t: 0.74, off: 48 }, { t: 0.92, off: -46 }],
+    hunters: [{ t: 0.42, off: 0, wanderR: 165 }, { t: 0.78, off: 0, wanderR: 160 }],
+    ice: [{ t: 0.26, off: -36 }, { t: 0.62, off: 36 }, { t: 0.88, off: -36 }],
+    urchins: [{ t: 0.22, off: 36 }, { t: 0.5, off: -36 }, { t: 0.68, off: 36 }, { t: 0.96, off: -36 }],
+    heartMotes: [{ t: 0.56, off: 44 }],
+    stars: { motePct: 0.65, maxPings: 56 },
+    hints: [
+      { t: 0.18, text: 'Warm going up, cold going across, and lights that want you to stop.',
+        plain: 'A vent and a cross-current fight each other. Lures sit where you lose control.' },
+    ],
+  },
+  {
+    id: 48, name: 'Hot and Cold', seed: 4848,
+    path: [[0, 0], [-70, 340], [60, 700], [-60, 1060], [50, 1400], [-40, 1740], [40, 2080]],
+    width: [98, 92, 88],
+    moteCount: 16,
+    warmVents: [{ t: 0.24, off: 0, r: 155, strength: 1.25 }, { t: 0.68, off: 0, r: 150, strength: 1.25 }],
+    hushZones: [{ t: 0.42, off: 0, r: 175, depth: 0.78 }, { t: 0.7, off: 0, r: 160, depth: 0.74 },
+                { t: 0.92, off: 0, r: 145, depth: 0.7 }],
+    ice: [
+      { t: 0.3, off: -32 }, { t: 0.38, off: 32 }, { t: 0.5, off: -32 },
+      { t: 0.6, off: 32 }, { t: 0.78, off: -32 }, { t: 0.88, off: 32 },
+    ],
+    lures: [{ t: 0.46, off: 44 }, { t: 0.74, off: -42 }],
+    hunters: [{ t: 0.36, off: 0, wanderR: 165 }, { t: 0.62, off: 0, wanderR: 160 }, { t: 0.86, off: 0, wanderR: 150 }],
+    urchins: [{ t: 0.2, off: 32 }, { t: 0.54, off: -32 }, { t: 0.82, off: 32 }, { t: 0.96, off: -32 }],
+    heartMotes: [{ t: 0.34, off: -42 }],
+    stars: { motePct: 0.65, maxPings: 58 },
+    hints: [
+      { t: 0.14, text: 'Warmth on both sides of a silence.',
+        plain: 'The vents light the hush for free. Ride in on their glow instead of singing.' },
+    ],
+  },
+  {
+    id: 49, name: 'The Threshold', seed: 4949,
+    path: [[0, 0], [70, 340], [-60, 700], [50, 1060], [-50, 1420], [60, 1780], [-20, 2120]],
+    width: [112, 104, 98],
+    moteCount: 17,
+    warmVents: [{ t: 0.28, off: 0, r: 155, strength: 1.3 }, { t: 0.7, off: 0, r: 155, strength: 1.3 }],
+    hushZones: [{ t: 0.5, off: 0, r: 175, depth: 0.78 }, { t: 0.88, off: 0, r: 150, depth: 0.72 }],
+    lures: [{ t: 0.38, off: 48 }, { t: 0.56, off: -46 }, { t: 0.72, off: 46 }, { t: 0.9, off: -44 }],
+    hunters: [{ t: 0.44, off: 0, wanderR: 170 }, { t: 0.8, off: 0, wanderR: 160 }],
+    ice: [{ t: 0.32, off: -35 }, { t: 0.5, off: 35 }, { t: 0.64, off: -35 }, { t: 0.84, off: 35 }],
+    urchins: [{ t: 0.24, off: 35 }, { t: 0.6, off: -35 }, { t: 0.76, off: 35 }, { t: 0.96, off: -35 }],
+    heartMotes: [{ t: 0.34, off: -44 }],
+    stars: { motePct: 0.6, maxPings: 60 },
+    hints: [
+      { t: 0.1, text: 'The last quiet door. Everything is on the other side of it.',
+        plain: 'Vents, hush, lures, ice and three hunters together. Spend as few songs as you can.' },
+    ],
+  },
+  {
+    id: 50, name: 'The Warm Dark', seed: 5050,
+    path: [[0, 0], [80, 340], [-50, 700], [40, 1080], [0, 1480], [70, 1860], [-30, 2220], [30, 2540]],
+    width: [94, 90, 175, 300, 300, 160, 104, 92],
+    checkpoint: 0.46,
+    moteCount: 20,
+    leviathans: [
+      { t: 0.52, off: 0, patrolR: 210, speedScale: 1.25 },
+      { t: 0.58, off: 0, patrolR: 115, speedScale: 1.4, reverse: true },
+    ],
+    warmVents: [{ t: 0.32, off: 0, r: 155, strength: 1.3 }, { t: 0.78, off: 0, r: 150, strength: 1.3 }],
+    hushZones: [{ t: 0.54, off: 0, r: 235, depth: 0.74 }],
+    crystals: [{ t: 0.4, off: 0 }, { t: 0.72, off: 0 }],
+    ice: [{ t: 0.24, off: -32 }, { t: 0.34, off: 32 }, { t: 0.86, off: -32 }],
+    urchins: [{ t: 0.2, off: 32 }, { t: 0.9, off: -32 }, { t: 0.96, off: 32 }],
+    heartMotes: [{ t: 0.46, off: -68 }],
+    stars: { motePct: 0.6, maxPings: 62 },
+    hints: [
+      { t: 0.2, text: 'Warm water, and two shapes turning in it.',
+        plain: 'Two leviathans, and vents that can carry you past both without a sound.' },
+      { t: 0.45, text: 'The mouth. Whatever happens past here, you wake here again.',
+        plain: 'Checkpoint. Any death past this point returns you here.' },
+      { t: 0.6, text: 'Let the warmth do it. You have spent enough of your voice down here.',
+        plain: 'Ride the vents through the gap in their orbits. Sing only if you must.' },
+      { t: 0.93, text: 'Light ahead, little lume. Sing it home.',
+        plain: 'The vent is close. Finish the swim.' },
+    ],
+    chapterEnd: true,
     finale: true,
   },
 ];
@@ -471,6 +928,8 @@ export const LEVELS = [
 export const CHAPTERS = [
   { id: 1, name: 'The Shallows', from: 1, to: 14, mode: 'shallows' },
   { id: 2, name: 'The Trench', from: 15, to: 28, mode: 'trench' },
+  { id: 3, name: 'The Hush', from: 29, to: 42, mode: 'hush' },
+  { id: 4, name: 'The Warm Dark', from: 43, to: 50, mode: 'warm' },
 ];
 
 export function chapterOf(levelId) {
@@ -522,11 +981,27 @@ export function gateBoon(id, banked, capacity) {
   const b = {
     id, kind, grade, banked, capacity,
     aura: 0, decay: 0, silentSongs: 0, revealLures: false, orbitSecs: 0,
+    hushRelief: 0, iceSteady: false,
   };
-  if (id % 28 === 7)  { b.aura = grade * 0.6; b.decay = grade * 0.35; }
-  else if (id % 28 === 14) { b.silentSongs = Math.floor(grade * 5); }
-  else if (id % 28 === 21) { b.revealLures = grade >= 0.34; }
-  else { b.orbitSecs = Math.round(grade * 20); }
+  switch (id) {
+    case 7:  b.aura = grade * 0.6; b.decay = grade * 0.35; break;
+    case 14: b.silentSongs = Math.floor(grade * 5); break;
+    case 21: b.revealLures = grade >= 0.34; break;
+    case 28: b.orbitSecs = Math.round(grade * 20); break;
+    // Chapter 3 gives back the thing the chapter takes away: carried light
+    // keeps a little of your voice alive inside the silence.
+    case 35: b.hushRelief = grade * 0.55; break;
+    case 42: b.hushRelief = grade * 0.45; b.orbitSecs = Math.round(grade * 16); break;
+    // Chapter 4's gate steadies you against the ice the vents throw you at.
+    case 49: b.iceSteady = grade >= 0.34; b.aura = grade * 0.35; break;
+    default:
+      // Anything past the authored set falls back to the 28-depth cycle, so a
+      // future chapter is never boonless by accident.
+      if (id % 28 === 7) { b.aura = grade * 0.6; b.decay = grade * 0.35; }
+      else if (id % 28 === 14) b.silentSongs = Math.floor(grade * 5);
+      else if (id % 28 === 21) b.revealLures = grade >= 0.34;
+      else b.orbitSecs = Math.round(grade * 20);
+  }
   return b;
 }
 
@@ -534,24 +1009,39 @@ export function gateBoon(id, banked, capacity) {
 // implies a purchase — there is no way to buy light.
 export function gateBoonLine(b) {
   if (!b) return '';
-  if (b.id % 28 === 7) {
-    return b.aura > 0.05
-      ? `Your glow starts ${Math.round(b.aura * 100)}% wider, and fades slower.`
-      : 'You will swim this one on your own light.';
+  switch (b.id) {
+    case 35:
+      return b.hushRelief > 0.05
+        ? `Enough that ${Math.round(b.hushRelief * 100)}% of your voice survives the silence.`
+        : 'Not enough to carry your voice in. The silence takes all of it.';
+    case 42:
+      return b.hushRelief > 0.05
+        ? `Enough to be heard in the hush, and to trace its orbit for ${b.orbitSecs} seconds.`
+        : 'Not enough to be heard in there at all. The glass is your only voice.';
+    case 49:
+      return b.iceSteady
+        ? 'Enough to hold your line where the warmth would have thrown you.'
+        : 'Not enough to steady yourself. The vents will steer for you.';
+    default:
+      if (b.id % 28 === 7) {
+        return b.aura > 0.05
+          ? `Your glow starts ${Math.round(b.aura * 100)}% wider, and fades slower.`
+          : 'You will swim this one on your own light.';
+      }
+      if (b.id % 28 === 14) {
+        return b.silentSongs > 0
+          ? `Enough for ${b.silentSongs} silent song${b.silentSongs === 1 ? '' : 's'}. It will not hear you coming.`
+          : 'Not enough for a single silent song. It hears everything.';
+      }
+      if (b.id % 28 === 21) {
+        return b.revealLures
+          ? 'Enough to see which lights are false before they spring.'
+          : 'Not enough to tell a lure from a mote. Sing at everything.';
+      }
+      return b.orbitSecs > 0
+        ? `Enough to trace their orbits for ${b.orbitSecs} seconds.`
+        : 'Not enough to trace them. You will have to watch, and wait.';
   }
-  if (b.id % 28 === 14) {
-    return b.silentSongs > 0
-      ? `Enough for ${b.silentSongs} silent song${b.silentSongs === 1 ? '' : 's'}. It will not hear you coming.`
-      : 'Not enough for a single silent song. It hears everything.';
-  }
-  if (b.id % 28 === 21) {
-    return b.revealLures
-      ? 'Enough to see which lights are false before they spring.'
-      : 'Not enough to tell a lure from a mote. Sing at everything.';
-  }
-  return b.orbitSecs > 0
-    ? `Enough to trace their orbits for ${b.orbitSecs} seconds.`
-    : 'Not enough to trace them. You will have to watch, and wait.';
 }
 
 export function prevChapter(chapter) {
@@ -584,6 +1074,12 @@ const PAR_TIMES = {
   // god mode never pays.
   15: 42, 16: 48, 17: 50, 18: 54, 19: 54, 20: 54, 21: 80,
   22: 50, 23: 56, 24: 52, 25: 58, 26: 54, 27: 60, 28: 95,
+  // Chapters 3-4, same measurement. Hush depths get a little extra on top of
+  // the 9x rule: a bot follows the corridor spine and never has to see, so its
+  // run time understates how long a human spends working out where to sing.
+  29: 46, 30: 48, 31: 46, 32: 48, 33: 52, 34: 50, 35: 56,
+  36: 50, 37: 48, 38: 54, 39: 48, 40: 52, 41: 54, 42: 94,
+  43: 42, 44: 46, 45: 46, 46: 48, 47: 48, 48: 52, 49: 50, 50: 98,
 };
 
 export function parTime(id) {

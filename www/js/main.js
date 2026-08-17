@@ -11,6 +11,7 @@ import { Save } from './save.js';
 import { UI } from './ui.js';
 import { Game, starBreakdown, starTargets } from './game.js';
 import { GameServices, MILESTONES } from './gameservices.js';
+import { Ads } from './ads.js';
 import {
   getLevel, LEVELS, parTime, chapterOf,
   gateKind, gateSpan, gateCapacity, gateBoon, gateBoonLine,
@@ -30,6 +31,7 @@ class Shell {
     this.haptics = new Haptics();
     this.save = new Save();
     this.gs = new GameServices(this.save);
+    this.ads = new Ads(this.save);   // inert until AD_IDS are filled in
     this.ui = new UI();
     this.input = new Input(this.canvas);
     this.palette = PALETTE;
@@ -64,6 +66,8 @@ class Shell {
     } else {
       this._show('title');
     }
+    // No-op while AD_IDS are null, so this is safe to ship dormant.
+    this.ads.init();
     // Debug/test API only in plain-web dev, never in shipped native builds.
     if (!window.Capacitor) installDebug(this);
 
@@ -138,6 +142,14 @@ class Shell {
           fromCheckpoint: this._checkpointFor(this.currentLevelId) !== null,
         });
         this._show('gameover');
+        // Never an interstitial here. The only ad a death may ever produce is
+        // a revive the player chooses, offered once, at a boss.
+        const dead = this.game.def;
+        if (dead && gateKind(dead.id) === 'boss') {
+          this.ads.offerRevive({ isBoss: true }).then((took) => {
+            if (took) this.startLevel(dead.id, { fromCheckpoint: true, skipGate: true });
+          });
+        }
       },
       onWin: (stats) => {
         this.input.setActive(false);
@@ -169,6 +181,10 @@ class Shell {
               setTimeout(() => this.audio.star(i + 1), 780 + i * 380);
             }
             this._show('results');
+            // The only interstitial in the game, and only ever here: a gate you
+            // just cleared. Dormant until ad ids exist; the rule lives in
+            // ads.js so it holds no matter who calls it.
+            this.ads.maybeInterstitial({ won: true, isGate: !!gateKind(def.id) });
           }, 900);
         }
       },
@@ -199,6 +215,15 @@ class Shell {
         this.particles.burst(x, y, this.palette.heart, 22, 140, 1.1, 3.2, this.palette.heartCore);
         this.ui.hint('The beating light mends you.', 2400);
       },
+      // Breaking ice is not damage, so it gets no red flash — but it is the
+      // loudest mistake available, so it gets the shake and the warning buzz.
+      onIceBreak: (x, y) => {
+        this.audio.iceBreak();
+        this.haptics.warn();
+        this.renderer.addShake(0.28);
+        this.particles.burst(x, y, this.palette.ice, 20, 190, 0.8, 3, this.palette.iceCore);
+      },
+      onSilentSong: () => this.haptics.tick?.(),
       onLeviathanWake: () => {
         this.audio.leviathanWake();
         this.haptics.warn();

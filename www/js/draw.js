@@ -5,6 +5,7 @@ import { clamp, lerp, dist, hexLerp } from './util.js';
 
 const _wallBatch = [];
 const _spikeBatch = [];
+const _iceBatch = [];
 
 // The chain's visible voice: concentric rings in the mote's own amber, growing
 // in count and strength with the streak. Colour never changes, so identity holds.
@@ -79,6 +80,65 @@ export function drawGame(R, game, particles, time, dt, palette) {
         alpha: 0.65 * Math.max(0.35, vis), gravity: -14, drag: 0.4,
       });
     }
+  }
+
+  // ---- hush zones ----
+  // Drawn as absence, and always visible. A zone you could not see before you
+  // sang into it would be a trap; seeing it makes the choice of where to sing
+  // the actual puzzle. Sits under everything else on purpose.
+  for (const h of game.ents.hushZones || []) {
+    if (!R.inView(h.x, h.y, h.r + 40)) continue;
+    const breathe = 1 + 0.02 * Math.sin(time * 0.5 + h.phase);
+    R.softDisc(h.x, h.y, h.r * breathe, palette.hush, 0.5 * h.depth);
+    R.ring(h.x, h.y, h.r * breathe, 1.1 * z, palette.hushEdge, 0.3);
+  }
+
+  // ---- warm vents ----
+  // A rising region, never a point — the warm hues in this palette all belong
+  // to things you collect, and scale is what keeps this from joining them.
+  for (const w of game.ents.warmVents || []) {
+    if (!R.inView(w.x, w.y, w.r + 40)) continue;
+    const pulse = 0.5 + 0.12 * Math.sin(time * 1.1 + w.phase);
+    R.softDisc(w.x, w.y, w.r, palette.warm, 0.16 * pulse);
+    R.ring(w.x, w.y, w.r * (0.55 + 0.12 * Math.sin(time * 0.9 + w.phase)),
+           1.2 * z, palette.warm, 0.28);
+    // Three motes of heat riding the draught, so the direction is readable.
+    for (let i = 0; i < 3; i++) {
+      const t = ((time * 0.42 + i / 3 + w.phase * 0.1) % 1);
+      const px = w.x + w.dirX * (t - 0.5) * w.r * 1.5;
+      const py = w.y + w.dirY * (t - 0.5) * w.r * 1.5;
+      R.glowDot(px, py, 3.4, palette.warm, 0.5 * Math.sin(t * Math.PI), palette.warmCore);
+    }
+  }
+
+  // ---- brittle ice ----
+  for (const ice of game.ents.ice || []) {
+    if (!R.inView(ice.x, ice.y, 60)) continue;
+    if (ice.broken) {
+      // Fragments flying apart, fading. Says plainly what just happened.
+      const k = Math.min(1, ice.t / TUNING.iceShatterTime);
+      if (k >= 1) continue;
+      for (const a of ice.facets) {
+        const d = 14 + k * 46;
+        const x = ice.x + Math.cos(a) * d, y = ice.y + Math.sin(a) * d;
+        R.glowDot(x, y, 2.6 * (1 - k), palette.ice, (1 - k) * 0.75, palette.iceCore);
+      }
+      continue;
+    }
+    const idle = 0.1 + 0.04 * Math.sin(time * 1.3 + ice.phase);
+    const vis = Math.max(ice.reveal, idle);
+    // Angular, not round: the shape is what separates it from a bloom crystal.
+    for (const a of ice.facets) {
+      const r0 = 4, r1 = TUNING.iceRadius;
+      const s0 = R.worldToScreen(ice.x + Math.cos(a) * r0, ice.y + Math.sin(a) * r0);
+      const s1 = R.worldToScreen(ice.x + Math.cos(a) * r1, ice.y + Math.sin(a) * r1);
+      _iceBatch.push({ x1: s0.x, y1: s0.y, x2: s1.x, y2: s1.y, a: vis * 0.8 });
+    }
+    R.glowDot(ice.x, ice.y, 4.5, palette.ice, vis * 0.55, palette.iceCore);
+  }
+  if (_iceBatch.length) {
+    R.strokeGlowSegments(_iceBatch, 1.2 * z, palette.ice, palette.iceCore);
+    _iceBatch.length = 0;
   }
 
   // ---- motes ----

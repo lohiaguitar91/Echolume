@@ -113,6 +113,39 @@ export function setupEntities(def, geom) {
     return { x: p.x, y: p.y, charge: 1, reveal: 0, phase: rng() * 6.28, spin: rng() * 6.28 };
   });
 
+  // Hush zones: water that swallows song. Always visible as an absence, because
+  // walking blind into one you never saw would be a trap, not a puzzle.
+  const hushZones = (def.hushZones || []).map((spec) => {
+    const p = resolvePos(spec, geom);
+    return {
+      x: p.x, y: p.y, r: spec.r || 160,
+      depth: Math.min(0.95, spec.depth ?? 0.7),
+      phase: rng() * 6.28,
+    };
+  });
+
+  // Brittle ice: it does not hurt you. It tells on you.
+  const ice = (def.ice || []).map((spec) => {
+    const p = resolvePos(spec, geom);
+    const facets = [];
+    const n = 5 + Math.floor(rng() * 3);
+    for (let i = 0; i < n; i++) facets.push((i / n) * Math.PI * 2 + rng() * 0.4);
+    return { x: p.x, y: p.y, broken: false, t: 0, reveal: 0, phase: rng() * 6.28, facets };
+  });
+
+  // Warm vents: rising water that carries you, and glows enough to see by.
+  const warmVents = (def.warmVents || []).map((spec) => {
+    const p = resolvePos(spec, geom);
+    let dx = p.dirX, dy = p.dirY;
+    if (spec.mode === 'against') { dx = -dx; dy = -dy; }
+    return {
+      x: p.x, y: p.y, r: spec.r || 150,
+      dirX: dx, dirY: dy,
+      strength: (spec.strength || 1) * TUNING.warmForce,
+      emitT: 0, phase: rng() * 6.28,
+    };
+  });
+
   // Heart motes: one per deep level, off the safe line, usually guarded.
   const heartMotes = (def.heartMotes || []).map((spec) => {
     const p = resolvePos(spec, geom);
@@ -140,5 +173,8 @@ export function setupEntities(def, geom) {
 
   const vent = { x: ventP.x, y: ventP.y, discovered: false, reveal: 0, phase: 0 };
 
-  return { player, motes, urchins, hunters, currents, lures, crystals, heartMotes, leviathans, vent };
+  return {
+    player, motes, urchins, hunters, currents, lures, crystals, heartMotes,
+    leviathans, hushZones, ice, warmVents, vent,
+  };
 }

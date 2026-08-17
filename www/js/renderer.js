@@ -170,6 +170,24 @@ export class Renderer {
     ctx.globalCompositeOperation = 'source-over';
   }
 
+  // A soft-edged filled region. Deliberately NOT additive: hush zones are
+  // thicker water rather than more light, so this lifts the void toward a
+  // murky grey instead of glowing. Warm vents use it at low alpha for haze.
+  softDisc(wx, wy, radius, color, alpha) {
+    if (!this.inView(wx, wy, radius)) return;
+    const s = this.worldToScreen(wx, wy);
+    const r = Math.max(1, radius * this.cam.zoom);
+    const ctx = this.ctx;
+    const g = ctx.createRadialGradient(s.x, s.y, r * 0.15, s.x, s.y, r);
+    g.addColorStop(0, color);
+    g.addColorStop(0.7, color);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
   // Expanding ping ring (screen space, additive).
   ring(wx, wy, radius, thickness, color, alpha) {
     const s = this.worldToScreen(wx, wy);

@@ -1,8 +1,9 @@
 # Echolume — project facts
 
-**Picking this up on a new machine? Read `HANDOFF.md` first** — it covers what's
-done, what's never been compiled, and the exact remaining steps for iOS, Android,
-and the two game-service consoles. `SHIP.md` is the ordered checklist.
+**On a Mac? Read `MACOS-NEXT.md` first** — it is written for the session picking
+this up there: what is done, what has never been compiled, the traps that have
+already cost time, and the design rules that must not be broken.
+`HANDOFF.md` is the longer history; `SHIP.md` is the ordered human checklist.
 
 - Run: `npm run dev` → port 3852 (config also in parent code-projects/.claude/launch.json as "echolume").
 - Pure vanilla JS in `www/`, no build step. Capacitor 8 wraps it (`android/`, `ios/`).
@@ -55,10 +56,23 @@ and the two game-service consoles. `SHIP.md` is the ordered checklist.
 - `www/js/ads.js` is dormant by design: fill `AD_IDS` / `IAP_PRODUCT_ID` to enable. Turning
   ads on also means a privacy-manifest and store data-safety update, and the iOS ATT prompt.
 
+## Verifying level content (learned the hard way)
+- **`autoplay` is not deterministic.** Hunter wander uses `Math.random()`, so a single
+  `verifyAll()` pass proves nothing for a marginal level. Run 9–11 trials and look at the
+  *pass rate*. Shipped chapters 1–2 sit at 100%; treat anything under ~90% as a real problem.
+- **A warm vent pins you to the centre line at speed.** In any level with `warmVents`, urchins
+  and ice must hug the wall (|off| ≥ ~0.7 × half-width) or they are simply undodgeable — depth
+  44 failed 0/7 until its last urchin moved outward, and 7/7 after.
+- **Lures hug the wall too**, at |off| ≈ half-width: `lureBaitRadius` is 50, so a centred lure
+  in a 90-wide corridor walls the seam completely.
+- Never use more than 2 hunters in a corridor under ~110 wide. Three is beyond anything
+  shipped and reads as unfair.
+
 ## Constraints worth remembering
 - Future level content must **sawtooth** in difficulty per chapter (~60% of the previous peak,
-  asymptotic ceiling). Linear scaling makes deep levels unplayable. Chapters 1–2 (depths 1–28)
-  are built; 3–4 (29–50) are hush zones, brittle ice, then warm vents.
+  asymptotic ceiling), measured from **non-gate levels only** — gates are designed spikes and
+  using them as the baseline opens the next chapter at boss difficulty. All four chapters
+  (depths 1–50) are built: shallows, trench, hush, warm dark.
 - A lure's real footprint is `lureBaitRadius` (the distance at which it springs), not its hit
   radius. Keep it well under the corridor half-width or it walls the passage off.
 - Monetization plan is ads + level packs. **No gems, no currency, no energy timers.**
