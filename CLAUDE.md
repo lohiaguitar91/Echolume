@@ -35,12 +35,19 @@ already cost time, and the design rules that must not be broken.
   chapter's length (~60%); its `mode` names a scale in `audio.js` `MODES`.
 - Adding a hazard is four edits: an array in `entities.js` `setupEntities`, a block in
   `Game.update`, a block in `drawGame`, and a synthesized sound. Follow lures/crystals.
+- **`R.ring`/`R.glowDot` leave the canvas in `lighter` composite.** Raw `ctx` drawing
+  after them must set `globalCompositeOperation` itself — a "muting" overlay drawn
+  additively silently brightens instead (this hid the Deaf God's ring-death cue).
+- Render-only entity fields are underscore-prefixed (`w._attend`, `w._face`) and the
+  sim never reads them; that is how bosses visibly react to the cast aim without the
+  strike math changing.
 - Audio is 100% synthesized WebAudio (`audio.js`) — no audio files anywhere.
 - Game services: `www/js/gameservices.js` drives a hand-written native bridge named `GameConnect`
   (`ios/App/App/GameConnectPlugin.swift`, `android/.../GameConnectPlugin.java`). Degrades to
   local-only when no bridge is present.
 - Icon/splash source art: `/__dev/gen` page → `assets-out/`; fan out with `npx capacitor-assets generate`.
-- Store docs in `store/`; build/publish runbooks in `docs/`; next-iteration design in `docs/plan-v1.1.html`.
+- Store docs in `store/`; build/publish runbooks in `docs/`; the `docs/plan-v1.*.html`
+  files are archived decision records, not live plans.
 
 ## The gate economy (v1.2)
 - Every 7th depth is a gate, every 14th a boss (`gateKind` in `levels.js`). The motes banked
@@ -83,6 +90,9 @@ already cost time, and the design rules that must not be broken.
   Add a new mechanic → add a `TEACH` entry and a `SOURCES` row, or it goes unexplained.
 - Vertical order, top to bottom: top bar → objectives → level toast → boss card → teach/hint.
   If you add an overlay, measure it against all of these at 320×568 before shipping.
+- A depth's t=0 hint fires **during the intro**, so the verbs strip and the hint slot
+  genuinely coexist: on short screens (≤640px tall) the strip rides higher and smaller,
+  and the toast wraps under a max-width. Both live in ui.css media rules — keep them.
 
 ## Bosses
 - **Boss-ness is declared by the level, not by arithmetic.** A def with a `boss: { name,
@@ -120,4 +130,6 @@ already cost time, and the design rules that must not be broken.
   (depths 1–50) are built: shallows, trench, hush, warm dark.
 - A lure's real footprint is `lureBaitRadius` (the distance at which it springs), not its hit
   radius. Keep it well under the corridor half-width or it walls the passage off.
-- Monetization plan is ads + level packs. **No gems, no currency, no energy timers.**
+- Monetization is ads + a single pay-once **Remove Ads** purchase. **No gems, no
+  currency, no energy timers, no level packs.** Interstitials only after gate wins;
+  rewarded revive at bosses only; the placement rules live inside `ads.js`.

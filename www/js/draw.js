@@ -274,6 +274,18 @@ export function drawGame(R, game, particles, time, dt, palette) {
     const striking = w.state === 'strike';
     const half = TUNING.wardenJawWidth * 0.5;
 
+    // Render-only facing. While the player holds a cast whose landing it would
+    // hear (main.js sets w._attend), a *listening* warden turns its body toward
+    // that point and parts its plates — "it strikes where you sang" performed
+    // before the song is spent. A committed warden stays committed, and the
+    // strike math everywhere uses w.aim; the sim never reads _attend or _face.
+    const attending = w.state === 'listen' && w._attend != null;
+    const faceTarget = attending ? w._attend : w.aim;
+    if (w._face == null) w._face = w.aim;
+    const dFace = ((faceTarget - w._face + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+    w._face += dFace * Math.min(1, dt * 6);
+    const face = w._face;
+
     // The line it is about to take. This is the whole tell, so it is loud.
     if (winding || striking) {
       const charge = winding ? 1 - Math.max(0, w.t) / TUNING.wardenWindup : 1;
@@ -294,13 +306,15 @@ export function drawGame(R, game, particles, time, dt, palette) {
     }
 
     // The body: plates rather than a glow, so it reads as structure.
+    // Orientation comes from the render-only `face` so an attending warden
+    // visibly tracks the aim; the telegraph arc above stays on true w.aim.
     const vis = Math.max(w.reveal, 0.5 + 0.06 * Math.sin(time * 0.9 + w.phase));
-    const open = striking ? 1 : (winding ? 0.55 : 0.18);
+    const open = striking ? 1 : (winding ? 0.55 : (attending ? 0.4 : 0.18));
     for (let i = 0; i < 10; i++) {
-      const a = w.aim + (i / 10) * Math.PI * 2;
+      const a = face + (i / 10) * Math.PI * 2;
       const inner = TUNING.wardenRadius * 0.42;
       const outer = TUNING.wardenRadius * (1 + 0.16 * Math.sin(time * 1.1 + i));
-      const spread = Math.abs(((a - w.aim + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < half * 1.8
+      const spread = Math.abs(((a - face + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < half * 1.8
         ? 1 + open * 0.55 : 1;
       const s0 = R.worldToScreen(w.x + Math.cos(a) * inner, w.y + Math.sin(a) * inner);
       const s1 = R.worldToScreen(w.x + Math.cos(a) * outer * spread, w.y + Math.sin(a) * outer * spread);
@@ -379,6 +393,57 @@ export function drawGame(R, game, particles, time, dt, palette) {
     const a = Math.pow(1 - t, 1.25) * 0.85;
     R.ring(ping.x, ping.y, ping.r, 2.4 * z, palette.ping, a);
     R.ring(ping.x, ping.y, ping.r * 0.88, 1.3 * z, '#5adfff', a * 0.45);
+  }
+
+  // ---- the Deaf God swallowing songs ----
+  // Where a song's ring meets a deaf leviathan, the arc facing it grays out
+  // and crumbles: the confiscated verb failing on screen instead of silently.
+  // The god itself never reacts — indifference is the tell. Free light (wake
+  // pulses, blooms, silent casts) carries no sound, so nothing dies. Render-
+  // only; the sim ignored the song long before this. Ash tones, not alert
+  // red, so the cue reads the same with visualThreat on or off.
+  for (const ping of game.pings) {
+    if (ping.free) continue;
+    for (const lv of game.ents.leviathans) {
+      if (!lv.deaf) continue;
+      const d = dist(ping.x, ping.y, lv.x, lv.y);
+      if (d < 8 || d > TUNING.leviathanSenseRadius) continue;
+      const band = TUNING.leviathanHeadRadius * 2.2;
+      const k = (ping.r - (d - band)) / (band * 3.4);
+      if (k <= 0 || k >= 1) continue;
+      if (!R.inView(lv.x, lv.y, TUNING.leviathanSenseRadius)) continue;
+      const env = Math.sin(k * Math.PI);
+      const t = ping.r / TUNING.pingMaxRadius;
+      const ringA = Math.pow(1 - Math.min(1, t), 1.25) * 0.85;
+      const ang = Math.atan2(lv.y - ping.y, lv.x - ping.x);
+      const hw = clamp(Math.atan2(TUNING.leviathanHeadRadius * 2.0, d), 0.18, 1.2);
+      const s = R.worldToScreen(ping.x, ping.y);
+      const ctx = R.ctx;
+      ctx.save();
+      // R.ring leaves the context additive; muting needs source-over or the
+      // "dead" arc quietly brightens the ring instead of killing it.
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = '#39424c';   // the ring's light with the song gone
+      ctx.lineCap = 'round';
+      ctx.globalAlpha = Math.min(0.9, ringA * 1.2 + 0.1) * env;
+      ctx.lineWidth = 3.2 * z;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, ping.r * z, ang - hw, ang + hw);
+      ctx.stroke();
+      ctx.globalAlpha *= 0.5;
+      ctx.lineWidth = 2.0 * z;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, ping.r * 0.88 * z, ang - hw * 0.9, ang + hw * 0.9);
+      ctx.stroke();
+      ctx.restore();
+      // The dead arc crumbles: ash motes sinking where the song gave out.
+      for (let i = -1; i <= 1; i++) {
+        const a2 = ang + i * hw * 0.75;
+        const rr = ping.r - k * 20;
+        R.glowDot(ping.x + Math.cos(a2) * rr, ping.y + Math.sin(a2) * rr + k * 14,
+          2.6, '#6f7b87', (1 - k) * 0.45 * env);
+      }
+    }
   }
 
   // ---- player ----

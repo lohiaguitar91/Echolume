@@ -23,9 +23,10 @@ session learned all three the hard way.
    `git checkout -- ios/App/CapApp-SPM/Package.swift`.
 2. **`__echo.autoplay()` is not deterministic** — hunter wander uses
    `Math.random()`. A single `verifyAll()` pass proves nothing about a marginal
-   level. Run 9–11 trials and read the *pass rate*. Depths 1–28 sit at 100%;
-   34 and 36 sit at 89%, which matches shipped depth 27. Treat under ~90% as a
-   real problem, not noise.
+   level. Run 9–11 trials and read the *pass rate*. The final Windows pass put
+   every depth at 10/11 or better; depth 37 straddles (one round 24/25, another
+   round a single-sample fail) and that is known and acceptable. Treat a *rate*
+   under ~90% as a real problem, not one bad sample.
 3. **Text has been damaged crossing machines before.** A previous handoff lost
    the space in `func signIn` (four times) and the backslashes in
    `Package.swift`. If native code written on Windows will not compile, suspect
@@ -45,6 +46,23 @@ session learned all three the hard way.
   - the bank is **never consumed** (sum of `bestMotes` per depth).
 - **Two stars, not three.** Motes stopped being graded and got their own light
   bar. Save migrates v1→v2 by recomputing from stored `bestPings`.
+- **Bosses perform their relationship to casting** (render-only, sim untouched):
+  a listening warden turns its body toward your cast-aim landing and parts its
+  plates (`_attend`/`_face`, fed by `main.js`, consumed by `draw.js` — the strike
+  still uses `w.aim`, and a committed warden ignores the lure); the Twins' tell
+  now says a thrown song can pull one wide; the Deaf God visibly swallows songs —
+  the ring's arc facing it grays out and crumbles while the god does not react.
+  Ash tones, not alert red, so it reads the same with the visual-threat toggle
+  on or off.
+- **Store screenshots are current.** Six new 1320×2868 captures in
+  `store/screenshots/` (cold open with the verbs strip, mote chain, gate screen,
+  Listener mid-telegraph, hush + ice, Warm Dark finale), rendered by the actual
+  game with the DOM HUD composited in. Nothing left to capture for submission.
+- **Two small HUD fixes from the final layout battery:** the depth toast now
+  wraps instead of clipping on ≤430px-wide screens ("The Trench Mouth" was 398px
+  wide at its tracking), and on short screens (≤640px tall) the verbs strip
+  rides higher and smaller so a depth's opening hint cannot sit on top of it.
+  Worth one glance on an SE-class phone.
 - **The ad surface**, dormant. See below.
 - iOS compiles (simulator, signing disabled) and has run on a real device via
   TestFlight. Android has **never been built at all**, on any machine.
@@ -60,12 +78,13 @@ real adaptive-icon bug already), and `GameConnectPlugin.java` type-checks agains
 the real Play Games 22.0.0 API, but no full build has ever completed.
 
 ### 2. Look at the new screens on a device
-The **gate screen** and the **results light bar** have never been seen rendered
-anywhere. The Windows box could only verify them through `classList` and
-`textContent`, because the preview pane never composites, so CSS transitions
-never advance and every overlay reads `opacity: 0`. Layout is genuinely
-unverified. Files: `#screen-gate` and `#light-bank` in `www/index.html`,
-styles under `/* ---------- gate ---------- */` in `www/css/ui.css`.
+The **gate screen** and the HUD have now been *seen* — the new store screenshots
+composite them with computed styles, and collision boxes pass at 375×812 and
+320×568 — but transitions and easing have still never advanced anywhere (the
+Windows pane never composites, so every fade was forced to its resting state).
+Watch the gate screen appear, the boss card fade, and the verbs strip dissolve
+on first touch. Files: `#screen-gate` in `www/index.html`, styles under
+`/* ---------- gate ---------- */` in `www/css/ui.css`.
 
 ### 3. Game Center capability
 One click, and it cannot be pre-committed because it needs the signing team:
@@ -123,13 +142,16 @@ human to confirm they now read:
   to your **last song**, so you beat it by singing somewhere you are not. Its
   telegraph is a red arc that widens during windup — the whole fight is whether
   that arc is legible in time. The bot cannot judge this, because it sings
-  exactly where it swims.
+  exactly where it swims. Three cast-performances also need human eyes: does
+  the warden's body-turn toward your held aim *read* as "it hears where the
+  song will land"; does the Deaf God's gray ring-death read as "my voice does
+  not work here" rather than a glitch; and does the Twins' new tell line land.
 - **The boon chip.** Carried light used to be promised at the gate and then
   never shown. There is now a chip above the HUD naming the active boon, with
   pips that darken as silent songs are spent, plus a flash and a burst when one
   goes. Check that the spend actually reads at a glance.
 
-### 6. Chapter 3's difficulty is unmeasured
+### 7. Chapter 3's difficulty is unmeasured
 The bot navigates by corridor geometry, not by what it can see, so it is
 structurally blind to how hard a hush zone is — a hush level that is miserable
 for a human scores the same as an easy one. Someone has to actually play 29–42.

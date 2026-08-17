@@ -1,7 +1,7 @@
 // Hand-authored level content. Coordinates are world px, y grows downward.
 // Each level teaches or tests exactly one new idea; widths shrink and hazards
-// compound gradually. Star rules: reach vent (1), collect motePct (2), finish
-// within maxPings (3).
+// compound gradually. Two stars: reach the vent (1), finish within maxPings (2).
+// motePct is the light bar's "goal met" line — motes bank for gates, no star.
 
 export const LEVELS = [
   {
@@ -454,7 +454,7 @@ export const LEVELS = [
     id: 28, name: 'The Trench Mouth', seed: 2828,
     boss: {
       name: 'The Twins',
-      tell: 'Two orbits, crossing. There is a gap where both have turned away.',
+      tell: 'Two orbits, crossing. The gap is where both turn away. A thrown song can pull one wide.',
     },
     path: [[0, 0], [80, 300], [-40, 620], [30, 980], [0, 1360], [70, 1740], [-30, 2080], [40, 2380]],
     width: [92, 88, 160, 285, 285, 150, 100, 88],

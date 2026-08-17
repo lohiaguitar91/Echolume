@@ -3,6 +3,22 @@
 Written Aug 9, 2026, at the end of a long Windows session. Read this first, then
 `SHIP.md` for the ordered checklist.
 
+> **Final Windows pass, Aug 16 2026 — done-done.** The last gameplay change
+> makes each boss *perform* its relationship to casting (render-only: the
+> warden turns toward your held aim, the Twins' tell teaches the bait, the
+> Deaf God visibly swallows song rings); after it, feature freeze. A stale-copy
+> sweep fixed the listings (two stars, 50 depths, hold-to-cast), the in-game
+> micro-goal (it still promised a third star), and `docs/PUBLISHING.md` (it
+> still instructed a no-ads submission). The six store screenshots were
+> re-rendered from the current game at 1320×2868 with the DOM HUD composited
+> in. The full battery ran green: gates 5/5 at zero bank, all 50 depths ≥10/11
+> survival, migration, teach-once, the cast pointer chain (450ms hold lands
+> 0px off; 80ms press sings from the player), silent-cast-wakes-nothing, ads
+> dormancy, HUD collision boxes at 375×812 and 320×568, hint queues inside
+> par. Two real layout bugs surfaced and were fixed: the depth toast clipped
+> at ≤430px widths, and on short screens the verbs strip collided with a
+> depth's opening hint. `MACOS-NEXT.md` is the entry point for the Mac.
+
 > **Picked up on macOS, Aug 9 2026.** Done since: the iOS project compiles
 > (`GameConnectPlugin.swift` needed four one-character fixes — see below), the
 > whole thing is synced to both native projects, and **chapter 2 · The Trench
@@ -47,9 +63,9 @@ machine this was built on.
 
 ### Done and verified
 - **The game.** `www/` is the whole thing: vanilla JS ES modules, no build step.
-  **28** hand-authored levels in two chapters, plus an endless Abyss. All 28
-  verified by the autoplay harness, zero console errors, ~0.7ms/frame at store
-  resolution.
+  **50** hand-authored depths in four chapters (gates every 7th, four distinct
+  bosses), plus an endless Abyss. All 50 verified by the autoplay harness, zero
+  console errors, ~0.7ms/frame at store resolution.
 - **Chapter 2 · The Trench (15–28)**, built to `docs/plan-v1.1.html` §3. New
   vocabulary is **lures** (false motes wearing the field's own amber; a song
   shows the tether behind the light, and taking the bait is the loudest sound in

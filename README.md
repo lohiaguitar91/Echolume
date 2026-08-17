@@ -4,13 +4,14 @@
 
 A one-thumb atmosphere game: you are a small blind creature of the deep who moves by
 singing — every tap pushes you through the water, lights the cave for a moment, and
-makes noise the deep can hear. 28 handcrafted depths across two chapters + an endless Abyss.
+makes noise the deep can hear. 50 handcrafted depths across four chapters + an endless Abyss.
 
 Built as a deliberate answer to where AI-built mobile games usually fall short:
 real sound design (fully synthesized, zero audio files), real game-feel (glow, particles,
 haptics, screen-shake, combo melodies), a complete loop (tutorial → levels → stars →
 finale → endless mode), tuned difficulty, and store-compliance from day one
-(offline, no data collection, no placeholder anything).
+(fully offline gameplay, honest per-type data disclosure for the ad SDK, no
+placeholder anything).
 
 ## Run it
 
@@ -31,8 +32,9 @@ npm run dev
 
 ## Controls
 
-Tap where you want to go. That's the whole interface — the song moves you, reveals
-the world, and wakes the hunters. Escape/pause button pauses.
+Tap where you want to go — the song moves you, reveals the world, and wakes the
+hunters. Hold, and you throw your voice instead: the song lands where you aim,
+and everything with ears turns there. Escape/pause button pauses.
 
 ## Testing
 
@@ -40,5 +42,5 @@ With the dev server (not under Capacitor), `window.__echo` exposes a headless te
 `__echo.startLevel(n)`, `__echo.stats()`, `__echo.tapWorld(x,y)`, `__echo.godMode()`,
 `__echo.startAbyss()`, `__echo.grantAllStars()`, `__echo.resetSave()`.
 `__echo.verifyAll()` runs the built-in autoplay harness over every level and reports
-placement, reachability, and whether a bot that dodges the obvious survives. All 28
-levels pass.
+placement, reachability, and whether a bot that dodges the obvious survives. All 50
+depths pass.

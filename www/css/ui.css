@@ -451,6 +451,10 @@ html, body {
   font-weight: 300;
   letter-spacing: 0.34em;
   margin-left: 0.34em;
+  /* The longest depth names outgrow a 375px viewport at this tracking; wrap
+     rather than clip. Short names are untouched. */
+  max-width: 92vw;
+  white-space: normal;
   text-transform: uppercase;
   color: #eafcff;
   text-shadow: 0 0 18px rgba(126, 240, 255, 0.55), 0 2px 14px rgba(3, 7, 17, 0.8);
@@ -809,6 +813,13 @@ body.reduced-motion .star.earned { animation: none; }
   .menu-inner { gap: 14px; }
   .menu-buttons { gap: 9px; }
   .btn { padding: 11px 16px; font-size: 15px; }
+  /* Short screens: the verbs strip must fit between the player (screen centre)
+     and the hint slot (~74% down), or a depth's opening hint sits on top of it. */
+  .hud-controls { top: 55%; gap: 18px; }
+  .hud-controls .ctl-glyph { width: 34px; height: 34px; }
+  .ctl-divider { height: 34px; }
+  .ctl-name { font-size: 12px; }
+  .ctl-what { font-size: 10.5px; }
 }
 @media (max-width: 360px) {
   .hud-left, .hud-right { min-width: 0; gap: 7px; }

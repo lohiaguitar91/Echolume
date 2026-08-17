@@ -319,16 +319,16 @@ class Shell {
     for (const lvl of LEVELS) {
       if (!this.save.isUnlocked(lvl.id)) continue;
       const rec = this.save.data.levels[lvl.id];
-      if (!rec || rec.stars >= 3) continue;
+      if (!rec) continue;
       const total = UI.moteTotal(lvl);
       const need = Math.ceil((lvl.stars?.motePct || 1) * total);
       if (rec.bestMotes < need) {
         const gap = need - rec.bestMotes;
-        return `Depth ${lvl.id} · <span class="accent">${gap} more mote${gap === 1 ? '' : 's'}</span> for its second star`;
+        return `Depth ${lvl.id} · <span class="accent">${gap} more mote${gap === 1 ? '' : 's'}</span> to bank its light`;
       }
       const maxPings = lvl.stars?.maxPings;
       if (maxPings && rec.bestPings > maxPings) {
-        return `Depth ${lvl.id} · finish in <span class="accent">${maxPings} songs</span> for its third star`;
+        return `Depth ${lvl.id} · finish in <span class="accent">${maxPings} songs</span> for its second star`;
       }
       const par = parTime(lvl.id);
       if (par && rec.bestTime > par) {
@@ -766,6 +766,9 @@ class Shell {
       // Cast aim. Three jobs: show the charge from the first frame of the hold
       // (a press must never feel dead), show where the voice will land, and
       // mark WHO will hear it land — the answer to "which enemy am I pulling."
+      if (!this._castAim || this.state !== 'playing') {
+        for (const wd of this.game.ents.wardens || []) wd._attend = null;
+      }
       if (this._castAim && this.state === 'playing') {
         const p = this.game.ents.player;
         const a = this._castAim;
@@ -774,6 +777,13 @@ class Shell {
         const max = TUNING.castRange;
         const tx = d > max ? p.x + (a.x - p.x) * (max / d) : a.x;
         const ty = d > max ? p.y + (a.y - p.y) * (max / d) : a.y;
+        // Any warden that would hear the landing turns toward it from the first
+        // frame of the hold (render-only — draw.js smooths the body onto
+        // _attend; the sim never reads it). Same radius the sim itself uses.
+        for (const wd of this.game.ents.wardens || []) {
+          wd._attend = Math.hypot(wd.x - tx, wd.y - ty) < TUNING.wardenReach * 1.6
+            ? Math.atan2(ty - wd.y, tx - wd.x) : null;
+        }
         const s1 = R.worldToScreen(tx, ty);
         const ctx = R.ctx;
         if (prog < 1) {
