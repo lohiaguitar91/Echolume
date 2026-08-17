@@ -1,6 +1,6 @@
 // Offline cache for web/PWA deploys. Capacitor builds don't register this
 // (files are bundled locally). Bump VERSION on every release.
-const VERSION = 'echolume-v1.2.0';
+const VERSION = 'echolume-v1.0.0';
 const ASSETS = [
   '.',
   'index.html',

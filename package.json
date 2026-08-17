@@ -1,6 +1,6 @@
 {
   "name": "echolume",
-  "version": "1.2.0",
+  "version": "1.0.0",
   "description": "Echolume — move by sound, see by light. A bioluminescent echolocation game.",
   "private": true,
   "scripts": {

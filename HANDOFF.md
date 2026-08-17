@@ -190,7 +190,7 @@ Hundred-Kilometre Song".
   `http://localhost:3852/__dev/gen`. It draws the icon, splash, and feature
   graphic in code and POSTs them to `assets-out/`. Then
   `npx capacitor-assets generate --ios` / `--android`.
-- **Versions are 1.1.0 everywhere**, bumped for chapter 2: `config.js`
+- **Versions are 1.0.0 everywhere** (reset for the first public release): `config.js`
   GAME_VERSION, `package.json`, `build.gradle` versionName, `sw.js` cache key,
   and iOS `MARKETING_VERSION`. Android `versionCode` is 2, iOS
   `CURRENT_PROJECT_VERSION` (build number) is 3. Bump the build number on every

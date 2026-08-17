@@ -17,8 +17,8 @@ Details for each live in docs/BUILDING.md and docs/PUBLISHING.md.
       safe-area insets on a notched phone, portrait lock.
 - [ ] Build → Generate Signed App Bundle; create keystore, BACK IT UP.
 - [ ] Play Console: internal testing → upload .aab → test → promote to production.
-- [ ] Store listing from `store/listing-android.md`; data safety = no collection
-      (**true only while ads stay dormant** — see 3.6);
+- [ ] Store listing from `store/listing-android.md`; Data Safety = **Yes, collects**
+      (ads ship at launch — the exact per-type answers are written in that file);
       icon `assets-out/pwa/icon-512.png` (regenerate via `/__dev/gen` if missing);
       feature graphic `store/feature-graphic.png`; screenshots `store/screenshots/`.
 
@@ -28,8 +28,9 @@ Details for each live in docs/BUILDING.md and docs/PUBLISHING.md.
 - [ ] Run on a real iPhone once (same spot-checks as Android).
 - [x] Product → Archive → upload to App Store Connect. (build 1.0 (1) uploaded via
       CLI — see the xcodebuild commands in docs/BUILDING.md)
-- [ ] Listing from `store/listing-ios.md`; App Privacy = Data Not Collected;
-      paste the review notes from that file into App Review Information.
+- [ ] Listing from `store/listing-ios.md`; App Privacy = **Yes, collects** (the
+      per-type table is written in that file); paste its review notes into App
+      Review Information.
 
 ## 3.5 Game services — Game Center & Play Games
 
@@ -145,7 +146,7 @@ moment you add the SDK; the exact snippets are in comments at the point of use:
 ## 4. Final sanity before each submit
 - [ ] Version stamps agree: `www/js/config.js` GAME_VERSION, `package.json`,
       `www/sw.js` VERSION, `android/app/build.gradle` versionName, Xcode
-      MARKETING_VERSION. All are **1.2.0**; Android `versionCode 3`, iOS build number 4.
+      MARKETING_VERSION. All are **1.0.0** (reset for the first public release); Android `versionCode 3`, iOS build number 4 keep counting upward.
       Bump the build number on every upload — App Store Connect rejects a repeat.
       (The `docs/plan-v1.*.html` names are internal milestones, not store versions.)
 - [ ] Name check: "Echolume" still free on both stores.
