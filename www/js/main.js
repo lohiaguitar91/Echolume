@@ -611,10 +611,12 @@ class Shell {
       const w = this.renderer.screenToWorld(cx, cy);
       this.game.castAt(w.x, w.y);
     };
-    // While aiming, the world shows where the voice would land.
-    this.input.onCastAim = (cx, cy) => {
+    // While holding, the world shows the charge from the first frame and where
+    // the voice would land once it is ready.
+    this.input.onCastAim = (cx, cy, progress) => {
       if (cx === null || this.state !== 'playing') { this._castAim = null; return; }
-      this._castAim = this.renderer.screenToWorld(cx, cy);
+      const w = this.renderer.screenToWorld(cx, cy);
+      this._castAim = { x: w.x, y: w.y, progress: progress ?? 1 };
     };
     // Keyboard fallback (desktop testing / accessibility)
     window.addEventListener('keydown', (e) => {
@@ -758,29 +760,72 @@ class Shell {
     if (inGame && this.game.ents) {
       drawGame(R, this.game, this.particles, this.time,
         this.state === 'paused' ? 0 : dt, this.palette);
-      // Cast aim: a thread from you to where the voice would land, clamped to
-      // range, so the reach of the lie is visible before you commit to it.
+      // Cast aim. Three jobs: show the charge from the first frame of the hold
+      // (a press must never feel dead), show where the voice will land, and
+      // mark WHO will hear it land — the answer to "which enemy am I pulling."
       if (this._castAim && this.state === 'playing') {
         const p = this.game.ents.player;
         const a = this._castAim;
+        const prog = a.progress ?? 1;
         const d = Math.hypot(a.x - p.x, a.y - p.y);
         const max = TUNING.castRange;
         const tx = d > max ? p.x + (a.x - p.x) * (max / d) : a.x;
         const ty = d > max ? p.y + (a.y - p.y) * (max / d) : a.y;
-        const s0 = R.worldToScreen(p.x, p.y);
         const s1 = R.worldToScreen(tx, ty);
         const ctx = R.ctx;
-        ctx.save();
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.strokeStyle = this.palette.ping;
-        ctx.globalAlpha = 0.35;
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 7]);
-        ctx.lineDashOffset = -this.time * 40;
-        ctx.beginPath(); ctx.moveTo(s0.x, s0.y); ctx.lineTo(s1.x, s1.y); ctx.stroke();
-        ctx.restore();
-        const pulse = 0.5 + 0.3 * Math.sin(this.time * 6);
-        R.ring(tx, ty, 14 + pulse * 5, 1.4 * R.cam.zoom, this.palette.ping, 0.5 + pulse * 0.3);
+        if (prog < 1) {
+          // Charging: an arc closing around the held point. Full circle = ready.
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.strokeStyle = this.palette.ping;
+          ctx.globalAlpha = 0.25 + prog * 0.45;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(s1.x, s1.y, 16 * R.cam.zoom, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          const s0 = R.worldToScreen(p.x, p.y);
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.strokeStyle = this.palette.ping;
+          ctx.globalAlpha = 0.35;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 7]);
+          ctx.lineDashOffset = -this.time * 40;
+          ctx.beginPath(); ctx.moveTo(s0.x, s0.y); ctx.lineTo(s1.x, s1.y); ctx.stroke();
+          ctx.restore();
+          const pulse = 0.5 + 0.3 * Math.sin(this.time * 6);
+          R.ring(tx, ty, 14 + pulse * 5, 1.4 * R.cam.zoom, this.palette.ping, 0.5 + pulse * 0.3);
+          // Mark every listener the landing would actually wake, in alert red,
+          // with a thread from them to the landing point. Only ones you can at
+          // least faintly see — the aim tool must not become a wallhack.
+          const mark = (x, y, vis) => {
+            const alpha = Math.min(0.6, 0.25 + vis * 0.5);
+            R.ring(x, y, 20 + pulse * 4, 1.2 * R.cam.zoom, this.palette.hunterAlert, alpha);
+            const sE = R.worldToScreen(x, y);
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.strokeStyle = this.palette.hunterAlert;
+            ctx.globalAlpha = alpha * 0.5;
+            ctx.lineWidth = 1;
+            ctx.setLineDash([2, 6]);
+            ctx.beginPath(); ctx.moveTo(sE.x, sE.y); ctx.lineTo(s1.x, s1.y); ctx.stroke();
+            ctx.restore();
+          };
+          const g = this.game;
+          for (const h of g.ents.hunters) {
+            if (h.reveal < 0.03) continue;
+            if (Math.hypot(h.x - tx, h.y - ty) < TUNING.hunterSenseRadius) mark(h.x, h.y, h.reveal);
+          }
+          for (const lv of g.ents.leviathans) {
+            if (lv.deaf) continue;   // a deaf god does not hear the lie either
+            if (Math.hypot(lv.x - tx, lv.y - ty) < TUNING.leviathanSenseRadius) mark(lv.x, lv.y, 1);
+          }
+          for (const w of g.ents.wardens || []) {
+            if (Math.hypot(w.x - tx, w.y - ty) < TUNING.wardenReach * 1.6) mark(w.x, w.y, 1);
+          }
+        }
       }
     } else {
       drawMenuAmbient(R, this.particles, this.time, dt, this.palette);

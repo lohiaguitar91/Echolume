@@ -39,14 +39,16 @@ export class Input {
       this._downAt = performance.now();
       this._downX = e.clientX; this._downY = e.clientY;
       this._aiming = false;
-      // After the threshold, start reporting aim. rAF-driven so a motionless
-      // hold still begins aiming (pointermove alone would never fire).
+      // Report the hold from the START, with progress 0..1 toward the cast
+      // threshold, so the press never feels dead — the charge is visible from
+      // the first frame. rAF-driven so a motionless hold still progresses
+      // (pointermove alone would never fire).
       const tick = () => {
         if (!this._downAt) return;
-        if (performance.now() - this._downAt >= CAST_HOLD_MS) {
-          this._aiming = true;
-          if (this.onCastAim) this.onCastAim(this._downX, this._downY);
-        }
+        const held = performance.now() - this._downAt;
+        const progress = Math.min(1, held / CAST_HOLD_MS);
+        this._aiming = progress >= 1;
+        if (this.onCastAim) this.onCastAim(this._downX, this._downY, progress);
         this._aimRaf = requestAnimationFrame(tick);
       };
       this._aimRaf = requestAnimationFrame(tick);
@@ -60,13 +62,15 @@ export class Input {
     const finish = (e, cancelled) => {
       if (!this._active || !this._downAt) return;
       const held = performance.now() - this._downAt;
-      const wasAiming = this._aiming;
       this._downAt = 0;
       this._aiming = false;
       cancelAnimationFrame(this._aimRaf);
-      if (this.onCastAim) this.onCastAim(null, null);   // aim glyph off
+      if (this.onCastAim) this.onCastAim(null, null, 0);   // aim glyph off
       if (cancelled) return;
-      if (wasAiming && held >= CAST_HOLD_MS) {
+      // Decide by held TIME, never by whether the aim loop got to run: rAF can
+      // stall (throttled tabs, dropped frames) and the gesture must not change
+      // meaning because the renderer hiccuped.
+      if (held >= CAST_HOLD_MS) {
         if (this.onCast) this.onCast(this._downX, this._downY);
       } else {
         // A short press is a tap. Firing on RELEASE (not down) keeps tap and
