@@ -56,6 +56,21 @@ already cost time, and the design rules that must not be broken.
 - `www/js/ads.js` is dormant by design: fill `AD_IDS` / `IAP_PRODUCT_ID` to enable. Turning
   ads on also means a privacy-manifest and store data-safety update, and the iOS ATT prompt.
 
+## Guidance and HUD layout
+- **One transient slot.** Hints, boss cards and first-encounter teaches all queue through
+  `ui.hint()` into a single element, so two messages can never sit on top of each other.
+  Anything new that needs to *say* something goes through that queue, not a new overlay.
+  (The boon chip was added as a floating element and immediately covered the hint.)
+- **Persistent status is iconic, never prose.** `.hud-objectives` holds motes, the song
+  budget, and the active boon as icon+number chips. The old goals banner was a sentence in
+  the middle of the screen that told you nothing at a glance.
+- **`teach.js` teaches on first encounter, once ever.** A concept fires only when its
+  subject is actually on screen (`Teacher.update` checks `inView`), never on a timer and
+  never before the player can see the thing. The seen set persists in `save.data.teachSeen`.
+  Add a new mechanic → add a `TEACH` entry and a `SOURCES` row, or it goes unexplained.
+- Vertical order, top to bottom: top bar → objectives → level toast → boss card → teach/hint.
+  If you add an overlay, measure it against all of these at 320×568 before shipping.
+
 ## Bosses
 - **Boss-ness is declared by the level, not by arithmetic.** A def with a `boss: { name,
   tell }` block is a boss; `gateKind` reads it. It used to be `id % 14 === 0`, which drifted

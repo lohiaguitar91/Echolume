@@ -34,7 +34,6 @@ export class UI {
       levelName: $('hud-level-name'),
       hint: $('hud-hint'),
       toast: $('hud-toast'),
-      goals: $('hud-goals'),
       levelGrid: $('level-grid'),
       totalStars: $('total-stars'),
       resultsTitle: $('results-title'),
@@ -106,12 +105,12 @@ export class UI {
     const label = document.getElementById('hud-boon-label');
     const pips = document.getElementById('hud-boon-pips');
     let text = null, count = 0;
-    if (boon.silentSongs > 0) { text = 'Silent songs'; count = boon.silentSongs; }
-    else if (boon.orbitSecs > 0) { text = 'Orbits traced'; count = 0; }
-    else if (boon.revealLures) { text = 'False lights shown'; count = 0; }
-    else if (boon.iceSteady) { text = 'Holding your line'; count = 0; }
-    else if (boon.hushRelief > 0.05) { text = 'Voice carries'; count = 0; }
-    else if (boon.aura > 0.05) { text = 'Glow carried'; count = 0; }
+    if (boon.silentSongs > 0) { text = 'Silent'; count = boon.silentSongs; }
+    else if (boon.orbitSecs > 0) { text = 'Orbits'; count = 0; }
+    else if (boon.revealLures) { text = 'True sight'; count = 0; }
+    else if (boon.iceSteady) { text = 'Steady'; count = 0; }
+    else if (boon.hushRelief > 0.05) { text = 'Carry'; count = 0; }
+    else if (boon.aura > 0.05) { text = 'Glow'; count = 0; }
     if (!text) { el.hidden = true; return; }
     label.textContent = text;
     pips.innerHTML = '';
@@ -208,21 +207,27 @@ export class UI {
     document.body.classList.add('flash-damage');
   }
 
-  // The counter reads against the star threshold, not the field size — knowing
-  // there are 14 motes in the level never told anyone that 10 earns the star.
+  // Objectives read as status, not as a sentence. Motes show what is here and
+  // how much you have; songs show the budget you are spending against, so the
+  // star you are chasing is legible without anyone writing it out in prose.
   setMoteGoal(need) { this._moteGoal = need > 0 ? need : 0; }
+  setSongBudget(n) { this._songBudget = Number.isFinite(n) ? n : 0; }
 
   setMotes(got, total) {
-    const goal = this._moteGoal || 0;
-    this.el.motes.textContent = goal > 0 ? `${got}/${goal}` : (total > 0 ? `${got}/${total}` : `${got}`);
+    this.el.motes.textContent = total > 0 ? `${got}/${total}` : `${got}`;
     const wrap = this.el.motes.parentElement;
-    wrap.classList.toggle('goal-met', goal > 0 && got >= goal);
+    wrap.classList.toggle('goal-met', total > 0 && got >= total);
     wrap.classList.remove('pop');
     void wrap.offsetWidth;
     wrap.classList.add('pop');
   }
 
-  setPings(n) { this.el.pings.textContent = n; }
+  setPings(n) {
+    const b = this._songBudget || 0;
+    this.el.pings.textContent = b > 0 ? `${n}/${b}` : `${n}`;
+    const wrap = this.el.pings.parentElement;
+    wrap.classList.toggle('over', b > 0 && n > b);
+  }
 
   setDepth(m) {
     this.el.depth.hidden = false;
@@ -244,30 +249,43 @@ export class UI {
     return Math.min(8000, Math.max(3000, 1200 + n * 55));
   }
 
-  hint(text, ms, plain) {
+  hint(text, ms, plain, glyph) {
     if (performance.now() < this._hintUntil) {
-      if (!this._hintQueue.some((q) => q.text === text)) this._hintQueue.push({ text, plain });
+      if (!this._hintQueue.some((q) => q.text === text)) {
+        // A teach is why you are alive right now; it goes to the front.
+        const item = { text, plain, glyph };
+        if (glyph) this._hintQueue.unshift(item); else this._hintQueue.push(item);
+      }
       return;
     }
-    this._showHint(text, ms || this.hintDuration(text, plain), plain);
+    this._showHint(text, ms || this.hintDuration(text, plain), plain, glyph);
   }
 
   // Two voices: the trench's line, then what it actually means. The poetry was
   // carrying the whole instruction and a playtester read right past it.
-  _showHint(text, ms, plain) {
+  _showHint(text, ms, plain, glyph) {
     const h = this.el.hint;
     clearTimeout(this._hintTimer);
     h.textContent = '';
+    h.classList.toggle('teach', !!glyph);
+    if (glyph) {
+      const g = document.createElement('span');
+      g.className = 'teach-glyph';
+      g.innerHTML = glyph;
+      h.appendChild(g);
+    }
+    const body = glyph ? document.createElement('span') : h;
     const lead = document.createElement('span');
     lead.className = 'hint-lead';
     lead.textContent = text;
-    h.appendChild(lead);
+    body.appendChild(lead);
     if (plain) {
       const sub = document.createElement('span');
       sub.className = 'hint-plain';
       sub.textContent = plain;
-      h.appendChild(sub);
+      body.appendChild(sub);
     }
+    if (glyph) h.appendChild(body);
     h.hidden = false;
     h.classList.remove('visible');
     void h.offsetWidth;
@@ -278,7 +296,9 @@ export class UI {
       setTimeout(() => {
         h.hidden = true;
         const next = this._hintQueue.shift();
-        if (next) this._showHint(next.text, this.hintDuration(next.text, next.plain), next.plain);
+        if (next) {
+          this._showHint(next.text, this.hintDuration(next.text, next.plain), next.plain, next.glyph);
+        }
       }, 400);
     }, ms);
   }
@@ -292,31 +312,12 @@ export class UI {
     this.el.hint.hidden = true;
   }
 
-  // Rides in under the level-name card: the three things a star wants, said
-  // before they can be missed rather than after.
-  showGoals(need, maxPings, ms = 3400) {
-    const g = this.el.goals;
-    if (!g) return;
-    const parts = ['Reach the vent'];
-    if (Number.isFinite(maxPings)) parts.push(`Under ${maxPings} songs`);
-    parts.push('Every mote banks');
-    g.textContent = parts.join(' · ');
-    clearTimeout(this._goalsTimer);
-    g.hidden = false;
-    g.classList.remove('visible');
-    void g.offsetWidth;
-    g.classList.add('visible');
-    this._goalsTimer = setTimeout(() => {
-      g.classList.remove('visible');
-      setTimeout(() => { g.hidden = true; }, 600);
-    }, ms);
-  }
-
-  hideGoals() {
-    clearTimeout(this._goalsTimer);
-    if (!this.el.goals) return;
-    this.el.goals.classList.remove('visible');
-    this.el.goals.hidden = true;
+  // A teach: shown the first time you ever meet something, once, ever. A glyph
+  // so the card points at a shape you can find on screen, and a line short
+  // enough to read while moving. It goes through the same queue as every other
+  // transient message, so it can never land on top of one.
+  teach(glyphSvg, lead, plain) {
+    this.hint(lead, undefined, plain, glyphSvg);
   }
 
   toast(text, ms = 2600) {

@@ -34,26 +34,40 @@
         <div id="hud-level-name" class="hud-level-name"></div>
       </div>
       <div class="hud-right">
-        <div class="hud-stat"><span class="mote-dot" aria-hidden="true"></span><span id="hud-motes">0/0</span></div>
         <button id="btn-pause" class="icon-btn" aria-label="Pause">II</button>
       </div>
     </div>
+
+    <!-- Objectives, as glanceable status rather than a sentence. This used to be
+         a line of prose that sat over the hint and told you nothing at a glance.
+         Icons carry meaning; numbers carry progress; nothing here is transient. -->
+    <div class="hud-objectives" id="hud-objectives">
+      <div class="obj" id="obj-motes" title="Motes gathered">
+        <span class="obj-icon mote" aria-hidden="true"></span>
+        <span class="obj-val" id="hud-motes">0/0</span>
+      </div>
+      <div class="obj" id="obj-songs" title="Songs spent">
+        <span class="obj-icon song" aria-hidden="true"></span>
+        <span class="obj-val" id="hud-pings">0</span>
+      </div>
+      <!-- Carried light, as a power you can see and watch drain. -->
+      <div class="obj power" id="hud-boon" hidden title="Carried light">
+        <span class="obj-icon light" aria-hidden="true"></span>
+        <span class="obj-val" id="hud-boon-label"></span>
+        <span class="hud-boon-pips" id="hud-boon-pips"></span>
+      </div>
+    </div>
+
+    <!-- ONE transient slot. Hints, boss cards and first-encounter teaches all
+         queue through here, so two messages can never sit on top of each other. -->
     <div id="hud-hint" class="hud-hint" hidden></div>
     <div id="hud-toast" class="hud-toast" hidden></div>
-    <div id="hud-goals" class="hud-goals" hidden></div>
-    <!-- What your banked light is doing right now. The boons were all passive
-         and invisible, so the gate promised something the fight never showed. -->
-    <div id="hud-boon" class="hud-boon" hidden>
-      <span class="hud-boon-label" id="hud-boon-label"></span>
-      <span class="hud-boon-pips" id="hud-boon-pips"></span>
-    </div>
     <div id="boss-card" class="boss-card" hidden>
       <span class="boss-card-kind">Boss</span>
       <span class="boss-card-name" id="boss-card-name"></span>
       <span class="boss-card-tell" id="boss-card-tell"></span>
     </div>
     <div class="hud-bottom">
-      <div class="hud-stat dim"><span id="hud-pings">0</span> songs</div>
       <div class="hud-stat dim" id="hud-depth" hidden>0 m</div>
     </div>
   </div>

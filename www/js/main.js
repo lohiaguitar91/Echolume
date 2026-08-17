@@ -12,6 +12,7 @@ import { UI } from './ui.js';
 import { Game, starBreakdown, starTargets } from './game.js';
 import { GameServices, MILESTONES } from './gameservices.js';
 import { Ads } from './ads.js';
+import { Teacher } from './teach.js';
 import {
   getLevel, LEVELS, parTime, chapterOf,
   gateKind, gateSpan, gateCapacity, gateBoon, gateBoonLine,
@@ -33,6 +34,7 @@ class Shell {
     this.gs = new GameServices(this.save);
     this.ads = new Ads(this.save);   // inert until AD_IDS are filled in
     this.ui = new UI();
+    this.teacher = new Teacher(this.save, this.ui);   // needs ui, so it comes after
     this.input = new Input(this.canvas);
     this.palette = PALETTE;
 
@@ -368,9 +370,10 @@ class Shell {
     const targets = starTargets(def, moteTotal);
     this.ui.setLevelName(`${id} · ${def.name}`);
     this.ui.setHearts(p.hearts, TUNING.maxHearts);
-    // No mote threshold any more: every mote banks, so the counter is a tally
-    // of what this depth holds rather than a bar to clear.
+    // Every mote banks, so the counter is a tally of what this depth holds. The
+    // song budget is the star you can still lose, so it shows as a budget.
     this.ui.setMoteGoal(0);
+    this.ui.setSongBudget(targets.pings);
     this.ui.setMotes(p.motes, moteTotal);
     this.ui.setPings(p.pings);
     this.ui.hideDepth();
@@ -378,9 +381,10 @@ class Shell {
     // Show what the carried light is actually doing, for as long as it lasts.
     this.ui.showBoon(this.game.boon);
     this.ui.hideBossCard();
+    // Only queue teaches for what this depth actually contains.
+    this.teacher.arm(this.game.ents);
     if (!opts.silent) {
       this.ui.toast(resume ? 'The lair mouth' : `Depth ${id} · ${def.name}`);
-      this.ui.showGoals(targets.motes, targets.pings);
       // A boss names itself, after the level card has cleared.
       if (def.boss) {
         setTimeout(() => this.ui.showBossCard(def.boss.name, def.boss.tell), 2400);
@@ -420,8 +424,10 @@ class Shell {
     this.renderer.cam.y = this.renderer.cam.targetY = p.y;
     this.ui.setLevelName('The Abyss');
     this.ui.setHearts(p.hearts, TUNING.maxHearts);
-    this.ui.hideGoals();
     this.ui.setMoteGoal(0);   // no star to earn down here; just a running tally
+    this.ui.setSongBudget(0);
+    this.ui.showBoon(null);
+    this.ui.hideBossCard();
     this.ui.setMotes(0, 0);
     this.ui.setPings(0);
     this.ui.setDepth(0);
@@ -675,6 +681,10 @@ class Shell {
         this._acc -= TUNING.fixedDt;
       }
       this._nudgeIfIdle(dt);
+      // Teach a thing the moment it is genuinely on screen, never before.
+      if (this.game.mode === 'story' && this.game.state === 'play') {
+        this.teacher.update(this.game.ents, (x, y, r) => R.inView(x, y, r || 40));
+      }
       const p = this.game.ents.player;
       R.cam.targetX = p.x + p.vx * TUNING.camLookahead;
       R.cam.targetY = p.y + p.vy * TUNING.camLookahead;
