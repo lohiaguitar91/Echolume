@@ -9,6 +9,11 @@ economy is in, the ad surface is written and wired but deliberately inert, and
 everything still open needs Xcode, Android Studio, or a store console — which is
 why it is waiting for you and not for the Windows box.
 
+**The final Windows commit is `6bc70df`** ("Bosses perform casting; final
+verified pass before the Mac", Aug 17 2026). Its message lists exactly what was
+verified on that tree and what only thumbs can judge. If `git log` shows
+anything after it that did not come from your own Mac session, read that first.
+
 ---
 
 ## Read this before you touch anything
