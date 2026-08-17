@@ -148,14 +148,25 @@ export const TUNING = {
   abyssDepthPerMeter: 10,   // world units per displayed meter
 };
 
-// Mote chain ladder. Hue, radius, and pulse rate all step together so the
-// chain is legible without color vision.
+// Mote chain ladder.
+//
+// Motes keep their amber identity at every tier. This game has no spare hues —
+// mint is the vent, cyan the walls and your own aura, pink and magenta the
+// hazards — so a ladder that walks through hues eventually lands on something
+// else's identity. It did: tier 2 used to be #5effc2, the vent's exact value,
+// while the tutorial taught "the green vent takes you deeper". A playtester
+// read a good chain as a new kind of mote.
+//
+// So the chain speaks through size, pulse rate and a halo, none of which are
+// spoken for, and all of which survive colour blindness. `accent` is used only
+// on the player's own trail and the collect burst — feedback that never has to
+// be identified as an object — and stays clear of every hazard hue.
 export const CHAIN_TIERS = [
-  { at: 0, color: '#ffc45e', core: '#fff2d0', scale: 1.00, pulse: 2.2 },
-  { at: 3, color: '#ffe08a', core: '#fffaf0', scale: 1.10, pulse: 3.0 },
-  { at: 4, color: '#5effc2', core: '#eafff6', scale: 1.22, pulse: 3.8 },
-  { at: 6, color: '#7ef0ff', core: '#eafcff', scale: 1.34, pulse: 4.8 },
-  { at: 8, color: '#b14fff', core: '#f0dcff', scale: 1.48, pulse: 6.0 },
+  { at: 0, accent: '#ffc45e', accentCore: '#fff2d0', scale: 1.00, pulse: 2.2, halo: 0.00, rings: 0 },
+  { at: 3, accent: '#ffe08a', accentCore: '#fffaf0', scale: 1.12, pulse: 3.0, halo: 0.30, rings: 1 },
+  { at: 4, accent: '#fff3cc', accentCore: '#fffdf4', scale: 1.26, pulse: 3.8, halo: 0.48, rings: 1 },
+  { at: 6, accent: '#e9c8ff', accentCore: '#f8ecff', scale: 1.40, pulse: 4.8, halo: 0.66, rings: 2 },
+  { at: 8, accent: '#b14fff', accentCore: '#f0dcff', scale: 1.56, pulse: 6.0, halo: 0.85, rings: 2 },
 ];
 export const CHAIN_BLOOM_AT = 8;
 
@@ -172,10 +183,12 @@ export function chainStyle(displayIndex) {
   const t = d - i0;
   const a = CHAIN_TIERS[i0], b = CHAIN_TIERS[i1];
   return {
-    color: hexLerp(a.color, b.color, t),
-    core: hexLerp(a.core, b.core, t),
+    accent: hexLerp(a.accent, b.accent, t),
+    accentCore: hexLerp(a.accentCore, b.accentCore, t),
     scale: lerp(a.scale, b.scale, t),
     pulse: lerp(a.pulse, b.pulse, t),
+    halo: lerp(a.halo, b.halo, t),
+    rings: lerp(a.rings, b.rings, t),
   };
 }
 

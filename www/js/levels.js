@@ -11,10 +11,14 @@ export const LEVELS = [
     moteCount: 8,
     stars: { motePct: 0.75, maxPings: 26 },
     hints: [
-      { t: 0.0, text: 'Tap the water. Your song lights the dark.' },
-      { t: 0.22, text: 'Every song also carries you. Tap where you want to go.' },
-      { t: 0.62, text: 'Gather the amber motes. Each one feeds your glow.' },
-      { t: 0.88, text: 'The green vent leads deeper.' },
+      { t: 0.0, text: 'Tap the water. Your song lights the dark.',
+        plain: 'Tap anywhere. Light spreads from where it lands.' },
+      { t: 0.22, text: 'Every song also carries you. Tap where you want to go.',
+        plain: 'Each tap pushes you toward it. That is how you move.' },
+      { t: 0.62, text: 'Gather the amber motes. Each one feeds your glow.',
+        plain: 'Amber dots are motes. Each one widens your glow.' },
+      { t: 0.88, text: 'The green vent leads deeper.',
+        plain: 'The ringed green circle is the exit.' },
     ],
   },
   {
@@ -28,8 +32,10 @@ export const LEVELS = [
     extraMotes: [{ branch: 1, count: 4 }],
     stars: { motePct: 0.8, maxPings: 34 },
     hints: [
-      { t: 0.3, text: 'Side passages hide more motes. Worth the detour?' },
-      { t: 0.9, text: 'Stars remember how gracefully you swim.' },
+      { t: 0.3, text: 'Side passages hide more motes. Worth the detour?',
+        plain: 'This depth has a side branch. More motes down it, but a longer swim.' },
+      { t: 0.9, text: 'Stars remember how gracefully you swim.',
+        plain: 'Stars count songs spent, not seconds taken. Drifting is free.' },
     ],
   },
   {
@@ -40,7 +46,8 @@ export const LEVELS = [
     urchins: [{ t: 0.3, off: -34 }, { t: 0.46, off: 40 }, { t: 0.63, off: -44 }, { t: 0.78, off: 30 }],
     stars: { motePct: 0.75, maxPings: 34 },
     hints: [
-      { t: 0.2, text: 'Pink thorns wound what touches them. Sing before you rush.' },
+      { t: 0.2, text: 'Pink thorns wound what touches them. Sing before you rush.',
+        plain: 'Urchins cost a heart on contact. A song shows you where they are first.' },
     ],
   },
   {
@@ -51,8 +58,10 @@ export const LEVELS = [
     hunters: [{ t: 0.5, off: 0, wanderR: 130 }],
     stars: { motePct: 0.7, maxPings: 30 },
     hints: [
-      { t: 0.28, text: 'Something ahead listens for your song.' },
-      { t: 0.44, text: 'It swims toward the last place you sang. Glide quiet. Let it lose you.' },
+      { t: 0.28, text: 'Something ahead listens for your song.',
+        plain: 'There is a hunter ahead. It cannot see you at all.' },
+      { t: 0.44, text: 'It swims toward the last place you sang. Glide quiet. Let it lose you.',
+        plain: 'It moves to wherever your last song landed. Stop singing and drift to shake it.' },
     ],
   },
   {
@@ -66,7 +75,8 @@ export const LEVELS = [
     extraMotes: [{ branch: 1, count: 7 }],
     urchins: [{ branch: 1, t: 0.45, off: -20 }, { branch: 1, t: 0.7, off: 24 }, { t: 0.7, off: -38 }],
     stars: { motePct: 0.8, maxPings: 36 },
-    hints: [{ t: 0.24, text: 'The narrow fork glitters. The wide fork forgives.' }],
+    hints: [{ t: 0.24, text: 'The narrow fork glitters. The wide fork forgives.',
+        plain: 'Two routes. The narrow one holds more motes and more thorns.' }],
   },
   {
     id: 6, name: 'Downdraft', seed: 606,
@@ -80,7 +90,8 @@ export const LEVELS = [
     ],
     urchins: [{ t: 0.58, off: 46 }],
     stars: { motePct: 0.75, maxPings: 30 },
-    hints: [{ t: 0.2, text: 'Blue water moves on its own. Ride it, or sing against it.' }],
+    hints: [{ t: 0.2, text: 'Blue water moves on its own. Ride it, or sing against it.',
+        plain: 'Blue zones push you. Going with the flow saves songs; fighting it costs them.' }],
   },
   {
     id: 7, name: 'Needle', seed: 707,
@@ -92,7 +103,8 @@ export const LEVELS = [
       { t: 0.56, off: 0 }, { t: 0.67, off: -26 }, { t: 0.78, off: 26 }, { t: 0.88, off: 0 },
     ],
     stars: { motePct: 0.7, maxPings: 34 },
-    hints: [{ t: 0.12, text: 'Thread the needle. Short, soft songs steer best.' }],
+    hints: [{ t: 0.12, text: 'Thread the needle. Short, soft songs steer best.',
+        plain: 'Tap close to yourself for small corrections. Distant taps overshoot into thorns.' }],
   },
   {
     id: 8, name: 'Two Ears', seed: 808,
@@ -104,7 +116,8 @@ export const LEVELS = [
       { t: 0.68, off: 20, wanderR: 150 },
     ],
     stars: { motePct: 0.7, maxPings: 30 },
-    hints: [{ t: 0.2, text: 'Two of them now. One song can wake both.' }],
+    hints: [{ t: 0.2, text: 'Two of them now. One song can wake both.',
+        plain: 'Both hunters chase the same spot: your last song. Sing wide to split them.' }],
   },
   {
     id: 9, name: 'Bloom', seed: 909,
@@ -117,7 +130,8 @@ export const LEVELS = [
     ],
     hunters: [{ t: 0.5, off: -150, wanderR: 220 }],
     stars: { motePct: 0.8, maxPings: 40 },
-    hints: [{ t: 0.3, text: 'A garden in full bloom. The thorns grew with it.' }],
+    hints: [{ t: 0.3, text: 'A garden in full bloom. The thorns grew with it.',
+        plain: 'A wide chamber ringed with urchins, and a hunter loose inside it.' }],
   },
   {
     id: 10, name: 'Serpentine', seed: 1010,
@@ -131,7 +145,8 @@ export const LEVELS = [
     ],
     urchins: [{ t: 0.4, off: -30 }, { t: 0.68, off: 32 }],
     stars: { motePct: 0.7, maxPings: 44 },
-    hints: [{ t: 0.18, text: 'The river runs upstream here. Spend your songs wisely.' }],
+    hints: [{ t: 0.18, text: 'The river runs upstream here. Spend your songs wisely.',
+        plain: 'A current pushes against you the whole way. Expect to spend more songs than usual.' }],
   },
   {
     id: 11, name: 'Choir', seed: 1111,
@@ -141,7 +156,8 @@ export const LEVELS = [
     urchins: [{ t: 0.3, off: -34 }, { t: 0.48, off: 30 }, { t: 0.62, off: -30 }, { t: 0.85, off: 26 }],
     hunters: [{ t: 0.4, off: 0, wanderR: 160 }, { t: 0.75, off: 0, wanderR: 160 }],
     stars: { motePct: 0.75, maxPings: 36 },
-    hints: [{ t: 0.15, text: 'Thorns and ears together. The deep is learning your voice.' }],
+    hints: [{ t: 0.15, text: 'Thorns and ears together. The deep is learning your voice.',
+        plain: 'Urchins and hunters share this corridor. Every song you spend dodging also calls them.' }],
   },
   {
     id: 12, name: 'Pressure', seed: 1212,
@@ -151,7 +167,8 @@ export const LEVELS = [
     moteCount: 12,
     urchins: [{ t: 0.35, off: -22 }, { t: 0.55, off: 24 }, { t: 0.75, off: -20 }],
     stars: { motePct: 0.7, maxPings: 40 },
-    hints: [{ t: 0.1, text: 'The water thickens. Light dies faster this deep.' }],
+    hints: [{ t: 0.1, text: 'The water thickens. Light dies faster this deep.',
+        plain: 'Reveal fades faster here, so you will need to sing more often to see.' }],
   },
   {
     id: 13, name: 'The Throat', seed: 1313,
@@ -168,7 +185,8 @@ export const LEVELS = [
     ],
     hunters: [{ t: 0.55, off: 0, wanderR: 190, fast: true }],
     stars: { motePct: 0.65, maxPings: 44 },
-    hints: [{ t: 0.08, text: 'The throat of the deep. Everything it knows, it sends.' }],
+    hints: [{ t: 0.08, text: 'The throat of the deep. Everything it knows, it sends.',
+        plain: 'Thorns, a hunter and currents at once. Nothing new, all of it together.' }],
   },
   {
     id: 14, name: 'Still Water', seed: 1414,
@@ -184,8 +202,10 @@ export const LEVELS = [
     currents: [{ t: 0.7, off: 0, r: 150, mode: 'along', strength: 0.9 }],
     stars: { motePct: 0.75, maxPings: 60 },
     hints: [
-      { t: 0.05, text: 'The shallows end here, little lume.' },
-      { t: 0.93, text: 'The water ahead is still. Sing it home.' },
+      { t: 0.05, text: 'The shallows end here, little lume.',
+        plain: 'Last depth of chapter one.' },
+      { t: 0.93, text: 'The water ahead is still. Sing it home.',
+        plain: 'No current past this point. Your songs carry their full distance again.' },
     ],
     chapterEnd: true,
   },
@@ -204,9 +224,12 @@ export const LEVELS = [
     heartMotes: [{ t: 0.66, off: -70 }],
     stars: { motePct: 0.7, maxPings: 34 },
     hints: [
-      { t: 0.12, text: 'Deeper water. Not all of the amber down here is food.' },
-      { t: 0.26, text: 'Sing at a light before you swim to it. A false one has something behind it.' },
-      { t: 0.62, text: 'The beating light mends what the trench takes. Save it for when you need it.' },
+      { t: 0.12, text: 'Deeper water. Not all of the amber down here is food.',
+        plain: 'Some amber lights are lures, not motes. They look identical until you sing at one.' },
+      { t: 0.26, text: 'Sing at a light before you swim to it. A false one has something behind it.',
+        plain: 'A song reveals a lure’s tether. No tether showing means it is safe to take.' },
+      { t: 0.62, text: 'The beating light mends what the trench takes. Save it for when you need it.',
+        plain: 'The pink pulsing mote restores a heart, and only takes if you are already hurt.' },
     ],
   },
   {
@@ -221,7 +244,8 @@ export const LEVELS = [
     urchins: [{ t: 0.34, off: 34 }, { t: 0.66, off: -32 }],
     heartMotes: [{ t: 0.5, off: 62 }],
     stars: { motePct: 0.75, maxPings: 38 },
-    hints: [{ t: 0.16, text: 'A whole field of them. Doubt costs less than a heart.' }],
+    hints: [{ t: 0.16, text: 'A whole field of them. Doubt costs less than a heart.',
+        plain: 'Five lures mixed into the motes. One song checks a whole cluster at once.' }],
   },
   {
     id: 17, name: 'Bloomlight', seed: 1717,
@@ -234,8 +258,10 @@ export const LEVELS = [
     heartMotes: [{ t: 0.32, off: -66 }],
     stars: { motePct: 0.75, maxPings: 30 },
     hints: [
-      { t: 0.08, text: 'This dark drinks light. Your songs will not hold for long.' },
-      { t: 0.19, text: 'The pale glass answers a song with one of its own — free, and silent.' },
+      { t: 0.08, text: 'This dark drinks light. Your songs will not hold for long.',
+        plain: 'Reveal fades very fast at this depth.' },
+      { t: 0.19, text: 'The pale glass answers a song with one of its own — free, and silent.',
+        plain: 'Sing near a white crystal and it blooms light for you. Costs no song and wakes nothing.' },
     ],
   },
   {
@@ -252,7 +278,8 @@ export const LEVELS = [
     urchins: [{ t: 0.38, off: -28 }, { t: 0.7, off: 26 }],
     heartMotes: [{ t: 0.86, off: 60 }],
     stars: { motePct: 0.7, maxPings: 26 },
-    hints: [{ t: 0.1, text: 'Let the glass carry it. Every song you keep is one it does not hear.' }],
+    hints: [{ t: 0.1, text: 'Let the glass carry it. Every song you keep is one it does not hear.',
+        plain: 'Six crystals chain across the level. Use them instead of singing near the hunter.' }],
   },
   {
     id: 19, name: 'Baited', seed: 1919,
@@ -263,7 +290,8 @@ export const LEVELS = [
     hunters: [{ t: 0.38, off: 0, wanderR: 170 }, { t: 0.76, off: 0, wanderR: 170 }],
     heartMotes: [{ t: 0.56, off: -64 }],
     stars: { motePct: 0.7, maxPings: 34 },
-    hints: [{ t: 0.14, text: 'Take the bait here and the whole trench hears it snap.' }],
+    hints: [{ t: 0.14, text: 'Take the bait here and the whole trench hears it snap.',
+        plain: 'A sprung lure is loud. It pulls both hunters straight to you.' }],
   },
   {
     id: 20, name: 'Slack Water', seed: 2020,
@@ -279,7 +307,8 @@ export const LEVELS = [
     urchins: [{ t: 0.44, off: 26 }, { t: 0.7, off: -24 }],
     heartMotes: [{ t: 0.18, off: 58 }],
     stars: { motePct: 0.7, maxPings: 40 },
-    hints: [{ t: 0.16, text: 'The water shoves. A lure only has to wait for it to shove you close.' }],
+    hints: [{ t: 0.16, text: 'The water shoves. A lure only has to wait for it to shove you close.',
+        plain: 'Currents can carry you into a lure’s reach. Check lights before you let yourself drift.' }],
   },
   {
     id: 21, name: 'The Sleeper', seed: 2121,
@@ -294,9 +323,12 @@ export const LEVELS = [
     heartMotes: [{ t: 0.44, off: -84 }],
     stars: { motePct: 0.6, maxPings: 44 },
     hints: [
-      { t: 0.28, text: 'Something down here is bigger than the dark.' },
-      { t: 0.47, text: 'The mouth of its lair. If it takes you, you wake here again.' },
-      { t: 0.54, text: 'It has no eyes. It only listens. Sing, then be somewhere else.' },
+      { t: 0.28, text: 'Something down here is bigger than the dark.',
+        plain: 'A leviathan patrols ahead. It cannot be killed, only avoided.' },
+      { t: 0.47, text: 'The mouth of its lair. If it takes you, you wake here again.',
+        plain: 'This is a checkpoint. Dying past it returns you here, not to the start.' },
+      { t: 0.54, text: 'It has no eyes. It only listens. Sing, then be somewhere else.',
+        plain: 'It hunts your last song. Sing, then move off that spot immediately.' },
     ],
   },
   {
@@ -308,7 +340,8 @@ export const LEVELS = [
     urchins: [{ t: 0.45, off: -40 }],
     heartMotes: [{ t: 0.72, off: 80 }],
     stars: { motePct: 0.8, maxPings: 34 },
-    hints: [{ t: 0.1, text: 'Quiet water. Take the light while it is offered.' }],
+    hints: [{ t: 0.1, text: 'Quiet water. Take the light while it is offered.',
+        plain: 'Nothing hunts here. A good depth to fill your glow before the next one.' }],
   },
   {
     id: 23, name: 'Cold Lanterns', seed: 2323,
@@ -326,7 +359,8 @@ export const LEVELS = [
     crystals: [{ t: 0.28, off: 0 }, { t: 0.62, off: 0 }],
     heartMotes: [{ t: 0.9, off: 56 }],
     stars: { motePct: 0.7, maxPings: 38 },
-    hints: [{ t: 0.12, text: 'A whole street of lanterns, and a current running through it.' }],
+    hints: [{ t: 0.12, text: 'A whole street of lanterns, and a current running through it.',
+        plain: 'Five lures in a row, with a current pushing you through them.' }],
   },
   {
     id: 24, name: 'Deepglass', seed: 2424,
@@ -341,7 +375,8 @@ export const LEVELS = [
     urchins: [{ t: 0.26, off: -22 }, { t: 0.44, off: 22 }, { t: 0.62, off: -20 }, { t: 0.8, off: 20 }],
     heartMotes: [{ t: 0.58, off: 48 }],
     stars: { motePct: 0.7, maxPings: 34 },
-    hints: [{ t: 0.08, text: 'Your glow shrinks to nothing here. The glass is all the sight you get.' }],
+    hints: [{ t: 0.08, text: 'Your glow shrinks to nothing here. The glass is all the sight you get.',
+        plain: 'Your aura barely reaches. Crystals are the only reliable light in this depth.' }],
   },
   {
     id: 25, name: 'The Long Doubt', seed: 2525,
@@ -355,7 +390,8 @@ export const LEVELS = [
     hunters: [{ t: 0.4, off: 0, wanderR: 170 }, { t: 0.78, off: 0, wanderR: 170, fast: true }],
     heartMotes: [{ t: 0.64, off: -50 }],
     stars: { motePct: 0.65, maxPings: 36 },
-    hints: [{ t: 0.1, text: 'Six lights and two ears. Choose slowly — the trench rewards patience, once.' }],
+    hints: [{ t: 0.1, text: 'Six lights and two ears. Choose slowly — the trench rewards patience, once.',
+        plain: 'Six lures and two hunters. Sing to check each light before you approach it.' }],
   },
   {
     id: 26, name: 'Thrift', seed: 2626,
@@ -371,7 +407,8 @@ export const LEVELS = [
     urchins: [{ t: 0.48, off: -24 }, { t: 0.76, off: 22 }],
     heartMotes: [{ t: 0.2, off: 52 }],
     stars: { motePct: 0.7, maxPings: 20 },
-    hints: [{ t: 0.08, text: 'A chain of glass, end to end. Sing once and let it carry.' }],
+    hints: [{ t: 0.08, text: 'A chain of glass, end to end. Sing once and let it carry.',
+        plain: 'Seven crystals in sequence. One well-placed song can cascade the whole way.' }],
   },
   {
     id: 27, name: 'Every Tooth', seed: 2727,
@@ -395,7 +432,8 @@ export const LEVELS = [
     crystals: [{ t: 0.26, off: 0 }, { t: 0.58, off: 0 }, { t: 0.86, off: 0 }],
     heartMotes: [{ t: 0.76, off: -46 }],
     stars: { motePct: 0.65, maxPings: 40 },
-    hints: [{ t: 0.06, text: 'Everything the trench learned, in one throat.' }],
+    hints: [{ t: 0.06, text: 'Everything the trench learned, in one throat.',
+        plain: 'Urchins, a hunter, a current, lures and crystals in a single corridor.' }],
   },
   {
     id: 28, name: 'The Trench Mouth', seed: 2828,
@@ -413,10 +451,14 @@ export const LEVELS = [
     heartMotes: [{ t: 0.42, off: -74 }],
     stars: { motePct: 0.6, maxPings: 48 },
     hints: [
-      { t: 0.26, text: 'The trench narrows to a throat, and the throat is where they sleep.' },
-      { t: 0.45, text: 'The mouth. Whatever happens past here, you wake here again.' },
-      { t: 0.52, text: 'Two of them, turning against each other. There is a gap. Wait for it.' },
-      { t: 0.93, text: 'Light ahead, little lume. Sing it home.' },
+      { t: 0.26, text: 'The trench narrows to a throat, and the throat is where they sleep.',
+        plain: 'Two leviathans ahead, not one.' },
+      { t: 0.45, text: 'The mouth. Whatever happens past here, you wake here again.',
+        plain: 'Checkpoint. Any death past this point returns you here.' },
+      { t: 0.52, text: 'Two of them, turning against each other. There is a gap. Wait for it.',
+        plain: 'Their patrol orbits cross. Wait at the edge until both have turned away.' },
+      { t: 0.93, text: 'Light ahead, little lume. Sing it home.',
+        plain: 'The vent is close. Finish the swim.' },
     ],
     chapterEnd: true,
     finale: true,
@@ -435,16 +477,97 @@ export function chapterOf(levelId) {
   return CHAPTERS.find((c) => levelId >= c.from && levelId <= c.to) || CHAPTERS[0];
 }
 
+// ---- gates ----
+// Every 7th depth is a gate, every second gate a full boss. The motes banked
+// across the seven depths behind it decide how much margin you arrive with.
+//
+// The bank buys margin, never permission: every gate stays winnable at zero
+// motes. The moment one needs farming to pass, this stops being motivation and
+// becomes a grind wall, which is the thing we refused when we dropped gems.
+export const GATE_EVERY = 7;
+
+export function gateKind(id) {
+  if (id % (GATE_EVERY * 2) === 0) return 'boss';
+  if (id % GATE_EVERY === 0) return 'challenge';
+  return null;
+}
+
+// The depths that feed a gate: the seven behind it, never the gate itself.
+export function gateSpan(id) {
+  return { from: Math.max(1, id - GATE_EVERY), to: id - 1 };
+}
+
+// What a depth can yield, straight from its def — no geometry needs building.
+export function moteCapacity(def) {
+  return (def.moteCount || 0) +
+    (def.extraMotes || []).reduce((s, e) => s + (e.count || 0), 0);
+}
+
+export function gateCapacity(id) {
+  const { from, to } = gateSpan(id);
+  let n = 0;
+  for (let i = from; i <= to; i++) {
+    const d = LEVELS.find((l) => l.id === i);
+    if (d) n += moteCapacity(d);
+  }
+  return n;
+}
+
+// What the light buys. Every effect is a lever the sim already has, and every
+// one is passive — no new input, nothing to spend, nothing to learn.
+export function gateBoon(id, banked, capacity) {
+  const kind = gateKind(id);
+  if (!kind) return null;
+  const grade = capacity > 0 ? Math.min(1, banked / capacity) : 0;
+  const b = {
+    id, kind, grade, banked, capacity,
+    aura: 0, decay: 0, silentSongs: 0, revealLures: false, orbitSecs: 0,
+  };
+  if (id % 28 === 7)  { b.aura = grade * 0.6; b.decay = grade * 0.35; }
+  else if (id % 28 === 14) { b.silentSongs = Math.floor(grade * 5); }
+  else if (id % 28 === 21) { b.revealLures = grade >= 0.34; }
+  else { b.orbitSecs = Math.round(grade * 20); }
+  return b;
+}
+
+// One line telling the player exactly what they bought. States a fact and never
+// implies a purchase — there is no way to buy light.
+export function gateBoonLine(b) {
+  if (!b) return '';
+  if (b.id % 28 === 7) {
+    return b.aura > 0.05
+      ? `Your glow starts ${Math.round(b.aura * 100)}% wider, and fades slower.`
+      : 'You will swim this one on your own light.';
+  }
+  if (b.id % 28 === 14) {
+    return b.silentSongs > 0
+      ? `Enough for ${b.silentSongs} silent song${b.silentSongs === 1 ? '' : 's'}. It will not hear you coming.`
+      : 'Not enough for a single silent song. It hears everything.';
+  }
+  if (b.id % 28 === 21) {
+    return b.revealLures
+      ? 'Enough to see which lights are false before they spring.'
+      : 'Not enough to tell a lure from a mote. Sing at everything.';
+  }
+  return b.orbitSecs > 0
+    ? `Enough to trace their orbits for ${b.orbitSecs} seconds.`
+    : 'Not enough to trace them. You will have to watch, and wait.';
+}
+
 export function prevChapter(chapter) {
   const i = CHAPTERS.indexOf(chapter);
   return i > 0 ? CHAPTERS[i - 1] : null;
 }
 
 // Stars needed in the preceding chapter to open this one. Null for chapter 1.
+// Two stars per level since motes stopped being graded. Keep this in step with
+// STARS_PER_LEVEL in game.js or every chapter gate silently moves.
+export const STARS_PER_LEVEL = 2;
+
 export function chapterGate(chapter) {
   const prev = prevChapter(chapter);
   if (!prev) return null;
-  return Math.ceil(0.6 * (prev.to - prev.from + 1) * 3);
+  return Math.ceil(0.6 * (prev.to - prev.from + 1) * STARS_PER_LEVEL);
 }
 
 export function getLevel(id) {

@@ -10,6 +10,21 @@ Written Aug 9, 2026, at the end of a long Windows session. Read this first, then
 > Android Studio or a store console. Items below are marked **[done]** or
 > **[still open]**.
 
+> **v1.2 built on Windows, Aug 16 2026 — the gate economy.** Motes became
+> *stored light*. Every 7th depth is a gate and every 14th a boss; the motes
+> banked across the seven depths behind it decide how much margin you carry in.
+> Two rules are load-bearing and must survive any future change:
+> **every gate stays winnable at zero motes** (verified by the bot with an empty
+> save), and **the bank is never consumed** — it is the sum of your *best* haul
+> per depth, so replaying raises it and failing costs nothing.
+> Stars went from three to two (motes stopped being graded; they have their own
+> light bar), with a v1→v2 save migration that recomputes from stored
+> `bestPings` rather than clamping. Also in: plain second lines on all 42 hints,
+> a hint queue with a minimum display time, motes no longer borrowing the vent's
+> colour, redrawn tutorial glyphs, settings sub-lines, and a one-time Abyss idle
+> nudge. **Ads and IAP are deliberately absent** — see `www/js/ads.js`, which is
+> dormant until the IDs exist.
+
 **The short version:** the game is finished and verified. The web build is done,
 both native projects are scaffolded and wired, and a hand-written Game Center /
 Play Games bridge is in place. What remains is everything that needs a Mac, an
@@ -68,9 +83,12 @@ machine this was built on.
 - **[still open] Full `assembleDebug` never completed.** No JDK on this Mac
   either (`/usr/libexec/java_home` finds nothing), so Android is untouched here.
   Android Studio's bundled JBR has `jlink`, so the build should just work there.
-- **[still open] Never run on a real device**, either platform. The iOS build
-  above is a simulator build with signing disabled; it proves the code compiles,
-  not that Game Center authenticates.
+- **[done] It has run on a real device.** Disha built and installed it through
+  TestFlight, so the whole class of hardware-only unknowns — audio unlock on
+  first touch, haptics, safe-area insets, sustained frame rate — is no longer
+  hypothetical. What a TestFlight install does *not* prove is Game Center
+  authenticating against a real Apple ID, which still needs the capability
+  enabled (see below), or anything on the Android side.
 
 ---
 
@@ -88,10 +106,9 @@ npm install && npx cap sync ios && npx cap open ios
    click actually does. Pre-committing an `.entitlements` file without that would
    break device signing, so it was deliberately left alone.
 3. **[done]** It compiles — see above.
-4. **[still open]** Run on a real iPhone and check: audio unlocks on the first
-   tap, haptics fire, 60fps, safe-area insets on a notched phone, portrait lock
-   holds. (Per memory, `cap run`'s deploy step fails here; use
-   `xcrun devicectl device install app` / `... process launch`.)
+4. **[done]** Runs on a real iPhone via TestFlight. (Per memory, `cap run`'s
+   deploy step fails here; use `xcrun devicectl device install app` /
+   `... process launch` for a direct install.)
 5. **[still open]** Product → Archive → App Store Connect.
 
 ### 2. Android (needs Android Studio)
@@ -134,6 +151,11 @@ Hundred-Kilometre Song".
 ## Things that will bite you if you don't know them
 
 - **`npx cap sync` after every `www/` change.** The native projects hold copies.
+- **A sync run on Windows corrupts `ios/App/CapApp-SPM/Package.swift`**, rewriting
+  the two plugin paths with backslashes. Swift needs forward slashes, and the
+  iOS build fails without them. This is the same damage the macOS session fixed
+  in `e4a3d24`, and it comes back on every Windows sync. Follow any sync on
+  Windows with `git checkout -- ios/App/CapApp-SPM/Package.swift`.
 - **The debug API is web-only.** `window.__echo` is installed only when
   `window.Capacitor` is absent, so it never ships in a native build.
 - **How to test headlessly.** Drive `__echo.game.update(1/60)` in a synchronous

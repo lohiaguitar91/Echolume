@@ -6,6 +6,16 @@ import { clamp, lerp, dist, hexLerp } from './util.js';
 const _wallBatch = [];
 const _spikeBatch = [];
 
+// The chain's visible voice: concentric rings in the mote's own amber, growing
+// in count and strength with the streak. Colour never changes, so identity holds.
+function drawChainHalo(R, x, y, r, chain, alpha, z, palette) {
+  if (chain.halo < 0.02 || alpha < 0.02) return;
+  R.ring(x, y, r * 2.1, 1.2 * z, palette.mote, alpha * chain.halo * 0.8);
+  if (chain.rings > 1.5) {
+    R.ring(x, y, r * 3.0, 1.0 * z, palette.mote, alpha * chain.halo * 0.42);
+  }
+}
+
 export function drawGame(R, game, particles, time, dt, palette) {
   const p = game.ents.player;
 
@@ -72,15 +82,18 @@ export function drawGame(R, game, particles, time, dt, palette) {
   }
 
   // ---- motes ----
-  // The whole field wears the current chain color, so a long chain is
-  // unmistakable at a glance; size and pulse rate step with it too.
+  // A mote is always amber. The chain shows as size, pulse rate and halo rings
+  // around that fixed core, so the field reads as "a long chain" at a glance
+  // without any mote ever pretending to be a different object.
   const chain = chainStyle(game.chainDisplay);
   for (const m of game.ents.motes) {
     if (m.taken) continue;
     const bob = Math.sin(time * 1.3 + m.driftPhase) * 2.5;
     const tw = 0.8 + 0.2 * Math.sin(time * chain.pulse + m.phase);
     const vis = clamp(0.26 + m.reveal * 0.74, 0, 1);
-    R.glowDot(m.x, m.y + bob, (4.6 + tw) * 1.15 * chain.scale, chain.color, vis * tw, chain.core);
+    const r = (4.6 + tw) * 1.15 * chain.scale;
+    R.glowDot(m.x, m.y + bob, r, palette.mote, vis * tw, palette.moteCore);
+    drawChainHalo(R, m.x, m.y + bob, r, chain, vis * tw, z, palette);
   }
 
   // ---- urchins ----
@@ -160,7 +173,11 @@ export function drawGame(R, game, particles, time, dt, palette) {
     if (baiting) {
       const tw = 0.8 + 0.2 * Math.sin(time * chain.pulse * 0.75 + l.phase);
       const bob = Math.sin(time * 0.9 + l.driftPhase) * 2.0;
-      R.glowDot(l.x, l.y + bob, (4.6 + tw) * 1.15 * chain.scale, chain.color, 0.26 * tw + known * 0.3, chain.core);
+      // Identical to a real mote, halo included — that is the whole trick.
+      const lr = (4.6 + tw) * 1.15 * chain.scale;
+      const la = 0.26 * tw + known * 0.3;
+      R.glowDot(l.x, l.y + bob, lr, palette.mote, la, palette.moteCore);
+      drawChainHalo(R, l.x, l.y + bob, lr, chain, la, z, palette);
     }
     if (known < 0.02 && baiting) continue;
     const vis = baiting ? known : Math.max(known, l.state === 'lunge' ? 1 : 0.35);
@@ -189,6 +206,15 @@ export function drawGame(R, game, particles, time, dt, palette) {
   }
 
   // ---- leviathans ----
+  // Banked light traces the loop it will swim, for as long as the light lasts.
+  // Knowing the orbit is the whole fight; this buys you time to read it.
+  if (game.orbitT > 0) {
+    const fade = Math.min(1, game.orbitT / 3);   // last three seconds dim out
+    for (const lv of game.ents.leviathans) {
+      if (!lv.patrolR) continue;
+      R.ring(lv.homeX, lv.homeY, lv.patrolR, 1.1 * z, palette.crystal, 0.3 * fade);
+    }
+  }
   for (const lv of game.ents.leviathans) {
     const hunting = lv.state === 'hunt';
     // Always faintly there: you are meant to learn its loop, not be ambushed.
@@ -252,7 +278,7 @@ export function drawGame(R, game, particles, time, dt, palette) {
     if (p.invuln > 0) alpha = 0.45 + 0.55 * Math.abs(Math.sin(p.invuln * 14));
     // Aura and tail take on the chain color, but never lose the lume's identity.
     const chainMix = clamp(game.chainDisplay / 4, 0, 1) * 0.75;
-    const auraCol = hexLerp(palette.playerAura, chain.color, chainMix);
+    const auraCol = hexLerp(palette.playerAura, chain.accent, chainMix);
     R.glowDot(p.x, p.y, 20 * breathe * game.effectiveAura() + 4, auraCol, 0.28 * alpha);
     R.glowDot(p.x, p.y, 10.5, auraCol, 0.75 * alpha);
     R.glowDot(p.x, p.y, 5.2, palette.player, alpha, '#ffffff');

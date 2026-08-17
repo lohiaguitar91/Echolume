@@ -9,9 +9,12 @@ import { AudioEngine } from './audio.js';
 import { Haptics } from './haptics.js';
 import { Save } from './save.js';
 import { UI } from './ui.js';
-import { Game, starBreakdown } from './game.js';
+import { Game, starBreakdown, starTargets } from './game.js';
 import { GameServices, MILESTONES } from './gameservices.js';
-import { getLevel, LEVELS, parTime, chapterOf } from './levels.js';
+import {
+  getLevel, LEVELS, parTime, chapterOf,
+  gateKind, gateSpan, gateCapacity, gateBoon, gateBoonLine,
+} from './levels.js';
 import { drawGame, drawMenuAmbient } from './draw.js';
 import { installDebug } from './debug.js';
 import { clamp } from './util.js';
@@ -81,13 +84,13 @@ class Shell {
         const p = this.game.ents.player;
         this.ui.setMotes(p.motes, this.game.mode === 'abyss' ? 0 : this.game.ents.motes.length);
         const chain = chainStyle(this.game.chainDisplay);
-        this.particles.burst(x, y, chain.color, 10 + Math.min(combo, 8), 90, 0.7, 3, chain.core);
+        this.particles.burst(x, y, chain.accent, 10 + Math.min(combo, 8), 90, 0.7, 3, chain.accentCore);
       },
       onChainBloom: (combo, x, y) => {
         this.audio.chainBloom();
         this.haptics.warn();
         const chain = chainStyle(this.game.chainDisplay);
-        this.particles.burst(x, y, chain.color, 26, 170, 1.1, 3.4, chain.core);
+        this.particles.burst(x, y, chain.accent, 26, 170, 1.1, 3.4, chain.accentCore);
         this.renderer.addShake(0.12);
         this.ui.toast(`×${combo} bloom`, 1500);
       },
@@ -161,6 +164,7 @@ class Shell {
               breakdown,
               chapterEnd: def.chapterEnd ? chapterOf(def.id).name : null,
             });
+            this.ui.fillLightBank(this.save, def.id);
             for (let i = 0; i < stars; i++) {
               setTimeout(() => this.audio.star(i + 1), 780 + i * 380);
             }
@@ -210,7 +214,7 @@ class Shell {
         this.particles.burst(x, y, this.palette.mote, 22, 130, 1.1, 3, this.palette.moteCore);
         this.ui.hint('Every mote gathered.', 2800);
       },
-      onHint: (text) => this.ui.hint(text),
+      onHint: (text, plain) => this.ui.hint(text, undefined, plain),
       onThud: (i) => {
         this.audio.thud(i);
         this.renderer.addShake(0.12 + i * 0.15);
@@ -291,30 +295,55 @@ class Shell {
     return this._checkpoint && this._checkpoint.levelId === id ? this._checkpoint.snap : null;
   }
 
+  // A gate stops you at the door once, to say what your light bought. Resuming
+  // from a checkpoint skips it — you already made that choice on the way in.
   startLevel(id, opts = {}) {
     const def = getLevel(id);
     if (!def) return;
+    if (gateKind(id) && !opts.fromCheckpoint && !opts.skipGate && !opts.silent) {
+      this._pendingGate = id;
+      const boon = this._boonFor(id);
+      this.ui.fillGate(def, boon);
+      this.ui.setGateBuys(gateBoonLine(boon));
+      this._show('gate');
+      return;
+    }
     const resume = opts.fromCheckpoint ? this._checkpointFor(id) : null;
     if (!resume) this._checkpoint = null;
     this.currentLevelId = id;
     this.particles.clear();
+    this.ui.clearHints();
     // Each depth sings in its own key (D, E, F, G rotation), and each chapter
     // in its own mode — the trench is audibly flatter than the shallows.
     this.audio.setRoot([293.66, 329.63, 349.23, 392.0][(id - 1) % 4]);
     this.audio.setMode(chapterOf(id).mode);
-    this.game.startStory(def, resume);
+    this.game.startStory(def, resume, this._boonFor(id));
     const p = this.game.ents.player;
     this.renderer.cam.x = this.renderer.cam.targetX = p.x;
     this.renderer.cam.y = this.renderer.cam.targetY = p.y;
+    const moteTotal = this.game.ents.motes.length;
+    const targets = starTargets(def, moteTotal);
     this.ui.setLevelName(`${id} · ${def.name}`);
     this.ui.setHearts(p.hearts, TUNING.maxHearts);
-    this.ui.setMotes(p.motes, this.game.ents.motes.length);
+    // No mote threshold any more: every mote banks, so the counter is a tally
+    // of what this depth holds rather than a bar to clear.
+    this.ui.setMoteGoal(0);
+    this.ui.setMotes(p.motes, moteTotal);
     this.ui.setPings(p.pings);
     this.ui.hideDepth();
     this._show('playing');
     if (!opts.silent) {
       this.ui.toast(resume ? 'The lair mouth' : `Depth ${id} · ${def.name}`);
+      this.ui.showGoals(targets.motes, targets.pings);
     }
+  }
+
+  // What the seven depths behind a gate are worth right now. Null everywhere
+  // else, so an ordinary depth plays exactly as it always did.
+  _boonFor(id) {
+    if (!gateKind(id)) return null;
+    const { from, to } = gateSpan(id);
+    return gateBoon(id, this.save.moteBank(from, to), gateCapacity(id));
   }
 
   startAbyss() {
@@ -332,6 +361,7 @@ class Shell {
   _startAbyssNow() {
     this.gs.signIn();  // no-op if already in, or if there's no native bridge
     this.particles.clear();
+    this.ui.clearHints();
     this.audio.setRoot(293.66);      // the Abyss sings in D,
     this.audio.setMode('shallows');  // in the shallows' own mode
     this.game.startAbyss(1 + Math.floor(Math.random() * 100000));
@@ -340,6 +370,8 @@ class Shell {
     this.renderer.cam.y = this.renderer.cam.targetY = p.y;
     this.ui.setLevelName('The Abyss');
     this.ui.setHearts(p.hearts, TUNING.maxHearts);
+    this.ui.hideGoals();
+    this.ui.setMoteGoal(0);   // no star to earn down here; just a running tally
     this.ui.setMotes(0, 0);
     this.ui.setPings(0);
     this.ui.setDepth(0);
@@ -388,6 +420,13 @@ class Shell {
       this._startAbyssNow();
     });
     click('btn-abyss-back', () => this._show('title'));
+    click('btn-gate-descend', () => {
+      const id = this._pendingGate;
+      this._pendingGate = null;
+      if (id) this.startLevel(id, { skipGate: true });
+    });
+    // The only other door out of a gate: back to the levels you can re-swim.
+    click('btn-gate-back', () => { this._pendingGate = null; this._show('levels'); });
     click('btn-settings', () => { this._settingsReturn = this.state; this._show('settings'); });
     click('btn-about', () => this._show('about'));
     click('btn-about-continue', () => this._show('title'));
@@ -533,7 +572,9 @@ class Shell {
   }
 
   // ---- debug hooks ----
-  debugStartLevel(id) { this.startLevel(id); }
+  // The harness plays levels, not menus: a gate door would stall autoplay and
+  // report a pass for a depth that never actually ran.
+  debugStartLevel(id) { this.startLevel(id, { skipGate: true }); }
   debugStartAbyss() { this.startAbyss(); }
   debugShowScreen(name) { this._show(name); }
 
@@ -544,6 +585,23 @@ class Shell {
     this._last = now;
     if (dt <= 0) return;
     this._tick(dt);
+  }
+
+  // Hands off the screen in the Abyss and the walls fade out, because reveal
+  // energy is decaying — which is the whole game, but a first-time player read
+  // it as a rendering bug. Said once, on the first dive only, it becomes the
+  // lesson instead of the doubt.
+  _nudgeIfIdle(dt) {
+    if (this.game.mode !== 'abyss' || this.save.data.abyssNudgeSeen) return;
+    const pings = this.game.ents.player.pings;
+    if (pings !== this._nudgeLastPings) { this._nudgeLastPings = pings; this._idleT = 0; return; }
+    this._idleT = (this._idleT || 0) + dt;
+    if (this._idleT < 4) return;
+    this._idleT = 0;
+    this.save.data.abyssNudgeSeen = true;
+    this.save.persist();
+    this.ui.hint('The dark comes back when you stop singing.',
+      undefined, 'Light fades on its own. Sing to see again.');
   }
 
   // One update+render step. Callable directly (debug/screenshots) without
@@ -566,6 +624,7 @@ class Shell {
         this.game.update(TUNING.fixedDt);
         this._acc -= TUNING.fixedDt;
       }
+      this._nudgeIfIdle(dt);
       const p = this.game.ents.player;
       R.cam.targetX = p.x + p.vx * TUNING.camLookahead;
       R.cam.targetY = p.y + p.vy * TUNING.camLookahead;

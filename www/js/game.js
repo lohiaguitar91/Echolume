@@ -30,18 +30,30 @@ export class Game {
     this.chainDisplay = 0;   // fractional tier index; rises fast, cools slow
     this.auraScale = 1;
     this.decayScale = 1;
+    this.boon = null;        // what banked light bought at this gate, if any
+    this.silentSongs = 0;    // songs that push you but make no sound
+    this.orbitT = 0;         // seconds of leviathan orbit still drawn for you
     // Abyss
     this.abyss = null;
   }
 
   // ---- lifecycle ----
-  startStory(def, checkpoint = null) {
+  // `boon` is what the player's banked light buys at a gate. Always passive, and
+  // always optional — a gate is beatable with boon null.
+  startStory(def, checkpoint = null, boon = null) {
     this.mode = 'story';
     this.def = def;
-    this.auraScale = def.auraScale || 1;
-    this.decayScale = def.decayScale || 1;
+    this.boon = boon;
+    this.auraScale = (def.auraScale || 1) * (1 + (boon?.aura || 0));
+    this.decayScale = (def.decayScale || 1) * (1 - (boon?.decay || 0));
+    this.silentSongs = boon?.silentSongs || 0;
+    this.orbitT = boon?.orbitSecs || 0;
     this.geom = buildLevelGeometry(def);
     this.ents = setupEntities(def, this.geom);
+    if (boon?.revealLures) {
+      // Carried light shows a lure for what it is before it ever springs.
+      for (const l of this.ents.lures) l.reveal = Math.max(l.reveal, 1);
+    }
     this._resetRun(checkpoint);
   }
 
@@ -226,7 +238,14 @@ export class Game {
     p.facing = Math.atan2(dy, dx);
     p.pings++;
     this.pingCooldown = TUNING.pingCooldown;
-    this._emitPing(p.x, p.y, {});
+    // Banked light spends itself here: the song still carries you, it just
+    // makes no sound. Costs no input and nothing to remember.
+    const quiet = this.silentSongs > 0;
+    if (quiet) {
+      this.silentSongs--;
+      if (this.cb.onSilentSong) this.cb.onSilentSong(this.silentSongs);
+    }
+    this._emitPing(p.x, p.y, { free: quiet });
     if (this.cb.onPing) this.cb.onPing(dy);
   }
 
@@ -272,6 +291,7 @@ export class Game {
     const p = this.ents.player;
 
     if (this.state === 'play') this.time += dt;
+    if (this.orbitT > 0) this.orbitT = Math.max(0, this.orbitT - dt);
     if (this.pingCooldown > 0) this.pingCooldown -= rawDt;
     if (this.comboT > 0) { this.comboT -= dt; if (this.comboT <= 0) this.moteCombo = 0; }
     // Chain color rises the instant you collect, then cools over ~2s.
@@ -678,7 +698,7 @@ export class Game {
         for (const h of this.def.hints) {
           if (bestT >= h.t && !this.hintsShown.has(h.t)) {
             this.hintsShown.add(h.t);
-            if (this.cb.onHint) this.cb.onHint(h.text);
+            if (this.cb.onHint) this.cb.onHint(h.text, h.plain);
           }
         }
       }
@@ -719,15 +739,35 @@ export class Game {
   }
 }
 
-// Per-criterion star results — the UI lights each star by its own rule,
-// never by count (a lit star must sit above the label it actually earned).
+// What this depth is asking for, known before a single song is sung.
+//
+// The threshold is a fraction of whatever this level happens to hold, and both
+// the fraction (0.6–0.8) and the field size vary per depth — so the number
+// swings for reasons no player can see. Shown only on the results screen it
+// read as random; a playtester hit that on three levels running. Same maths,
+// stated up front.
+export function starTargets(def, moteTotal) {
+  return {
+    motes: Math.ceil((def.stars?.motePct || 1) * moteTotal),
+    pings: def.stars?.maxPings ?? Infinity,
+  };
+}
+
+// Two stars, per criterion — the UI lights each by its own rule, never by count
+// (a lit star must sit above the label it actually earned).
+//
+// Motes used to be the middle star. They are the gate economy now, so grading
+// them here too would give one action two scoreboards. They get a light bar
+// instead; `motes` stays in the breakdown only so older callers keep working.
 export function starBreakdown(def, stats) {
-  const need = Math.ceil((def.stars?.motePct || 1) * stats.moteTotal);
+  const need = starTargets(def, stats.moteTotal).motes;
   const vent = true; // you're at the results screen because you reached it
   const motes = stats.moteTotal === 0 || stats.motes >= need;
   const songs = stats.pings <= (def.stars?.maxPings ?? Infinity);
-  return { vent, motes, songs, count: 1 + (motes ? 1 : 0) + (songs ? 1 : 0) };
+  return { vent, motes, songs, count: 1 + (songs ? 1 : 0) };
 }
+
+export const STARS_PER_LEVEL = 2;
 
 export function calcStars(def, stats) {
   return starBreakdown(def, stats).count;

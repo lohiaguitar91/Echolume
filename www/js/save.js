@@ -3,15 +3,18 @@
 // webview data eviction.
 
 import { SAVE_KEY } from './config.js';
-import { chapterOf, chapterGate, prevChapter } from './levels.js';
+import { chapterOf, chapterGate, prevChapter, getLevel, STARS_PER_LEVEL } from './levels.js';
+
+const SAVE_VERSION = 2;   // 2: motes stopped being a star; three became two
 
 const DEFAULTS = {
-  version: 1,
+  version: SAVE_VERSION,
   levels: {},          // id -> { stars, bestMotes, bestPings, bestTime }
   abyssBestDepth: 0,
   abyssUnlocked: false,
   tutorialSeen: false,
   abyssIntroSeen: false,
+  abyssNudgeSeen: false,   // the one-time "sing to see again" nudge
   aboutSeen: false,
   achievements: [],    // milestone ids unlocked locally (source of truth)
   settings: {
@@ -47,6 +50,7 @@ export class Save {
       console.warn('Save load failed; starting fresh.', e);
       this.data = structuredClone(DEFAULTS);
     }
+    this._migrate();
     // Async restore from native storage if webview storage was wiped.
     if (this.capPrefs && !localStorage.getItem(SAVE_KEY)) {
       this.capPrefs.get({ key: SAVE_KEY }).then((res) => {
@@ -98,6 +102,26 @@ export class Save {
     this.persist();
   }
 
+  // v1 -> v2: motes stopped earning a star, so three became two.
+  //
+  // Recomputed from what the save already holds rather than clamped: clamping
+  // would hand two stars to a player who only ever earned the vent, and take
+  // one from nobody. bestPings is the song star's own record, so the answer is
+  // already on disk — this reads it back rather than guessing.
+  _migrate() {
+    if ((this.data.version || 1) >= SAVE_VERSION) return;
+    for (const [id, rec] of Object.entries(this.data.levels || {})) {
+      if (!rec || typeof rec.stars !== 'number') continue;
+      if (rec.stars === 0) continue;              // never cleared; nothing to move
+      const def = getLevel(Number(id));
+      const maxPings = def?.stars?.maxPings ?? Infinity;
+      const song = Number.isFinite(rec.bestPings) && rec.bestPings <= maxPings;
+      rec.stars = Math.min(STARS_PER_LEVEL, 1 + (song ? 1 : 0));
+    }
+    this.data.version = SAVE_VERSION;
+    this.persist();
+  }
+
   // The depth the Continue chip should send you to: first unlocked level
   // without a star, otherwise the furthest unlocked one.
   // Skips locked depths rather than stopping at them: a chapter can open on
@@ -145,6 +169,16 @@ export class Save {
     }
     const prev = this.data.levels[levelId - 1];
     return !!(prev && prev.stars > 0);
+  }
+
+  // Light banked for a gate: the sum of your BEST haul on each depth behind it.
+  // Never consumed, never lost. Replaying a depth you rushed raises it; failing
+  // a gate costs nothing but the attempt. bestMotes is already recorded on
+  // deaths as well as wins, so an existing save carries a real bank on day one.
+  moteBank(from, to) {
+    let n = 0;
+    for (let id = from; id <= to; id++) n += this.data.levels[id]?.bestMotes || 0;
+    return n;
   }
 
   starsIn(from, to) {

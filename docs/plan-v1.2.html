@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Echolume v1.2 — Motes that matter</title>
+<style>
+  :root {
+    --bg: #030711; --bg2: #071427; --panel: rgba(9,20,38,0.85); --edge: rgba(126,240,255,0.16);
+    --cyan: #7ef0ff; --terrain: #35e0ff; --amber: #ffc45e; --mint: #5effc2; --magenta: #ff4f9a;
+    --violet: #b14fff; --text: #dceffc; --dim: #7f97b8; --danger: #ff3b5c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.65; padding: 40px 20px 80px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 { font-weight: 200; letter-spacing: 0.32em; font-size: 30px; color: #eafcff;
+       text-shadow: 0 0 22px rgba(126,240,255,0.5); text-transform: uppercase; text-align: center; }
+  .subtitle { text-align: center; color: var(--dim); letter-spacing: 0.18em; font-size: 13px;
+              text-transform: uppercase; margin: 10px 0 6px; }
+  .meta { text-align: center; color: var(--dim); font-size: 12.5px; margin-bottom: 42px; }
+  h2 { font-weight: 300; letter-spacing: 0.14em; font-size: 21px; color: #eafcff; margin: 56px 0 6px;
+       text-transform: uppercase; border-bottom: 1px solid var(--edge); padding-bottom: 10px; }
+  h2 .n { color: var(--cyan); margin-right: 10px; }
+  h3 { font-weight: 500; font-size: 15.5px; margin: 26px 0 8px; color: #cfeeff; }
+  p { margin: 10px 0; font-size: 14.5px; }
+  .dim { color: var(--dim); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
+  .shot { border-radius: 14px; border: 1px solid var(--edge); width: 100%; display: block; }
+  .caption { font-size: 12px; color: var(--dim); text-align: center; margin-top: 8px; letter-spacing: 0.06em; }
+  .card { background: var(--panel); border: 1px solid var(--edge); border-radius: 16px; padding: 18px 20px; margin: 16px 0; }
+  .pill { display: inline-block; border-radius: 999px; padding: 2px 12px; font-size: 11.5px; letter-spacing: 0.12em;
+          text-transform: uppercase; margin-right: 8px; }
+  .pill.now { background: rgba(126,240,255,0.12); color: var(--cyan); border: 1px solid rgba(126,240,255,0.4); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 14px 0; }
+  th { text-align: left; color: var(--dim); font-weight: 500; letter-spacing: 0.08em; font-size: 12px;
+       text-transform: uppercase; padding: 8px 10px; border-bottom: 1px solid var(--edge); }
+  td { padding: 9px 10px; border-bottom: 1px solid rgba(126,240,255,0.07); vertical-align: top; }
+  td.good { color: var(--mint); } td.bad { color: var(--magenta); } td.mid { color: var(--amber); }
+  .rec { border-left: 3px solid var(--mint); padding-left: 16px; }
+  .warn { border-left: 3px solid var(--magenta); padding-left: 16px; }
+  .quote { border-left: 3px solid var(--cyan); padding: 4px 0 4px 16px; margin: 14px 0;
+           color: #cfeeff; font-style: italic; font-size: 14.5px; }
+  .quote .ts { font-style: normal; color: var(--dim); font-size: 12px; letter-spacing: 0.08em; margin-right: 8px; }
+  ul { margin: 8px 0 8px 22px; font-size: 14.5px; }
+  li { margin: 5px 0; }
+  code { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; color: var(--cyan);
+         background: rgba(126,240,255,0.07); border-radius: 5px; padding: 1px 6px; }
+  .svgmock { width: 100%; height: auto; display: block; border-radius: 14px; border: 1px solid var(--edge); }
+  .q { background: rgba(177,79,255,0.06); border: 1px solid rgba(177,79,255,0.32);
+       border-radius: 16px; padding: 18px 20px; margin: 22px 0; }
+  .q h3 { margin-top: 0; color: var(--violet); letter-spacing: 0.1em; text-transform: uppercase; font-size: 13px; }
+  .opt { display: grid; grid-template-columns: 34px 1fr; gap: 12px; padding: 11px 0;
+         border-top: 1px solid rgba(177,79,255,0.14); }
+  .opt:first-of-type { border-top: none; }
+  .opt .k { font-weight: 600; color: var(--dim); font-size: 14px; }
+  .opt.pick .k { color: var(--mint); }
+  .opt .t { font-size: 14px; }
+  .opt.pick .t strong { color: var(--mint); }
+  .footer { margin-top: 60px; text-align: center; color: var(--dim); font-size: 12px; letter-spacing: 0.1em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Echolume</h1>
+<div class="subtitle">v1.2 &middot; Motes that matter</div>
+<div class="meta">Disha's playtest &plus; the boss-cadence direction &middot; August 16, 2026</div>
+
+<h2><span class="n">0</span>Two inputs, one problem</h2>
+<p>This doc merges a 10:38 voice memo (Disha, depths 8&ndash;18 plus the Abyss, unscripted, ending on
+<em>"overall looks good"</em>) with the direction you and Disha worked out afterwards: bosses and challenges on a
+fixed cadence, with motes deciding how hard they are.</p>
+
+<p>They turn out to be the same problem from two sides. The memo's complaint list is almost entirely
+<strong>"the game keeps its goals and rewards to itself."</strong> The direction is a way to
+<strong>give motes a reason to exist that the player can feel.</strong> One is the diagnosis, the other is the
+cure, and the cure is bigger than the complaint.</p>
+
+<div class="card rec">
+  <p style="margin:0"><strong>The line from the playtest this direction answers:</strong>
+  <em>"Your goal is to achieve three stars for each level, but the incentive of doing that isn't really there."</em>
+  Ten minutes of play and the reward structure never landed. Bosses that read your mote count are the first
+  mechanic that makes collecting them matter <em>later</em>, which is the only kind of mattering that motivates.</p>
+</div>
+
+<p class="dim" style="font-size:13.5px">Nothing about movement, tap response, or audio came up once in ten
+minutes &mdash; the three things that were painful in earlier rounds. Those are settled.</p>
+
+<h2><span class="n">1</span>The new spine &mdash; motes are stored light</h2>
+
+<p>Today a mote gives a little glow for a moment and a star at the end. Under this direction a mote is something
+you <em>carry</em>. The fiction is already sitting there waiting: a creature that cannot see, in a game where
+light is the resource and singing is the cost. So motes become <strong>stored light</strong> &mdash; sight you
+banked earlier and can spend later without making a sound.</p>
+
+<p>That framing matters because it makes the boss effect obvious instead of arbitrary. You are not spending
+"points." You are arriving at the most dangerous thing in the game either carrying light or not.</p>
+
+<h3>The cadence</h3>
+<div class="card">
+  <svg class="svgmock" viewBox="0 0 820 150" xmlns="http://www.w3.org/2000/svg" style="background:#050d1c">
+    <line x1="40" y1="76" x2="780" y2="76" stroke="rgba(126,240,255,0.18)" stroke-width="1.5"/>
+    <text x="40" y="30" fill="#7f97b8" font-size="11.5" letter-spacing="1.4">EVERY 7 A GATE &middot; EVERY 14 A BOSS</text>
+    <path d="M100 50 L470 50" stroke="#ffc45e" stroke-width="1" stroke-dasharray="3 4" opacity="0.45"/>
+    <text x="285" y="44" fill="#ffc45e" font-size="10.5" text-anchor="middle" opacity="0.8">motes banked across these feed the gate</text>
+    <g fill="#7f97b8" font-size="11" text-anchor="middle">
+      <circle cx="80"  cy="76" r="4" fill="#35506e"/>
+      <circle cx="160" cy="76" r="4" fill="#35506e"/>
+      <circle cx="240" cy="76" r="10" fill="#ffc45e"/><text x="240" y="104" fill="#ffc45e">7 &middot; challenge</text>
+      <circle cx="330" cy="76" r="4" fill="#35506e"/>
+      <circle cx="410" cy="76" r="4" fill="#35506e"/>
+      <circle cx="490" cy="76" r="15" fill="#ff4f9a"/><text x="490" y="110" fill="#ff4f9a">14 &middot; BOSS</text>
+      <circle cx="580" cy="76" r="4" fill="#35506e"/>
+      <circle cx="660" cy="76" r="10" fill="#ffc45e"/><text x="660" y="104" fill="#ffc45e">21 &middot; challenge</text>
+      <circle cx="740" cy="76" r="15" fill="#ff4f9a"/><text x="740" y="110" fill="#ff4f9a">28 &middot; BOSS</text>
+    </g>
+  </svg>
+  <div class="caption">Every 7th depth is a gate. Every second gate is a full boss.</div>
+</div>
+
+<p>Good news on fit: depths <strong>21 and 28 already have leviathan bosses</strong>, and depth 14 is already
+written as chapter 1's finale (<em>"The throat of the deep. Everything it knows, it sends."</em>). The cadence
+you described is most of the way built. What is genuinely new is depth 7, the mote bank, and the gate screen.</p>
+
+<h3>The bank, and the gate</h3>
+<p>Entering a gate, the game totals the motes you hold from the seven depths behind it and states plainly what
+that buys. If you arrive light, it says so and offers you the door back:</p>
+
+<div class="grid2">
+  <div>
+    <svg class="svgmock" viewBox="0 0 375 460" xmlns="http://www.w3.org/2000/svg" style="background:#050d1c">
+      <text x="187" y="54" text-anchor="middle" fill="#7f97b8" font-size="12" letter-spacing="3">DEPTH 14</text>
+      <text x="187" y="88" text-anchor="middle" fill="#eafcff" font-size="21" letter-spacing="2">THE THROAT</text>
+      <circle cx="187" cy="168" r="40" fill="none" stroke="#ff4f9a" stroke-width="2" opacity="0.5"/>
+      <circle cx="187" cy="168" r="24" fill="#ff4f9a" opacity="0.25"/>
+      <circle cx="187" cy="168" r="9" fill="#ffd3e8"/>
+      <text x="187" y="248" text-anchor="middle" fill="#dceffc" font-size="15">You carry 96 lights of 118.</text>
+      <rect x="60" y="270" width="255" height="7" rx="3.5" fill="rgba(127,151,184,0.2)"/>
+      <rect x="60" y="270" width="207" height="7" rx="3.5" fill="#ffc45e" opacity="0.9"/>
+      <text x="187" y="312" text-anchor="middle" fill="#5effc2" font-size="13.5">Enough for 4 silent pulses.</text>
+      <text x="187" y="336" text-anchor="middle" fill="#7f97b8" font-size="12.5">It will not hear you coming.</text>
+      <rect x="70" y="368" width="235" height="42" rx="21" fill="rgba(126,240,255,0.2)" stroke="rgba(126,240,255,0.6)"/>
+      <text x="187" y="394" text-anchor="middle" fill="#f2fdff" font-size="14" letter-spacing="2">DESCEND</text>
+      <text x="187" y="436" text-anchor="middle" fill="#7f97b8" font-size="12.5" letter-spacing="1">go back for more light</text>
+    </svg>
+    <div class="caption">Arriving heavy. The gate says exactly what you bought.</div>
+  </div>
+  <div>
+    <svg class="svgmock" viewBox="0 0 375 460" xmlns="http://www.w3.org/2000/svg" style="background:#050d1c">
+      <text x="187" y="54" text-anchor="middle" fill="#7f97b8" font-size="12" letter-spacing="3">DEPTH 14</text>
+      <text x="187" y="88" text-anchor="middle" fill="#eafcff" font-size="21" letter-spacing="2">THE THROAT</text>
+      <circle cx="187" cy="168" r="40" fill="none" stroke="#ff3b5c" stroke-width="2" opacity="0.45"/>
+      <circle cx="187" cy="168" r="24" fill="#ff3b5c" opacity="0.16"/>
+      <circle cx="187" cy="168" r="9" fill="#ff8fa3"/>
+      <text x="187" y="248" text-anchor="middle" fill="#dceffc" font-size="15">You carry 31 lights of 118.</text>
+      <rect x="60" y="270" width="255" height="7" rx="3.5" fill="rgba(127,151,184,0.2)"/>
+      <rect x="60" y="270" width="67" height="7" rx="3.5" fill="#ff3b5c" opacity="0.9"/>
+      <text x="187" y="312" text-anchor="middle" fill="#ff8fa3" font-size="13.5">Not enough for a single pulse.</text>
+      <text x="187" y="336" text-anchor="middle" fill="#7f97b8" font-size="12.5">You will go in blind. Are you sure?</text>
+      <rect x="70" y="368" width="235" height="42" rx="21" fill="rgba(255,59,92,0.12)" stroke="rgba(255,59,92,0.5)"/>
+      <text x="187" y="394" text-anchor="middle" fill="#ffc9d2" font-size="14" letter-spacing="2">DESCEND ANYWAY</text>
+      <text x="187" y="436" text-anchor="middle" fill="#5effc2" font-size="12.5" letter-spacing="1">go back for more light</text>
+    </svg>
+    <div class="caption">Arriving light. The warning, stated as a fact rather than a scold.</div>
+  </div>
+</div>
+
+<div class="card rec">
+  <p style="margin:0"><strong>The rule that keeps this from being a wall:</strong> every gate must remain
+  <em>beatable at zero motes</em> by a good player. The bank buys margin, never permission. The moment a boss
+  becomes mathematically impossible without farming, this stops being motivation and becomes a grind gate &mdash;
+  the exact thing we ruled out when we dropped gems.</p>
+</div>
+
+<h2><span class="n">2</span>What the light actually buys</h2>
+<p>You said the effect should differ per boss. Agreed, and it is what keeps the seventh depth from feeling like
+the same fight in a new skin. One shared currency, a different translation each time, always built out of
+mechanics the game already has:</p>
+
+<table>
+  <tr><th>Gate</th><th>Encounter</th><th>What banked light does</th><th>Built from</th></tr>
+  <tr><td>7</td><td>Challenge &mdash; the long dark</td><td class="good">Starting glow radius, and how slowly it decays</td><td class="dim">existing aura + decay scale</td></tr>
+  <tr><td>14</td><td class="bad">Boss &mdash; the Throat</td><td class="good">Silent pulses: reveal without singing, so it never hears you</td><td class="dim">bloom crystal reveal</td></tr>
+  <tr><td>21</td><td>Challenge &mdash; the lure field</td><td class="good">Lures are shown as false before they spring</td><td class="dim">existing lure tether</td></tr>
+  <tr><td>28</td><td class="bad">Boss &mdash; the leviathan</td><td class="good">Its patrol orbit is drawn for you, for a while</td><td class="dim">existing leviathan path</td></tr>
+  <tr><td class="dim">35+</td><td class="dim">to author</td><td class="dim">checkpoint retries, current immunity, longer hush</td><td class="dim">chapters 3&ndash;4</td></tr>
+</table>
+
+<p>Every one of those is a lever that already exists in the sim. None adds an inventory, a shop, or a screen the
+player has to learn. That is deliberate: the point is that motes finally <em>do something</em>, not that the game
+grows an economy around them.</p>
+
+<div class="q">
+  <h3>Question 1 &mdash; one boss effect, or many?</h3>
+  <div class="opt pick"><div class="k">A</div><div class="t">
+    <strong>Per-gate effects, as in the table.</strong> Each encounter translates light differently, so the
+    cadence stays fresh and each gate teaches something. More design and copy per gate.
+    <span class="dim">My pick &mdash; it is the version you described, and it is the reason to keep playing.</span>
+  </div></div>
+  <div class="opt"><div class="k">B</div><div class="t">
+    One universal effect everywhere (silent pulses), tuned by amount. Far simpler to build, balance and explain.
+    The 7th depth starts to feel samey by the fourth one.
+  </div></div>
+  <div class="opt"><div class="k">C</div><div class="t">
+    B for the launch cadence (7 and 14), A from 21 onward once the pattern has proven itself.
+    <span class="dim">The cautious path if you want this in the next build rather than the one after.</span>
+  </div></div>
+</div>
+
+<h3>How the bank is counted</h3>
+<p>This decides whether the idea feels motivating or exhausting, so it is worth being explicit.</p>
+
+<div class="q">
+  <h3>Question 2 &mdash; what happens to the bank</h3>
+  <div class="opt pick"><div class="k">A</div><div class="t">
+    <strong>Your best run of each depth counts, permanently.</strong> The bank is the sum of your best mote haul
+    on each of the seven depths behind the gate. Replaying a depth you rushed <em>raises</em> it; nothing is ever
+    consumed or lost. Failing the boss costs nothing but the attempt.
+    <span class="dim">My pick. Replay becomes a choice rather than a chore, and it can never punish you twice.</span>
+  </div></div>
+  <div class="opt"><div class="k">B</div><div class="t">
+    The bank is spent at the gate and must be re-earned for the next one. More tension and more weight per boss.
+    Also the version where a bad boss run sends you back to re-farm seven levels, which is the classic way this
+    mechanic turns into a grind.
+  </div></div>
+  <div class="opt"><div class="k">C</div><div class="t">
+    Spent on use, but only what you actually spend. Arrive with 96, use 2 of 4 pulses, keep the rest.
+    Middle ground; harder arithmetic for a player to hold in their head.
+  </div></div>
+</div>
+
+<h2><span class="n">3</span>What this fixes, and what it doesn't</h2>
+<p>Mapping the direction back onto the memo. Two findings get solved outright, one gets <em>more</em> urgent, and
+five are untouched and still need doing.</p>
+
+<table>
+  <tr><th>From the memo</th><th>Effect of the new direction</th></tr>
+  <tr><td>"The incentive of three stars isn't really there"</td><td class="good">Solved &mdash; but by motes, not stars. See question 3.</td></tr>
+  <tr><td>Motes feel pointless once a level ends</td><td class="good">Solved &mdash; they are what you carry to the boss.</td></tr>
+  <tr><td class="bad">Motes turn the vent's exact green at chain 4</td><td class="bad">Worse &mdash; you cannot make a currency the player can't identify.</td></tr>
+  <tr><td>Star goal is invisible and looks random</td><td class="mid">Unchanged, and now competing for HUD space.</td></tr>
+  <tr><td>Hints carry no decodable instruction</td><td class="mid">Unchanged.</td></tr>
+  <tr><td>Two tutorial icons don't read</td><td class="mid">Unchanged.</td></tr>
+  <tr><td>Settings aren't self-explanatory</td><td class="mid">Unchanged.</td></tr>
+  <tr><td>Two fade observations, one possibly a bug</td><td class="mid">Unchanged.</td></tr>
+  <tr><td>Lives and death handling</td><td class="good">Working. Leave alone.</td></tr>
+</table>
+
+<h3>The colour collision, now that motes are the currency</h3>
+<p><span class="pill now">Confirmed in code</span></p>
+<div class="quote"><span class="ts">05:16</span> "I don't really know what these green motes are."</div>
+<p>I went looking for a "green mote" expecting heart motes. It isn't those &mdash; those are pink. What Disha saw
+were <strong>ordinary amber motes</strong>, repainted by their own chain streak. At a chain of 4,
+<code>drawGame</code> recolours the entire mote field to the chain tier, and that tier is <code>#5effc2</code>
+&mdash; the exact value of <code>PALETTE.vent</code>, the level exit. The tutorial meanwhile teaches
+<em>"the green vent takes you deeper."</em></p>
+
+<div class="grid2">
+  <div>
+    <img class="shot" src="data:image/jpeg;base64,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" alt="Two green glowing motes in a lit corridor">
+    <div class="caption">Depth 13 at chain 4. Both glowing dots are ordinary amber motes.</div>
+  </div>
+  <div>
+    <svg class="svgmock" viewBox="0 0 420 300" xmlns="http://www.w3.org/2000/svg" style="background:#050d1c">
+      <text x="210" y="26" text-anchor="middle" fill="#7f97b8" font-size="12" letter-spacing="1.6">THE CHAIN LADDER</text>
+      <circle cx="52" cy="72" r="15" fill="#ffc45e"/><circle cx="52" cy="72" r="6" fill="#fff2d0"/>
+      <text x="52" y="104" text-anchor="middle" fill="#7f97b8" font-size="10.5">chain 0</text>
+      <circle cx="131" cy="72" r="16" fill="#ffe08a"/><circle cx="131" cy="72" r="6" fill="#fffaf0"/>
+      <text x="131" y="104" text-anchor="middle" fill="#7f97b8" font-size="10.5">chain 3</text>
+      <circle cx="210" cy="72" r="18" fill="#5effc2"/><circle cx="210" cy="72" r="7" fill="#eafff6"/>
+      <text x="210" y="104" text-anchor="middle" fill="#5effc2" font-size="10.5">chain 4</text>
+      <circle cx="289" cy="72" r="19" fill="#7ef0ff"/><circle cx="289" cy="72" r="7" fill="#eafcff"/>
+      <text x="289" y="104" text-anchor="middle" fill="#7f97b8" font-size="10.5">chain 6</text>
+      <circle cx="368" cy="72" r="21" fill="#b14fff"/><circle cx="368" cy="72" r="8" fill="#f0dcff"/>
+      <text x="368" y="104" text-anchor="middle" fill="#7f97b8" font-size="10.5">chain 8</text>
+      <path d="M210 116 L210 196" stroke="#5effc2" stroke-width="1.4" stroke-dasharray="4 5" opacity="0.75"/>
+      <text x="222" y="152" fill="#5effc2" font-size="11.5" font-style="italic">identical value</text>
+      <text x="222" y="169" fill="#7f97b8" font-size="11">#5effc2</text>
+      <circle cx="210" cy="222" r="20" fill="none" stroke="#5effc2" stroke-width="2.4"/>
+      <circle cx="210" cy="222" r="11" fill="#5effc2" opacity="0.55"/>
+      <circle cx="210" cy="222" r="5" fill="#eafff6"/>
+      <text x="210" y="264" text-anchor="middle" fill="#eafcff" font-size="12" letter-spacing="1.2">THE VENT</text>
+      <text x="210" y="282" text-anchor="middle" fill="#7f97b8" font-size="10.5">the level exit</text>
+    </svg>
+    <div class="caption">The ladder's third step lands exactly on the exit's colour.</div>
+  </div>
+</div>
+
+<p><strong>Recommendation:</strong> keep the amber core at every tier and let the chain speak through a ring, a
+size step and a pulse rate around it; and drop <code>#5effc2</code> from the ladder so no object ever borrows the
+exit's colour. The chain stays readable across the field, and a mote always looks like a mote. This was worth
+fixing before. With motes as the currency it is not optional.</p>
+
+<h2><span class="n">4</span>Stars, now that motes have a job</h2>
+<div class="quote"><span class="ts">06:36</span>
+"The depth screen just kind of tells you what you achieved. I guess your goal is to achieve three stars for each
+level, but the incentive of doing that isn't really there."</div>
+
+<p>Today a level grades three things: reach the vent, gather a fraction of the motes, finish under a song budget.
+Under the new direction the middle one stops being a grade and becomes the bank. That is a real overlap, and
+leaving both in without deciding gives the player two scoreboards for one action.</p>
+
+<p>Worth knowing: the star incentive <em>does</em> already exist and is simply invisible. Chapter 2 opens at 26 of
+the shallows' 42 stars. Disha walked through that gate at depth 15 and never knew it was there.</p>
+
+<div class="q">
+  <h3>Question 3 &mdash; do stars survive?</h3>
+  <div class="opt pick"><div class="k">A</div><div class="t">
+    <strong>Stars stay, but stop grading motes.</strong> Two stars: reached the vent, finished under the song
+    budget. Motes get their own readout &mdash; a light bar filling toward the next gate. Each action has exactly
+    one scoreboard, and the mote number finally points somewhere. <span class="dim">My pick.</span>
+  </div></div>
+  <div class="opt"><div class="k">B</div><div class="t">
+    Keep all three stars and show the bank alongside. Nothing to un-build, and the existing chapter star gates
+    keep working untouched. Busier results screen, and motes still get graded twice.
+  </div></div>
+  <div class="opt"><div class="k">C</div><div class="t">
+    Drop stars entirely; the light bar and the gates are the whole progression. Cleanest single system, biggest
+    change &mdash; it re-cuts the depth map and every chapter gate.
+  </div></div>
+</div>
+
+<div class="q">
+  <h3>Question 4 &mdash; the invisible star goal (independent of question 3)</h3>
+  <p style="font-size:13.5px;margin-top:0" class="dim">Disha hit this on three separate levels: <em>"it seems to
+  sort of arbitrarily change the number."</em> It isn't arbitrary &mdash; the threshold is
+  <code>ceil(motePct &times; moteTotal)</code> and <em>both</em> inputs vary per level (<code>motePct</code> runs
+  0.6 to 0.8 across the 28 depths). But it is only ever shown after the level ends, so it reads as random.</p>
+  <div class="opt pick"><div class="k">A</div><div class="t">
+    <strong>State the target up front and in the HUD.</strong> The intro card lists the conditions; the counter
+    reads against the threshold rather than the field total. <span class="dim">My pick. Do this regardless.</span>
+  </div></div>
+  <div class="opt"><div class="k">B</div><div class="t">
+    A, plus flatten <code>motePct</code> to one value per chapter so the fraction is at least learnable.
+  </div></div>
+</div>
+
+<h2><span class="n">5</span>Money &mdash; ads on the cadence, no packs</h2>
+<p>Dropping paid level packs simplifies this a great deal, and I think it is right. Packs meant a store, a content
+gate, per-pack pricing, restore-purchases on two platforms, and a review-risk conversation about paywalled
+difficulty. The replacement is one interstitial rhythm and one button.</p>
+
+<div class="card">
+  <table style="margin:0">
+    <tr><th>Surface</th><th>Rule</th></tr>
+    <tr><td>Interstitial</td><td>After clearing a <strong>gate depth</strong> (every 7th), on the win screen only.</td></tr>
+    <tr><td class="bad">Never</td><td class="bad">After a death. After a failed boss. During the gate warning. On first launch.</td></tr>
+    <tr><td>Rewarded</td><td>Optional revive at a boss, offered once per attempt, never auto-played.</td></tr>
+    <tr><td>IAP</td><td>One non-consumable, <code>remove_ads</code>. Removes interstitials permanently; the
+    rewarded revive stays available as a choice.</td></tr>
+    <tr><td>Content</td><td class="good">Every depth free, forever. No pack gate at 50.</td></tr>
+  </table>
+</div>
+
+<p>The cadence lines up neatly: the gate is already a natural pause, the player has just won something, and the
+ad lands on a high rather than a failure. That placement rule survives this change intact.</p>
+
+<div class="card warn">
+  <h3 style="margin-top:0">What this costs, stated plainly</h3>
+  <p style="margin:0">Packs were the high-spender path; ads plus a single unlock is a lower ceiling per player. In
+  exchange: no content gating, a simpler store presence, one purchase to support instead of many, and no review
+  thread about paying past a difficulty spike. For a first title with no audience I think the trade is clearly
+  right &mdash; reach and rating are worth more right now than revenue per player.</p>
+</div>
+
+<div class="q">
+  <h3>Question 5 &mdash; ad timing and the revive</h3>
+  <div class="opt pick"><div class="k">A</div><div class="t">
+    <strong>Interstitial after every gate win, plus a rewarded revive at bosses.</strong> Roughly one ad per seven
+    levels, always on a victory. <span class="dim">My pick.</span>
+  </div></div>
+  <div class="opt"><div class="k">B</div><div class="t">
+    Interstitial only, no rewarded revive. Cleanest and most respectful; leaves real money on the table, since
+    rewarded video usually out-earns interstitials in this genre.
+  </div></div>
+  <div class="opt"><div class="k">C</div><div class="t">
+    Ads deferred entirely to the release after launch, so the boss cadence ships clean and earns a rating first.
+    <span class="dim">This was the original plan's sequencing and it is still defensible.</span>
+  </div></div>
+</div>
+
+<div class="q">
+  <h3>Question 6 &mdash; does the launch build include all of this?</h3>
+  <div class="opt"><div class="k">A</div><div class="t">
+    Ship the boss cadence and ads together as v1.2, holding the store submission until it is all done.
+  </div></div>
+  <div class="opt pick"><div class="k">B</div><div class="t">
+    <strong>Ship the playtest fixes now as 1.1.1</strong> &mdash; copy, colour and two icons, days not weeks &mdash;
+    then the boss cadence as 1.2, then ads as 1.3. Three small releases, each verifiable, and the first gets you a
+    live listing and a rating while the rest is built.
+    <span class="dim">My pick, and the only question here I feel strongly about.</span>
+  </div></div>
+  <div class="opt"><div class="k">C</div><div class="t">
+    Hold everything and submit once, fully featured. Fewest review cycles, longest wait for any real-world signal.
+  </div></div>
+</div>
+
+<h2><span class="n">6</span>The rest of the playtest</h2>
+<p>None of these interact with the boss work. All are copy, colour, or a few SVG paths, and all could ship this
+week.</p>
+
+<h3>Hints read as flavour, not instruction</h3>
+<div class="quote"><span class="ts">05:07</span>
+"Is it supposed to be an actual help, or is it just special notes? It's not super clear."</div>
+<p>Every hint encrypts its tactical content inside a literary line. <em>"The river runs upstream here"</em> means
+a current pushes back, so budget your songs &mdash; but that translation exists nowhere in the game. By depth 16
+Disha had stopped reading them. <strong>Proposal:</strong> keep the poetic line as the headline, add one dim plain
+line beneath it. Copy only, and the writing survives.</p>
+
+<h3>Two tutorial icons don't read</h3>
+<div class="quote"><span class="ts">09:20</span>
+"The one next to 'songs are loud' &mdash; I don't understand what that icon is. Same with 'gather the amber
+motes' &mdash; what's the green circle in that icon supposed to be?"</div>
+<p>The copy worked; the drawings failed. The hunter glyph is a bare 12px line with no arrowhead, so it reads as a
+connector rather than a chase. The vent glyph is a plain green dot slightly larger than the mote dots beside it
+&mdash; the same collision as above, in the one screen meant to prevent it. <strong>Proposal:</strong> arrowhead
+and motion arc on the first; draw the vent as the ringed portal it actually is on the second.</p>
+
+<h3>Settings don't explain themselves</h3>
+<div class="quote"><span class="ts">10:18</span>
+"It just says haptics, or high-contrast palette, or show danger on screen, but it's not clear what that means."</div>
+<p>"Show danger on screen" is the accessibility path for deaf and hard-of-hearing players and its name says
+nothing about that. <strong>Proposal:</strong> one dim sub-line under each toggle.</p>
+
+<h3>Two fades &mdash; one is the design, one might be a bug</h3>
+<p>Reported forty seconds apart, and not the same thing. The <strong>idle fade in the Abyss</strong> is reveal
+energy decaying, which is the core fiction and is correct &mdash; though a player who suspects the central
+mechanic is a rendering bug is still a signal, and a one-time nudge would convert the doubt into the lesson. The
+<strong>in-play flicker</strong> (<em>"the boundaries of the path aren't there, like for a split second"</em>) is
+the only thing in the memo that sounds like a real defect. Disha hedged it heavily. I would not guess at a fix; it
+wants a repro first.</p>
+
+<h3>Lives &mdash; leave alone</h3>
+<p>You have wondered whether lives mean anything given how rarely you die. Disha lost several, went looking for
+the rules, and approved of both: <em>"lives do restore after you beat a level, which is good"</em> and
+<em>"when I die it just continues the same level, so that's good."</em> One data point against tightening them.</p>
+
+<h2><span class="n">7</span>Risks worth naming</h2>
+<div class="card warn">
+  <ul style="margin:0 0 0 18px">
+    <li><strong>Grind.</strong> The biggest failure mode. Mitigated by question 2A (best-run banking, never
+    consumed) and the zero-mote beatability rule. Drop either and this becomes a farming game.</li>
+    <li><strong>The warning reading as a paywall.</strong> "Are you sure?" must state a fact and offer a door,
+    never imply a purchase. There is no way to buy light &mdash; the copy must never suggest otherwise.</li>
+    <li><strong>Sawtooth.</strong> Gates are peaks by definition, so the curve now has a designed spike every 7.
+    The chapter-opening rule (~60% of the previous peak) has to be measured from the <em>non-gate</em> levels, or
+    depth 29 opens at boss difficulty.</li>
+    <li><strong>Re-verification.</strong> Any change to <code>levels.js</code> or <code>draw.js</code> means
+    re-running <code>__echo.verifyAll()</code> across all 28 depths plus <code>npx cap sync</code>. That is the
+    real schedule cost, not the code.</li>
+    <li><strong>This is one playtester.</strong> Disha is one person, ten minutes, first time seeing the game.
+    Strong signal on comprehension, weak signal on difficulty and retention.</li>
+  </ul>
+</div>
+
+<h2><span class="n">8</span>Six questions, in one place</h2>
+<p>Marked options are what I'd pick. Reply with only the ones you want to change.</p>
+<div class="card">
+  <table style="margin:0">
+    <tr><th>#</th><th>Question</th><th>My pick</th></tr>
+    <tr><td>1</td><td>One boss effect or many</td><td class="good">A &mdash; per-gate effects</td></tr>
+    <tr><td>2</td><td>How the bank is counted</td><td class="good">A &mdash; best run per depth, never consumed</td></tr>
+    <tr><td>3</td><td>Do stars survive</td><td class="good">A &mdash; two stars, motes get their own bar</td></tr>
+    <tr><td>4</td><td>The invisible star goal</td><td class="good">A &mdash; state it up front, regardless</td></tr>
+    <tr><td>5</td><td>Ad timing and revive</td><td class="good">A &mdash; gate-win interstitial plus boss revive</td></tr>
+    <tr><td>6</td><td>Release shape</td><td class="good">B &mdash; 1.1.1 fixes, 1.2 bosses, 1.3 ads</td></tr>
+  </table>
+</div>
+
+<div class="card rec">
+  <h3 style="margin-top:0">The thing I'd most want you to push back on</h3>
+  <p style="margin:0">Question 3. Removing the mote star is the one proposal here that deletes something already
+  built and verified, and it touches the chapter gates that currently run on star totals. I think two scoreboards
+  for one action is worse than the migration cost &mdash; but that is a judgement call, and 3B keeps everything
+  working with no un-building at all.</p>
+</div>
+
+<div class="footer">Echolume &middot; v1.2 plan &middot; Disha's playtest plus the boss-cadence direction &middot; August 16 2026</div>
+
+</div>
+</body>
+</html>

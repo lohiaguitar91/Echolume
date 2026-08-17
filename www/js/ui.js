@@ -1,6 +1,9 @@
 // DOM overlay: screens, HUD, toasts. Pure view layer — main.js wires events.
 
-import { LEVELS, CHAPTERS, parTime, teaser, chapterOf, chapterGate, prevChapter } from './levels.js';
+import {
+  LEVELS, CHAPTERS, parTime, teaser, chapterOf, chapterGate, prevChapter,
+  STARS_PER_LEVEL, gateKind, gateSpan, gateCapacity, GATE_EVERY,
+} from './levels.js';
 import { formatTime } from './util.js';
 
 const $ = (id) => document.getElementById(id);
@@ -15,6 +18,7 @@ export class UI {
       about: $('screen-about'),
       howto: $('screen-howto'),
       abyssintro: $('screen-abyss-intro'),
+      gate: $('screen-gate'),
       abyssrecap: $('screen-abyss-recap'),
       paused: $('screen-pause'),
       results: $('screen-results'),
@@ -30,6 +34,7 @@ export class UI {
       levelName: $('hud-level-name'),
       hint: $('hud-hint'),
       toast: $('hud-toast'),
+      goals: $('hud-goals'),
       levelGrid: $('level-grid'),
       totalStars: $('total-stars'),
       resultsTitle: $('results-title'),
@@ -39,9 +44,17 @@ export class UI {
       btnAbyss: $('btn-abyss'),
       btnNext: $('btn-next'),
       versionLine: $('version-line'),
+      gateDepth: $('gate-depth'),
+      gateName: $('gate-name'),
+      gateMark: $('gate-mark'),
+      gateCarry: $('gate-carry'),
+      gateBarFill: $('gate-bar-fill'),
+      gateBuys: $('gate-buys'),
     };
     this._hintTimer = null;
     this._toastTimer = null;
+    this._hintQueue = [];
+    this._hintUntil = 0;
     this._activeOverlays = new Set();
   }
 
@@ -63,6 +76,43 @@ export class UI {
   _hudWith(name) {
     return name === 'paused' || name === 'results' || name === 'gameover' ||
            name === 'credits' || name === 'abyssrecap';
+  }
+
+  // The gate. Says what you carry, what it buys, and offers the way back.
+  // "Lean" is a warning about the dark, never a prompt to buy anything.
+  fillGate(def, boon) {
+    const lean = boon.grade < 0.34;
+    this.el.gateDepth.textContent = `Depth ${boon.id}`;
+    this.el.gateName.textContent = def.name;
+    this.el.gateCarry.textContent =
+      `You carry ${boon.banked} light${boon.banked === 1 ? '' : 's'} of ${boon.capacity}.`;
+    this.el.gateBarFill.style.width = `${Math.round(boon.grade * 100)}%`;
+    this.el.gateMark.classList.toggle('lean', lean);
+    this.el.gateBarFill.classList.toggle('lean', lean);
+    this.el.gateBuys.classList.toggle('lean', lean);
+    return lean;
+  }
+
+  setGateBuys(line) { this.el.gateBuys.textContent = line; }
+
+  // Motes lost their star, so this is where they report instead: what you just
+  // banked, and how full the run into the next gate is. Nothing is spent here.
+  fillLightBank(save, levelId) {
+    const wrap = document.getElementById('light-bank');
+    if (!wrap) return;
+    // The gate this depth is feeding: the next multiple of seven at or past it.
+    const gateId = Math.ceil((levelId + (gateKind(levelId) ? 1 : 0)) / GATE_EVERY) * GATE_EVERY;
+    const target = LEVELS.some((l) => l.id === gateId) ? gateId : null;
+    if (!target) { wrap.hidden = true; return; }
+    const { from, to } = gateSpan(target);
+    const banked = save.moteBank(from, to);
+    const cap = gateCapacity(target);
+    const pct = cap > 0 ? Math.min(1, banked / cap) : 0;
+    document.getElementById('light-bank-count').textContent = `${banked} / ${cap}`;
+    document.getElementById('light-bank-fill').style.width = `${Math.round(pct * 100)}%`;
+    document.getElementById('light-bank-note').textContent =
+      `Carried into depth ${target}. Your best run of each depth counts.`;
+    wrap.hidden = false;
   }
 
   showRotate(on) {
@@ -90,9 +140,15 @@ export class UI {
     document.body.classList.add('flash-damage');
   }
 
+  // The counter reads against the star threshold, not the field size — knowing
+  // there are 14 motes in the level never told anyone that 10 earns the star.
+  setMoteGoal(need) { this._moteGoal = need > 0 ? need : 0; }
+
   setMotes(got, total) {
-    this.el.motes.textContent = total > 0 ? `${got}/${total}` : `${got}`;
+    const goal = this._moteGoal || 0;
+    this.el.motes.textContent = goal > 0 ? `${got}/${goal}` : (total > 0 ? `${got}/${total}` : `${got}`);
     const wrap = this.el.motes.parentElement;
+    wrap.classList.toggle('goal-met', goal > 0 && got >= goal);
     wrap.classList.remove('pop');
     void wrap.offsetWidth;
     wrap.classList.add('pop');
@@ -108,18 +164,91 @@ export class UI {
 
   setLevelName(text) { this.el.levelName.textContent = text; }
 
-  hint(text, ms = 4600) {
+  // Reading time, not a flat number. A hint that fires while another is still
+  // being read waits its turn instead of overwriting it — several depths place
+  // triggers half a second apart, which used to cut the first one to shreds for
+  // anyone swimming faster than par.
+  // ~18 chars/sec, which is unhurried for prose you are reading while swimming,
+  // plus a beat to notice it arrived. Capped so a queue always drains inside the
+  // level: at 95ms/char depth 1's four tutorial hints needed 45s against a 35s par.
+  hintDuration(text, plain) {
+    const n = text.length + (plain ? plain.length : 0);
+    return Math.min(8000, Math.max(3000, 1200 + n * 55));
+  }
+
+  hint(text, ms, plain) {
+    if (performance.now() < this._hintUntil) {
+      if (!this._hintQueue.some((q) => q.text === text)) this._hintQueue.push({ text, plain });
+      return;
+    }
+    this._showHint(text, ms || this.hintDuration(text, plain), plain);
+  }
+
+  // Two voices: the trench's line, then what it actually means. The poetry was
+  // carrying the whole instruction and a playtester read right past it.
+  _showHint(text, ms, plain) {
     const h = this.el.hint;
     clearTimeout(this._hintTimer);
-    h.textContent = text;
+    h.textContent = '';
+    const lead = document.createElement('span');
+    lead.className = 'hint-lead';
+    lead.textContent = text;
+    h.appendChild(lead);
+    if (plain) {
+      const sub = document.createElement('span');
+      sub.className = 'hint-plain';
+      sub.textContent = plain;
+      h.appendChild(sub);
+    }
     h.hidden = false;
     h.classList.remove('visible');
     void h.offsetWidth;
     h.classList.add('visible');
+    this._hintUntil = performance.now() + ms;
     this._hintTimer = setTimeout(() => {
       h.classList.remove('visible');
-      setTimeout(() => { h.hidden = true; }, 400);
+      setTimeout(() => {
+        h.hidden = true;
+        const next = this._hintQueue.shift();
+        if (next) this._showHint(next.text, this.hintDuration(next.text, next.plain), next.plain);
+      }, 400);
     }, ms);
+  }
+
+  // Leaving a level must not leak its hints into the next one.
+  clearHints() {
+    clearTimeout(this._hintTimer);
+    this._hintQueue.length = 0;
+    this._hintUntil = 0;
+    this.el.hint.classList.remove('visible');
+    this.el.hint.hidden = true;
+  }
+
+  // Rides in under the level-name card: the three things a star wants, said
+  // before they can be missed rather than after.
+  showGoals(need, maxPings, ms = 3400) {
+    const g = this.el.goals;
+    if (!g) return;
+    const parts = ['Reach the vent'];
+    if (Number.isFinite(maxPings)) parts.push(`Under ${maxPings} songs`);
+    parts.push('Every mote banks');
+    g.textContent = parts.join(' · ');
+    clearTimeout(this._goalsTimer);
+    g.hidden = false;
+    g.classList.remove('visible');
+    void g.offsetWidth;
+    g.classList.add('visible');
+    this._goalsTimer = setTimeout(() => {
+      g.classList.remove('visible');
+      setTimeout(() => { g.hidden = true; }, 600);
+    }, ms);
+  }
+
+  hideGoals() {
+    clearTimeout(this._goalsTimer);
+    if (!this.el.goals) return;
+    this.el.goals.classList.remove('visible');
+    this.el.goals.hidden = true;
   }
 
   toast(text, ms = 2600) {
@@ -167,7 +296,7 @@ export class UI {
     }
     const total = save.totalStars();
     this.el.totalStars.textContent =
-      `${total} / ${LEVELS.length * 3} stars · ${motesGathered} / ${motesInGame} motes`;
+      `${total} / ${LEVELS.length * STARS_PER_LEVEL} stars · ${motesGathered} / ${motesInGame} light`;
   }
 
   _buildChapterCells(grid, save, chapter, onPick, tally) {
@@ -190,7 +319,7 @@ export class UI {
       btn.innerHTML = `
         <span class="level-num">${lvl.id}</span>
         <span class="level-name">${unlocked ? lvl.name : '???'}</span>
-        <span class="level-stars">${'★'.repeat(stars)}${'☆'.repeat(Math.max(0, 3 - stars))}</span>
+        <span class="level-stars">${'★'.repeat(stars)}${'☆'.repeat(Math.max(0, STARS_PER_LEVEL - stars))}</span>
         ${bestLine}${medalLine}`;
       if (unlocked) btn.addEventListener('click', () => onPick(lvl.id));
       grid.appendChild(btn);
@@ -213,8 +342,8 @@ export class UI {
     const starEls = this.el.resultsStars.querySelectorAll('.star');
     // Light each star by its own criterion, staggered among the earned ones.
     const earned = opts.breakdown
-      ? [opts.breakdown.vent, opts.breakdown.motes, opts.breakdown.songs]
-      : [true, stars >= 2, stars >= 3];
+      ? [opts.breakdown.vent, opts.breakdown.songs]
+      : [true, stars >= 2];
     let popIndex = 0;
     starEls.forEach((s, i) => {
       s.classList.remove('earned', 'pop1', 'pop2', 'pop3');
@@ -226,11 +355,9 @@ export class UI {
     });
     // Show what each star wants, so a missed star is a goal, not a mystery.
     if (opts.def) {
-      const need = Math.ceil((opts.def.stars?.motePct || 1) * stats.moteTotal);
       const labels = {
         1: 'reach the vent',
-        2: `gather ${need} motes`,
-        3: `≤ ${opts.def.stars?.maxPings ?? '—'} songs`,
+        2: `≤ ${opts.def.stars?.maxPings ?? '—'} songs`,
       };
       for (const [n, text] of Object.entries(labels)) {
         const el = this.el.resultsStars.querySelector(`[data-starlabel="${n}"]`);
