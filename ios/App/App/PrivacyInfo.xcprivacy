@@ -2,13 +2,26 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Echolume collects nothing and contacts no server. The one required-reason
-	     API in the binary is UserDefaults, reached through @capacitor/preferences,
-	     which mirrors the local save so progress survives webview data eviction.
-	     That plugin compiles into this target as a Swift package and ships no
-	     manifest of its own, so the usage is attributed here. -->
+	<!-- This is the APP's manifest, and it describes only what this bundle does.
+	     The Google Mobile Ads SDK (11.2.0+) ships its own privacy manifest and
+	     declares its own collection and tracking domains; Apple aggregates the
+	     two at submission, so do NOT copy Google's declarations in here.
+
+	     What is ours: the app enables advertising that uses the advertising
+	     identifier once the user grants ATT, so NSPrivacyTracking is true. The
+	     one required-reason API in our own binary is UserDefaults, reached
+	     through @capacitor/preferences, which mirrors the local save so progress
+	     survives webview data eviction. That plugin compiles into this target as
+	     a Swift package and ships no manifest of its own, so it is attributed here.
+
+	     NSPrivacyTrackingDomains stays empty on purpose: this app makes no
+	     tracking connections of its own. The ad SDK lists its domains in its own
+	     manifest, which is where Apple expects them. Do not invent entries here.
+
+	     The App Store Connect App Privacy answers are a SEPARATE exercise and are
+	     NOT derived from this file — see store/listing-ios.md for the table. -->
 	<key>NSPrivacyTracking</key>
-	<false/>
+	<true/>
 	<key>NSPrivacyTrackingDomains</key>
 	<array/>
 	<key>NSPrivacyCollectedDataTypes</key>

@@ -108,14 +108,39 @@ To turn it on:
 - [ ] Create the `remove_ads` non-consumable in **both** App Store Connect and Play
       Console, then set `IAP_PRODUCT_ID`. Pick a purchase plugin
       (`@revenuecat/purchases-capacitor` 13.x declares `@capacitor/core >=8.0.0`).
-- [ ] **Store metadata changes the moment ads ship** — do not skip this:
-      - iOS `PrivacyInfo.xcprivacy` must declare the ad SDK's collection, and the app
-        needs an App Tracking Transparency prompt before any tracking request.
-      - App Privacy in App Store Connect stops being "Data Not Collected".
-      - Play Data Safety stops being "no collection".
-      - `store/privacy-policy.md` needs an advertising section, and both listings need
-        the updated URL.
 - [ ] `npx cap sync`, then re-test that a death never produces an interstitial.
+
+### Metadata: already written for an ad-supported launch
+
+Ads are shipping in v1.0, so all of this is **already updated in the repo** and
+describes the launch build. It is listed here so you can check it, not redo it.
+
+- [x] `store/privacy-policy.md` — rewritten with an advertising section covering the
+      six data types the Google Mobile Ads SDK collects, the ATT choice, the advertising
+      ID reset, and the Remove Ads purchase.
+- [x] `store/listing-ios.md` — App Privacy now answers **Yes** to data collection, with
+      a per-type table (linked / used-for-tracking). Review notes explain the ad
+      placement rules and the ATT prompt.
+- [x] `store/listing-android.md` — Data Safety answers **Yes**, declares the four
+      collected-and-shared categories, and the listing is marked **contains ads**.
+- [x] `ios/App/App/PrivacyInfo.xcprivacy` — `NSPrivacyTracking` is now `true`.
+      `NSPrivacyTrackingDomains` is intentionally empty: the ad SDK declares its own
+      domains in its own manifest and Apple aggregates them. Do not copy Google's
+      declarations into ours.
+- [x] `ios/App/App/Info.plist` — `NSUserTrackingUsageDescription` added (without it the
+      ATT call silently no-ops and the build is rejected), plus Google's SKAdNetwork id.
+
+Two identifiers are **deliberately absent**, because the SDK throws at launch if either
+is missing *or* malformed — a placeholder would crash every build. Add both at the same
+moment you add the SDK; the exact snippets are in comments at the point of use:
+- [ ] iOS `GADApplicationIdentifier` in `Info.plist`
+- [ ] Android `com.google.android.gms.ads.APPLICATION_ID` in `AndroidManifest.xml`
+
+- [ ] **Re-check both disclosure tables against Google's current pages before each
+      submission** ([iOS](https://developers.google.com/admob/ios/privacy/data-disclosure),
+      [Android](https://developers.google.com/admob/android/privacy/data-disclosure)).
+      What the SDK collects has changed between versions, and the obligation is yours
+      regardless of what the SDK's own manifest says.
 
 ## 4. Final sanity before each submit
 - [ ] Version stamps agree: `www/js/config.js` GAME_VERSION, `package.json`,

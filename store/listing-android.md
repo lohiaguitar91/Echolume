@@ -20,7 +20,7 @@ ECHOLUME is a one-thumb atmosphere game about voice, light, and restraint.
 ★ Earn up to three stars per depth: reach the vent, gather the motes, and waste no songs.
 ★ A living soundscape, synthesized in real time: your motes build melodies, the cave echoes your voice, and your own heartbeat warns you what is near.
 ★ Beautiful bioluminescent world rendered at 60fps.
-★ No ads and nothing tracked by us. Optional Play Games leaderboard and 15 depth achievements for the Abyss. Haptics, reduced-motion, and high-contrast options included.
+★ Free to play, all 50 depths. Ads appear only after you clear a depth, never when you fail one, and a one-time purchase removes them for good. Optional Play Games leaderboard and 15 depth achievements for the Abyss. Haptics, reduced-motion, and high-contrast options included.
 
 The deep is dark. You are not.
 
@@ -30,14 +30,40 @@ Game › Adventure (or Arcade)
 ## Tags
 Offline, Single player, Atmospheric, Casual
 
+## Store settings
+- **Free**, with one in-app product: `remove_ads` (non-consumable / managed product).
+- **Contains ads: YES.** Tick this in the Play Console store listing, or the
+  listing is inaccurate and can be pulled.
+
 ## Content rating questionnaire
 - Violence: mild fantasy peril only (a glowing creature can be caught by sea creatures; no blood, no gore) → typically **Everyone / PEGI 3-7**
-- No user interaction features, no data sharing, no gambling, no ads.
+- No user interaction features, no gambling.
+- **Does the app contain ads? Yes.** Answer this honestly — the rating and the
+  "contains ads" badge both derive from it.
 
 ## Data safety form answers
-- Does your app collect or share any of the required user data types? **No**
-- Is all of the user data collected by your app encrypted in transit? N/A (no data leaves the device)
-- Do you provide a way for users to request that their data is deleted? N/A (nothing collected); in-app local reset exists under Settings.
+
+Echolume's own code collects nothing, but the Google Mobile Ads SDK does, and
+Play requires you to declare a bundled SDK's collection as your own.
+
+- Does your app collect or share any of the required user data types? **Yes**
+- Declare, all **collected and shared**, for **Advertising or marketing**:
+  - **Device or other IDs** — advertising identifier
+  - **App activity → App interactions** — ads shown, taps, video views
+  - **Location → Approximate location** — derived from IP by the ad SDK
+  - **App info and performance → Crash logs** and **Diagnostics**
+- Is all of the user data collected by your app encrypted in transit? **Yes**
+  (the Google Mobile Ads SDK uses HTTPS)
+- Do you provide a way for users to request that their data is deleted?
+  Point at the advertising-ID reset in Android Settings and the contact address;
+  Echolume itself holds nothing to delete, and the in-app local reset lives under
+  Settings → Reset progress.
+- **Ads declaration:** the app shows ads → yes, third-party advertising.
+
+**Re-check these against Google's
+[data disclosure](https://developers.google.com/admob/android/privacy/data-disclosure)
+before each submission.** What the SDK collects has changed between versions and
+the disclosure obligation is yours either way.
 
 ## Contact details
 Email: kaushlohia@gmail.com

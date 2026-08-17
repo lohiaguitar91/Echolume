@@ -83,10 +83,24 @@ who asks. Keep it that way.
 Turning it on is: install `@capacitor-community/admob` (8.1.0 supports Capacitor
 8), paste the ids, create `remove_ads` in both consoles, set `IAP_PRODUCT_ID`.
 
-**The part that is easy to forget:** shipping ads changes your store metadata.
-`PrivacyInfo.xcprivacy`, the ATT prompt, App Privacy, Play Data Safety, and the
-privacy policy all currently say "no collection", and all of them become wrong
-the moment an ad loads. `SHIP.md` §3.6 lists each one.
+**The metadata is already done.** Ads ship at launch, so the repo now describes
+an ad-supported app rather than an offline one: the privacy policy has an
+advertising section, both listings declare collection with per-type tables,
+`PrivacyInfo.xcprivacy` sets `NSPrivacyTracking` true, and `Info.plist` has the
+ATT usage string and Google's SKAdNetwork id. `SHIP.md` §3.6 has the checklist.
+
+Two identifiers are **deliberately missing** and you must add both when you add
+the SDK: iOS `GADApplicationIdentifier` and Android
+`com.google.android.gms.ads.APPLICATION_ID`. The SDK throws at launch if either
+is absent *or* malformed, so a placeholder would have crashed every build. The
+exact snippets are in comments at the point of use in `Info.plist` and
+`AndroidManifest.xml`.
+
+One thing I could not settle from here: `NSPrivacyTrackingDomains` is empty on
+purpose, because this app makes no tracking connections of its own and the ad
+SDK declares its own domains. That reading matches Apple's aggregation model,
+but I could not test it against a real submission — if the validator complains,
+that is the first place to look.
 
 ### 5. Chapter 3's difficulty is unmeasured
 The bot navigates by corridor geometry, not by what it can see, so it is

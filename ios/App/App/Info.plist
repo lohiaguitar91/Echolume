@@ -66,5 +66,30 @@
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<!-- Shown by the App Tracking Transparency prompt before any tracking
+	     request. Required as soon as the ad SDK is present; without it the ATT
+	     call is a no-op and the submission is rejected. -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Allow tracking to see ads matched to your interests. Decline and you will still see ads, just less relevant ones — nothing else in the game changes.</string>
+	<!-- GADApplicationIdentifier is DELIBERATELY ABSENT.
+	     The Google Mobile Ads SDK raises an exception at launch if this key is
+	     missing OR malformed, so a placeholder would crash every build. Add it
+	     with the real value at the same time you install the SDK:
+
+	       <key>GADApplicationIdentifier</key>
+	       <string>ca-app-pub-################~##########</string>
+
+	     See SHIP.md 3.6. -->
+	<key>SKAdNetworkItems</key>
+	<array>
+		<!-- Google's own SKAdNetwork identifier. Additional entries are needed
+		     only if mediation partners are added later; Google publishes the
+		     current list, and stale entries cost attribution rather than break
+		     the build. -->
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>cstr6suwn9.skadnetwork</string>
+		</dict>
+	</array>
 </dict>
 </plist>

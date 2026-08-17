@@ -25,6 +25,17 @@
             android:name="com.google.android.gms.games.APP_ID"
             android:value="@string/game_services_project_id" />
 
+        <!-- AdMob's APPLICATION_ID is DELIBERATELY ABSENT.
+             The Google Mobile Ads SDK throws at startup if this is missing OR
+             malformed, so a placeholder would crash every build. Add it at the
+             same time you add the SDK dependency:
+
+               <meta-data
+                   android:name="com.google.android.gms.ads.APPLICATION_ID"
+                   android:value="ca-app-pub-################~##########" />
+
+             See SHIP.md 3.6. -->
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
