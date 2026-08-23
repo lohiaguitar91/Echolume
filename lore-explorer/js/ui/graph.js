@@ -47,6 +47,71 @@
 
   const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967295; };
 
+  /* ── premium rendering: sprites, gradients, curves ── */
+  let tNow = 0;                                       // seconds, drives ambient animation
+  const _hex = c => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+  const hexA = (c, a2) => { const [r, g, b2] = _hex(c); return 'rgba(' + r + ',' + g + ',' + b2 + ',' + a2 + ')'; };
+  const hexMix = (c1, c2, f) => {
+    const x = _hex(c1), y = _hex(c2);
+    return 'rgb(' + x.map((v, i) => Math.round(v + (y[i] - v) * f)).join(',') + ')';
+  };
+  const variantCache = new Map();
+  function variants(col) {
+    let v = variantCache.get(col);
+    if (!v) {
+      v = { core: hexMix(col, '#ffffff', .5), deep: hexMix(col, '#000000', .34), rim: hexMix(col, '#ffffff', .28) };
+      variantCache.set(col, v);
+    }
+    return v;
+  }
+  const glowCache = new Map();
+  function glowSprite(col, radius) {
+    const size = Math.max(12, Math.min(220, Math.round(radius / 4) * 4));
+    const key = col + '|' + size;
+    let sp = glowCache.get(key);
+    if (!sp) {
+      sp = document.createElement('canvas'); sp.width = sp.height = size * 2;
+      const g = sp.getContext('2d');
+      const grad = g.createRadialGradient(size, size, 0, size, size, size);
+      grad.addColorStop(0, hexA(col, .5));
+      grad.addColorStop(.4, hexA(col, .15));
+      grad.addColorStop(1, hexA(col, 0));
+      g.fillStyle = grad; g.fillRect(0, 0, size * 2, size * 2);
+      glowCache.set(key, sp);
+    }
+    return sp;
+  }
+  let bgLayer = null;                                 // vignette + dot grid, cached per size/skin
+  function buildBg() {
+    bgLayer = document.createElement('canvas');
+    bgLayer.width = W; bgLayer.height = Hh;
+    const g = bgLayer.getContext('2d');
+    g.fillStyle = T().canvasBg; g.fillRect(0, 0, W, Hh);
+    g.fillStyle = hexA(T().grid, .6);
+    for (let y = 13; y < Hh; y += 26)
+      for (let x = 13; x < W; x += 26) g.fillRect(x, y, 1, 1);
+    const rad = g.createRadialGradient(W / 2, Hh * .42, 0, W / 2, Hh * .42, Math.max(W, Hh) * .74);
+    rad.addColorStop(0, 'rgba(0,0,0,0)'); rad.addColorStop(1, 'rgba(0,0,0,.4)');
+    g.fillStyle = rad; g.fillRect(0, 0, W, Hh);
+  }
+  function clearRenderCaches() { variantCache.clear(); glowCache.clear(); bgLayer = null; }
+  function curveCP(ax, ay, bx, by, l) {
+    const dx = bx - ax, dy = by - ay;
+    const d = Math.sqrt(dx * dx + dy * dy) || 1;
+    const k = Math.min(d * .16, 26) * (hash(l.s + l.t) > .5 ? 1 : -1);
+    return { x: (ax + bx) / 2 - dy / d * k, y: (ay + by) / 2 + dx / d * k };
+  }
+  const qPoint = (t, ax, ay, qx, qy, bx, by) => {
+    const u = 1 - t;
+    return { x: u * u * ax + 2 * u * t * qx + t * t * bx, y: u * u * ay + 2 * u * t * qy + t * t * by };
+  };
+  function pillPath(c, x, y, w2, h2, r) {
+    if (c.roundRect) { c.beginPath(); c.roundRect(x, y, w2, h2, r); return; }
+    c.beginPath();
+    c.moveTo(x + r, y); c.arcTo(x + w2, y, x + w2, y + h2, r); c.arcTo(x + w2, y + h2, x, y + h2, r);
+    c.arcTo(x, y + h2, x, y, r); c.arcTo(x, y, x + w2, y, r); c.closePath();
+  }
+
   function eraPass(n) {
     if (!state.era) return true;
     if (n.type === 'event') return n.era === state.era;
@@ -79,7 +144,8 @@
         y: cached ? cached.y : Hh * (0.12 + 0.76 * hash(n.id + 'y')),
         z: cached && cached.z != null ? cached.z : (hash(n.id + 'z') - .5) * 300,
         vx: 0, vy: 0, vz: 0, fixed: false,
-        px: 0, py: 0, ps: 1, zr: 0
+        px: 0, py: 0, ps: 1, zr: 0,
+        born: (cached && cached.born) || performance.now()
       };
     });
     nodeById = new Map(nodes.map(nn => [nn.id, nn]));
@@ -130,7 +196,7 @@
       p.vz = Math.max(-vmax, Math.min(vmax, p.vz));
       p.x += p.vx; p.y += p.vy;
       if (d3) p.z += p.vz;
-      posCache.set(p.id, { x: p.x, y: p.y, z: p.z });
+      posCache.set(p.id, { x: p.x, y: p.y, z: p.z, born: p.born });
     });
     alpha = Math.max(alpha * 0.994, 0);
   }
@@ -172,53 +238,128 @@
 
   function draw() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = T().canvasBg;
-    ctx.fillRect(0, 0, W, Hh);
+    if (!bgLayer) buildBg();
+    ctx.drawImage(bgLayer, 0, 0);
     ctx.translate(view.tx, view.ty);
     ctx.scale(view.k, view.k);
 
     projectAll();
     const sel = state.selected ? nodeById.get(state.selected) : null;
     const selN = sel ? new Set([sel.id, ...S.neighbors(sel.id).map(x => x.other)]) : null;
+    const nowMs = performance.now();
 
-    /* edges */
+    /* ── edges: curved; the selected node's own edges get color gradients + flow pulses ── */
     links.forEach(l => {
       const a = nodeById.get(l.s), b = nodeById.get(l.t);
-      const dim = selN && !(selN.has(a.id) && selN.has(b.id));
-      ctx.strokeStyle = EDGE_COLOR[l.r] || 'rgba(120,100,110,.3)';
-      ctx.globalAlpha = (dim ? 0.07 : 1) * Math.min(depthAlpha(a), depthAlpha(b));
-      ctx.lineWidth = (l.r === 'trained' || l.r === 'killed' ? 1.5 : 1) / view.k;
-      ctx.beginPath(); ctx.moveTo(a.px, a.py); ctx.lineTo(b.px, b.py); ctx.stroke();
+      const lit = sel && (a.id === sel.id || b.id === sel.id);
+      const dim = selN && !lit;
+      const da = Math.min(depthAlpha(a), depthAlpha(b));
+      const cp = curveCP(a.px, a.py, b.px, b.py, l);
+      ctx.beginPath();
+      ctx.moveTo(a.px, a.py);
+      ctx.quadraticCurveTo(cp.x, cp.y, b.px, b.py);
+      if (lit) {
+        const grad = ctx.createLinearGradient(a.px, a.py, b.px, b.py);
+        grad.addColorStop(0, hexA(A().colorOf(a.n), .85));
+        grad.addColorStop(1, hexA(A().colorOf(b.n), .85));
+        ctx.strokeStyle = grad;
+        ctx.globalAlpha = da;
+        ctx.lineWidth = 1.7 / view.k;
+      } else {
+        ctx.strokeStyle = EDGE_COLOR[l.r] || 'rgba(120,100,110,.3)';
+        ctx.globalAlpha = (dim ? 0.05 : 0.85) * da;
+        ctx.lineWidth = (l.r === 'trained' || l.r === 'killed' ? 1.4 : 1) / view.k;
+      }
+      ctx.stroke();
+      if (lit) {
+        for (let i = 0; i < 2; i++) {
+          const t = (tNow * 0.28 + i * 0.5 + hash(l.s + l.r)) % 1;
+          const q = qPoint(t, a.px, a.py, cp.x, cp.y, b.px, b.py);
+          const pc = t < 0.5 ? A().colorOf(a.n) : A().colorOf(b.n);
+          ctx.globalAlpha = da * 0.6;
+          ctx.fillStyle = hexA(pc, 0.55);
+          ctx.beginPath(); ctx.arc(q.x, q.y, 3.1 / Math.sqrt(view.k), 0, 6.2832); ctx.fill();
+          ctx.globalAlpha = da;
+          ctx.fillStyle = 'rgba(255,255,255,.92)';
+          ctx.beginPath(); ctx.arc(q.x, q.y, 1.3 / Math.sqrt(view.k), 0, 6.2832); ctx.fill();
+        }
+      }
     });
     ctx.globalAlpha = 1;
 
-    /* nodes — far first in 3D so near ones paint on top */
+    /* ── nodes: glow halo + gradient core + rim, far first in 3D ── */
     const order = state.mode3d ? [...nodes].sort((a, b) => b.zr - a.zr) : nodes;
     order.forEach(p => {
       const dim = selN && !selN.has(p.id);
-      const hov = state.hovered === p.id || state.selected === p.id;
-      ctx.globalAlpha = (dim ? 0.14 : 1) * depthAlpha(p);
+      const isSel = state.selected === p.id;
+      const hov = state.hovered === p.id || isSel;
       const col = A().colorOf(p.n);
-      const rr = p.r * p.ps;
-      if (hov) { ctx.shadowColor = col; ctx.shadowBlur = 16; }
-      shapePath(ctx, p.px, p.py, rr, p.n.type);
+      const v = variants(col);
+      const spawn = Math.min(1, (nowMs - p.born) / 420);
+      const eSpawn = 1 - Math.pow(1 - spawn, 3);
+      let rr = p.r * p.ps * eSpawn;
+      if (rr <= 0.1) return;
+      if (isSel) rr *= 1 + Math.sin(tNow * 2.6) * 0.05;
+      const aBase = (dim ? 0.13 : 1) * depthAlpha(p) * (0.25 + 0.75 * eSpawn);
+
+      const hFac = hov ? 3.3 : 2.3;
+      const hs = hFac * rr;
+      ctx.globalAlpha = aBase * (hov ? 0.95 : p.d >= 9 ? 0.55 : 0.38);
+      ctx.drawImage(glowSprite(col, hs * view.k), p.px - hs, p.py - hs, hs * 2, hs * 2);
+      ctx.globalAlpha = aBase;
+
       if (p.n.type === 'location') {
+        shapePath(ctx, p.px, p.py, rr, 'location');
         ctx.strokeStyle = col; ctx.lineWidth = 2 / Math.sqrt(view.k); ctx.stroke();
+        ctx.beginPath(); ctx.arc(p.px, p.py, Math.max(rr * 0.34, 1), 0, 6.2832);
+        ctx.fillStyle = v.core; ctx.fill();
       } else {
-        ctx.fillStyle = col; ctx.fill();
-        ctx.strokeStyle = T().dotStroke; ctx.lineWidth = 1.2; ctx.stroke();
+        const grad = ctx.createRadialGradient(p.px - rr * 0.35, p.py - rr * 0.42, rr * 0.12, p.px, p.py, rr * 1.28);
+        grad.addColorStop(0, v.core); grad.addColorStop(0.55, col); grad.addColorStop(1, v.deep);
+        shapePath(ctx, p.px, p.py, rr, p.n.type);
+        ctx.fillStyle = grad; ctx.fill();
+        ctx.strokeStyle = v.rim;
+        ctx.lineWidth = 0.9 / Math.sqrt(view.k);
+        ctx.globalAlpha = aBase * 0.85; ctx.stroke();
+        ctx.globalAlpha = aBase;
       }
-      ctx.shadowBlur = 0;
-      const showLbl = hov || (selN && selN.has(p.id)) || p.d >= 9 || view.k >= 1.5;
+
+      if (isSel) {
+        ctx.strokeStyle = hexA(col, 0.9);
+        ctx.lineWidth = 1.4 / view.k;
+        ctx.setLineDash([5 / view.k, 7 / view.k]);
+        ctx.lineDashOffset = -tNow * 26;
+        ctx.beginPath(); ctx.arc(p.px, p.py, rr + 8 / view.k, 0, 6.2832); ctx.stroke();
+        ctx.setLineDash([]);
+      } else if (state.hovered === p.id) {
+        ctx.strokeStyle = hexA(col, 0.55);
+        ctx.lineWidth = 1.2 / view.k;
+        ctx.beginPath(); ctx.arc(p.px, p.py, rr + 6 / view.k, 0, 6.2832); ctx.stroke();
+      }
+
+      const isNeighbor = selN && selN.has(p.id) && !isSel;
+      const showLbl = hov || isNeighbor || p.d >= 9 || view.k >= 1.5;
       if (showLbl && !dim && (!state.mode3d || p.ps > 0.72 || hov)) {
         const fs = Math.max(10.5 / view.k, Math.min(12.5, 11 / Math.sqrt(view.k))) * (state.mode3d ? (0.8 + p.ps * 0.25) : 1);
-        ctx.font = (hov ? '600 ' : '') + fs + 'px Saira, sans-serif';
+        ctx.font = (hov ? '600 ' : '500 ') + fs + 'px Saira, sans-serif';
         ctx.textAlign = 'center';
-        ctx.lineWidth = 3 / view.k;
-        ctx.strokeStyle = T().dotStroke;
-        ctx.strokeText(p.n.name, p.px, p.py - rr - 5 / view.k);
-        ctx.fillStyle = hov ? T().ink : T().labelInk;
-        ctx.fillText(p.n.name, p.px, p.py - rr - 5 / view.k);
+        const ly = p.py - rr - 8 / view.k;
+        if (hov || isNeighbor) {
+          /* label pill */
+          const tw = ctx.measureText(p.n.name).width;
+          const padX = 6 / view.k, padY = 3 / view.k;
+          pillPath(ctx, p.px - tw / 2 - padX, ly - fs - padY + 1, tw + padX * 2, fs + padY * 2, (fs + padY * 2) / 2);
+          ctx.fillStyle = hexA(T().canvasBg, 0.82); ctx.fill();
+          ctx.strokeStyle = hexA(col, 0.4); ctx.lineWidth = 1 / view.k; ctx.stroke();
+          ctx.fillStyle = hov ? T().ink : T().labelInk;
+          ctx.fillText(p.n.name, p.px, ly);
+        } else {
+          ctx.lineWidth = 3 / view.k;
+          ctx.strokeStyle = hexA(T().canvasBg, 0.85);
+          ctx.strokeText(p.n.name, p.px, ly);
+          ctx.fillStyle = T().labelInk;
+          ctx.fillText(p.n.name, p.px, ly);
+        }
       }
     });
     ctx.globalAlpha = 1;
@@ -227,6 +368,7 @@
   function loop() {
     if (!running) return;
     if (!canvas.offsetParent || document.hidden) { running = false; return; }
+    tNow = performance.now() / 1000;
     if (alpha > 0.012) physics();
     if (state.mode3d && !dragging && !state.hovered) theta += 0.0016;   // slow orbit
     draw();
@@ -240,6 +382,7 @@
     Hh = Math.max(460, Math.min(700, window.innerHeight - 290));
     canvas.width = W * dpr; canvas.height = Hh * dpr;
     canvas.style.height = Hh + 'px';
+    bgLayer = null;
   }
 
   function toWorld(cxp, cyp) {
@@ -422,7 +565,7 @@
     }, { passive: false });
 
     buildLegend();
-    H.theme.onChange(() => { buildLegend(); start(); });
+    H.theme.onChange(() => { clearRenderCaches(); buildLegend(); start(); });
     if ('ResizeObserver' in window) new ResizeObserver(() => { resize(); start(); }).observe(frame);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) start(); });
     resize();

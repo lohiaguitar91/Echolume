@@ -36,6 +36,23 @@
       chipsEl.append(c);
     });
 
+    /* cursor spotlight: results light toward the pointer (fine pointers only) */
+    if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) {
+      let spotRaf = 0, spotEv = null;
+      resultsEl.addEventListener('pointermove', e => {
+        spotEv = e;
+        if (spotRaf) return;
+        spotRaf = requestAnimationFrame(() => {
+          spotRaf = 0;
+          const card = spotEv.target.closest ? spotEv.target.closest('.result') : null;
+          if (!card) return;
+          const r = card.getBoundingClientRect();
+          card.style.setProperty('--mx', ((spotEv.clientX - r.left) / r.width * 100).toFixed(1) + '%');
+          card.style.setProperty('--my', ((spotEv.clientY - r.top) / r.height * 100).toFixed(1) + '%');
+        });
+      }, { passive: true });
+    }
+
     let deb = null;
     input.addEventListener('input', () => { clearTimeout(deb); deb = setTimeout(run, 140); });
     input.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });

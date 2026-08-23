@@ -687,3 +687,85 @@ body[data-skin="console"] .holo3d .face {
   border-bottom-color: var(--accent);
 }
 .skin-btn { flex: none; font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; }
+
+
+/* ══ Chic layer: ambience, depth, light ══════════════════════════ */
+
+/* Drifting aurora behind everything (transform-only, own layers) */
+.aurora { position: fixed; inset: -12%; z-index: -1; pointer-events: none; }
+.aurora i {
+  position: absolute; width: 50vmax; height: 50vmax; border-radius: 50%;
+  top: -14%; left: -8%; will-change: transform;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 12%, transparent), transparent 62%);
+  animation: adrift1 64s ease-in-out infinite alternate;
+}
+.aurora i + i {
+  top: auto; left: auto; right: -10%; bottom: -16%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--jedi) 8%, transparent), transparent 62%);
+  animation: adrift2 86s ease-in-out infinite alternate;
+}
+@keyframes adrift1 { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(9vw, 7vh, 0) scale(1.18); } }
+@keyframes adrift2 { from { transform: translate3d(0, 0, 0) scale(1.12); } to { transform: translate3d(-8vw, -6vh, 0) scale(.94); } }
+@media (prefers-reduced-motion: reduce) { .aurora i { animation: none; } }
+@media (max-width: 720px) { .aurora { display: none; } }
+
+/* Gradient brand type */
+.brand-name {
+  background: linear-gradient(100deg, var(--ink) 18%, color-mix(in srgb, var(--accent) 70%, var(--ink)) 58%, var(--gold) 115%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+}
+
+/* Layered depth: lit top edge + ambient drop on every surface */
+.result, .qa-card, .cmp-col, .era-acc, .panel, .drawer {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045), 0 18px 42px -26px rgba(0, 0, 0, .78);
+}
+.drawer { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045), var(--shadow); }
+.tl-frame, .graph-frame, .map-frame {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--accent) 20%, transparent),
+    inset 0 0 0 1px rgba(255, 255, 255, .014),
+    0 26px 54px -30px rgba(0, 0, 0, .85);
+}
+
+/* Cursor spotlight on result cards */
+.result {
+  background:
+    radial-gradient(230px circle at var(--mx, 50%) var(--my, 15%), color-mix(in srgb, var(--accent) 5%, transparent), transparent 72%),
+    linear-gradient(175deg, var(--panel-hi2), var(--frame-bg));
+}
+.result:hover {
+  background:
+    radial-gradient(250px circle at var(--mx, 50%) var(--my, 30%), color-mix(in srgb, var(--accent) 11%, transparent), transparent 70%),
+    linear-gradient(175deg, var(--panel-hov), var(--panel-hov-lo));
+}
+
+/* Refined chips & buttons: hairline inner light, glow when active */
+.chip { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .045); }
+.chip.active {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent),
+    inset 0 0 18px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.echip { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .04); }
+.btn { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); }
+.btn.primary { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 0 18px color-mix(in srgb, var(--accent) 22%, transparent); }
+
+/* Slim themed scrollbars */
+* { scrollbar-width: thin; scrollbar-color: var(--bg3) transparent; }
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--line); }
+
+/* Air on larger screens */
+@media (min-width: 721px) {
+  main { padding: 34px 26px 110px; }
+  .view-head { gap: 20px; margin: 6px 0 8px; }
+  .view-head h2 { font-size: 21px; }
+  .view-head .lede { font-size: 14.5px; }
+  .toolbar { margin: 16px 0; }
+  .results { gap: 12px; }
+  .era-acc { margin-bottom: 14px; }
+}
