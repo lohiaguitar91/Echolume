@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Old Republic Holocron</title>
+<meta name="description" content="An interactive lore atlas of the Old Republic: timeline, relationship graph, searchable database, Q&amp;A, era deep-dives, and a galaxy map — Legends continuity, hand-curated.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Source+Sans+3:wght@400;600&family=Chivo+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 L29 27 H3 Z' fill='none' stroke='%23e0463c' stroke-width='2'/%3E%3Ccircle cx='16' cy='19.5' r='3' fill='%23e0463c'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-glyph" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M16 3 L29 27 H3 Z" fill="none" stroke="#e0463c" stroke-width="1.6"></path>
+      <path d="M16 10 L23.5 24 H8.5 Z" fill="rgba(224,70,60,.16)" stroke="#e0463c" stroke-width="1"></path>
+      <circle class="core" cx="16" cy="19.5" r="2.6" fill="#e0463c"></circle>
+    </svg>
+    <div>
+      <div class="brand-name">HOLOCRON</div>
+      <div class="brand-sub">a lore atlas of the Old Republic</div>
+    </div>
+  </div>
+  <nav class="tabs" aria-label="Views">
+    <button class="tab" id="tab-timeline" type="button">Timeline</button>
+    <button class="tab" id="tab-graph" type="button">Graph</button>
+    <button class="tab" id="tab-atlas" type="button">Atlas</button>
+    <button class="tab" id="tab-ask" type="button">Ask</button>
+    <button class="tab" id="tab-eras" type="button">Eras</button>
+    <button class="tab" id="tab-galaxy" type="button">Galaxy</button>
+    <button class="tab" id="tab-compare" type="button">Compare</button>
+  </nav>
+  <div class="searchbox">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a8998f" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4.2-4.2"></path></svg>
+    <input id="global-search" type="search" placeholder="Search the record… (Enter)" aria-label="Search the record">
+  </div>
+</header>
+
+<main>
+
+  <!-- ── Timeline ── -->
+  <section class="view" id="view-timeline" hidden>
+    <div class="view-head">
+      <h2>Timeline</h2>
+      <p class="lede">Six thousand years on one scrubbable line — wars, deaths, foundings, academy cycles, and the successions that connect them. Drag to pan, scroll to zoom, click anything.</p>
+    </div>
+    <div class="toolbar" id="tl-eras"></div>
+    <div class="toolbar">
+      <span class="toolbar-label">Show</span>
+      <span id="tl-kinds" style="display:contents"></span>
+      <span class="sep"></span>
+      <span class="toolbar-label">Layers</span>
+      <span id="tl-layers" style="display:contents"></span>
+      <span class="sep"></span>
+      <button class="btn" id="tl-zoom-out" type="button" aria-label="Zoom out">−</button>
+      <button class="btn" id="tl-zoom-in" type="button" aria-label="Zoom in">+</button>
+      <button class="btn" id="tl-fit" type="button">Fit all</button>
+      <button class="btn" id="tl-export" type="button">Export PNG</button>
+    </div>
+    <div class="tl-frame">
+      <div class="tl-legend">
+        <b>Events</b>
+        <span class="lg"><i style="background:#8e2a26"></i>war</span>
+        <span class="lg"><i style="background:#e0463c"></i>battle</span>
+        <span class="lg"><i style="background:#e28f4a"></i>duel</span>
+        <span class="lg"><i style="background:#b9463e"></i>death</span>
+        <span class="lg"><i style="background:#c9a06a"></i>founding</span>
+        <span class="lg"><i style="background:#9c8f9c"></i>politics</span>
+        <span class="lg"><i style="background:#a03cc2"></i>catastrophe</span>
+        <span class="lg"><i style="background:#8f6fd8"></i>ritual</span>
+        <span class="lg"><i style="background:#58a6f2"></i>academy</span>
+        <span class="lg"><i style="background:#5fc6b8"></i>discovery</span>
+        <span class="lg"><i style="background:#d8c26f"></i>turning point</span>
+        <span class="lg" style="margin-left:auto"><i style="background:#e0463c"></i>Sith academy open</span>
+        <span class="lg"><i style="background:#58a6f2"></i>Jedi academy open</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Graph ── -->
+  <section class="view" id="view-graph" hidden>
+    <div class="view-head">
+      <h2>Relationship Graph</h2>
+      <p class="lede">Who trained whom, who killed whom, who betrayed everyone — the era’s people, orders, relics and doctrines as a living web. Click a node to focus its connections.</p>
+    </div>
+    <div class="toolbar">
+      <span id="g-types" style="display:contents"></span>
+      <span class="sep"></span>
+      <span id="g-aligns" style="display:contents"></span>
+    </div>
+    <div class="toolbar" id="g-eras"></div>
+    <div class="toolbar">
+      <input id="g-find" type="search" placeholder="Find in graph… (Enter)" aria-label="Find in graph"
+             style="padding:8px 12px;background:var(--bg1);border:1px solid var(--line);border-radius:7px;color:var(--ink);width:min(320px,100%)">
+    </div>
+    <div class="graph-frame">
+      <div class="graph-hud">
+        <button class="btn" id="g-reheat" type="button" title="Re-run the layout">Reheat</button>
+        <button class="btn" id="g-fit" type="button">Fit</button>
+        <button class="btn" id="g-export" type="button">Export PNG</button>
+      </div>
+      <div class="graph-legend">
+        <span class="lg"><i style="background:#e0463c;border-radius:50%"></i> Sith</span>
+        <span class="lg"><i style="background:#58a6f2;border-radius:50%"></i> Jedi</span>
+        <span class="lg"><i style="background:#c9a06a;border-radius:50%"></i> Gray</span>
+        <span class="lg"><i style="background:#8f8f9c;border-radius:50%"></i> Neutral</span>
+        <span class="lg">● character &nbsp;⬡ faction &nbsp;▲ artifact &nbsp;◆ concept &nbsp;○ world</span>
+        <span class="lg"><i style="background:#c9a06a;height:2px"></i> trained &nbsp;<i style="background:#e0463c;height:2px"></i> killed &nbsp;<i style="background:#8f6fd8;height:2px"></i> corrupted</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Atlas ── -->
+  <section class="view" id="view-atlas" hidden>
+    <div class="view-head">
+      <h2>Atlas</h2>
+      <p class="lede">Full-text search across every character, faction, world, event, artifact and doctrine in the record — with context snippets and cross-references.</p>
+    </div>
+    <div class="atlas-search">
+      <input id="atlas-q" type="search" placeholder="Search — “Korriban academy history”, “Rule of Two origins”, “Revan’s lineage”…" aria-label="Search the lore database">
+    </div>
+    <div class="toolbar" id="atlas-types"></div>
+    <div class="results" id="atlas-results"></div>
+  </section>
+
+  <!-- ── Ask ── -->
+  <section class="view" id="view-ask" hidden>
+    <div class="view-head">
+      <h2>Ask the Holocron</h2>
+      <p class="lede">Plain-language questions, answered from the lore graph itself — every answer links its entities and cites its sources. No cloud, no guessing beyond the record.</p>
+    </div>
+    <div class="ask-wrap">
+      <div class="ask-input">
+        <input id="ask-q" type="text" placeholder="When did the Sith academy reopen after Bane?" aria-label="Ask a question">
+        <button class="btn primary" id="ask-go" type="button">Ask</button>
+      </div>
+      <div class="chips" id="ask-samples"></div>
+      <p class="hint-note" style="margin:12px 0 18px">The gatekeeper parses your question, walks the curated graph (masters, kills, foundings, academy cycles, dates, places), and synthesizes an answer. If it can’t parse, it falls back to search.</p>
+      <div id="ask-cards"></div>
+    </div>
+  </section>
+
+  <!-- ── Eras ── -->
+  <section class="view" id="view-eras" hidden>
+    <div class="view-head">
+      <h2>Era Deep-Dives</h2>
+      <p class="lede">Nine period studies — each war’s shape, its battles and figures, the technological state, and where the Jedi and Sith actually stood.</p>
+    </div>
+    <div id="era-list"></div>
+  </section>
+
+  <!-- ── Galaxy ── -->
+  <section class="view" id="view-galaxy" hidden>
+    <div class="view-head">
+      <h2>Galaxy</h2>
+      <p class="lede">The worlds of the record, Deep Core to Sith space. Click a world for its history, academy cycles, and the relics tied to it.</p>
+    </div>
+    <div class="toolbar">
+      <span class="toolbar-label">Highlight era</span>
+      <select id="map-era" style="padding:7px 10px;background:var(--bg1);border:1px solid var(--line);border-radius:7px;color:var(--ink)">
+        <option value="">— none —</option>
+      </select>
+    </div>
+    <div class="map-layout">
+      <div class="map-frame"></div>
+      <aside class="world-list" id="world-list" aria-label="Worlds by region"></aside>
+    </div>
+  </section>
+
+  <!-- ── Compare ── -->
+  <section class="view" id="view-compare" hidden>
+    <div class="view-head">
+      <h2>Compare</h2>
+      <p class="lede">Any two entries side by side — characters, eras, factions, worlds — plus everything the record says connects them.</p>
+    </div>
+    <div class="cmp-pickers">
+      <input id="cmp-a" list="cmp-names" placeholder="First — try “Revan”" aria-label="First entry">
+      <div class="cmp-vs">vs</div>
+      <input id="cmp-b" list="cmp-names" placeholder="Second — try “Darth Bane”" aria-label="Second entry">
+      <datalist id="cmp-names"></datalist>
+    </div>
+    <div id="cmp-out"></div>
+  </section>
+
+  <footer class="hint-note" style="margin-top:48px;border-top:1px solid var(--line);padding-top:14px">
+    A fan-made reference, hand-curated from Star Wars Legends sources — Tales of the Jedi, the KOTOR games and comics, The Old Republic, the Darth Bane trilogy, Darth Plagueis, and the Legacy comics. Dates follow the Legends timeline (BBY/ABY). Not affiliated with or endorsed by Lucasfilm.
+  </footer>
+</main>
+
+<!-- ── Entity drawer ── -->
+<aside class="drawer" id="drawer" aria-hidden="true" aria-label="Entity details">
+  <div class="drawer-head">
+    <h3 id="drawer-title">—</h3>
+    <button class="btn-ghost" id="drawer-close" type="button" aria-label="Close panel">✕</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</aside>
+
+<!-- ── Export modal ── -->
+<div class="modal" id="modal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="modal-bar">
+      <strong id="modal-title">export.png</strong>
+      <span class="grow"></span>
+      <a class="btn" id="modal-dl" href="#" download>Download PNG</a>
+      <button class="btn-ghost" id="modal-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script src="js/data/eras.js"></script>
+<script src="js/data/locations.js"></script>
+<script src="js/data/factions.js"></script>
+<script src="js/data/characters.js"></script>
+<script src="js/data/events.js"></script>
+<script src="js/data/artifacts.js"></script>
+<script src="js/data/world.js"></script>
+<script src="js/data/edges.js"></script>
+<script src="js/core/store.js"></script>
+<script src="js/core/search.js"></script>
+<script src="js/core/qa.js"></script>
+<script src="js/ui/app.js"></script>
+<script src="js/ui/export.js"></script>
+<script src="js/ui/timeline.js"></script>
+<script src="js/ui/graph.js"></script>
+<script src="js/ui/database.js"></script>
+<script src="js/ui/qa-ui.js"></script>
+<script src="js/ui/eras-ui.js"></script>
+<script src="js/ui/map.js"></script>
+<script src="js/ui/compare.js"></script>
+</body>
+</html>
