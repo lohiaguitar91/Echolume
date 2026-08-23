@@ -243,7 +243,7 @@ main { max-width: 1480px; margin: 0 auto; padding: 26px 22px 90px; }
 
 /* ── Timeline ──────────────────────────────────────────────────── */
 .tl-frame { background-color: var(--frame-bg); border: 1px solid var(--line-soft); overflow: hidden; }
-.tl-svg { display: block; width: 100%; cursor: grab; touch-action: none; }
+.tl-svg { display: block; width: 100%; cursor: grab; touch-action: pan-y; }
 .tl-svg.dragging { cursor: grabbing; }
 .tl-legend { display: flex; gap: 13px; flex-wrap: wrap; padding: 10px 16px; border-top: 1px solid var(--line-soft); font-size: 12px; color: var(--ink-dim); }
 .tl-legend b { font-weight: 400; color: var(--ink-faint); font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; margin-right: 2px; }
@@ -454,17 +454,67 @@ select {
   .searchbox input { width: 170px; }
 }
 @media (max-width: 720px) {
-  .topbar { flex-wrap: wrap; gap: 8px 10px; padding: 10px 12px; }
+  .topbar { flex-wrap: wrap; gap: 8px 8px; padding: 8px 10px; }
   .brand-sub { display: none; }
-  .brand-name { font-size: 14px; }
-  .searchbox { order: 2; flex: 1; }
-  .searchbox input { width: 100%; }
+  .brand-name { font-size: 14px; letter-spacing: .2em; }
+  .skin-btn { order: 1; padding: 6px 9px; }
+  .skin-btn .skin-txt { display: none; }
+  .searchbox { order: 2; flex: 1; min-width: 110px; }
+  .searchbox input { width: 100%; font-size: 16px; }   /* 16px stops iOS zoom-on-focus */
   .tabs { order: 3; flex-basis: 100%; border-top: 1px solid var(--line-soft); padding-top: 4px; }
-  main { padding: 16px 12px 60px; }
+  main { padding: 14px 10px 60px; }
   .cmp-pickers { grid-template-columns: 1fr; }
   .cmp-vs { display: none; }
+  .cmp-pickers input, #g-find, .atlas-search input, .ask-input input { font-size: 16px; }
   .rel-verb { min-width: 70px; }
   .view-head h2 { font-size: 16px; }
+  .view-head { gap: 10px; }
+
+  /* Filter walls become single-row swipe rails with an edge fade */
+  .toolbar {
+    flex-wrap: nowrap; overflow-x: auto; padding: 2px 2px 6px;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 90%, transparent);
+    mask-image: linear-gradient(90deg, #000 90%, transparent);
+  }
+  .toolbar::-webkit-scrollbar { display: none; }
+  .toolbar > *, .toolbar .chip, .toolbar .btn { flex: none; }
+  .chips#ask-samples { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 90%, transparent);
+    mask-image: linear-gradient(90deg, #000 90%, transparent); }
+  .chips#ask-samples::-webkit-scrollbar { display: none; }
+  .chips#ask-samples .chip { flex: none; }
+
+  /* Drawer becomes a full-bleed sheet */
+  .drawer { width: 100vw; border-left: 0; }
+  .drawer-head { padding: 14px 14px 10px; }
+  .drawer-body { padding: 12px 14px 40px; }
+  #drawer-close { padding: 10px 14px; font-size: 18px; }
+
+  /* Galaxy: fixed-width chart the finger swipes, instead of a shrunken postage stamp */
+  .map-frame { overflow-x: auto; scrollbar-width: none; }
+  .map-frame::-webkit-scrollbar { display: none; }
+  .map-frame svg { width: 760px; max-width: none; }
+  .map-stage { transition: none; }
+  .world-list { max-height: none; }
+
+  .tl-legend { font-size: 10.5px; gap: 8px; padding: 8px 10px; }
+  .graph-legend { font-size: 10px; padding: 6px 9px; left: 8px; bottom: 8px; }
+  .graph-hud { right: 8px; top: 8px; }
+  .graph-hud .btn { padding: 5px 8px; font-size: 11px; }
+  .era-body { padding: 4px 14px 16px; }
+  .cmp-col, .panel, .qa-card { padding: 14px 14px; }
+}
+
+/* Fat-finger targets wherever the pointer is coarse */
+@media (pointer: coarse) {
+  .chip { padding: 7px 13px; font-size: 12px; }
+  .echip { padding: 6px 13px 6px 10px; }
+  .btn { padding: 10px 16px; }
+  .tab { padding: 11px 12px 13px; }
+  .world-row, .battle-row { padding-top: 9px; padding-bottom: 9px; }
+  .rel-row { padding: 6px 0; }
+  .era-head { padding: 16px 14px; }
 }
 
 /* ══ Cranked: motion, 3D, and Star Wars set-pieces ═══════════════ */
@@ -637,4 +687,3 @@ body[data-skin="console"] .holo3d .face {
   border-bottom-color: var(--accent);
 }
 .skin-btn { flex: none; font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; }
-@media (max-width: 720px) { .skin-btn { order: 4; } }

@@ -74,7 +74,9 @@
     });
     document.body.dataset.skin = skin;
     const btn = document.getElementById('skin-toggle');
-    if (btn) btn.textContent = skin === 'archive' ? '▤ Console mode' : '◈ Archive mode';
+    if (btn) btn.innerHTML = skin === 'archive'
+      ? '<span class="skin-ico">▤</span><span class="skin-txt"> Console mode</span>'
+      : '<span class="skin-ico">◈</span><span class="skin-txt"> Archive mode</span>';
     /* repaint every tagged swatch */
     document.querySelectorAll('[data-hc]').forEach(el => {
       const i = el.dataset.hc.indexOf(':');

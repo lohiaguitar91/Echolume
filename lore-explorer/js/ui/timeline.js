@@ -8,6 +8,7 @@
   const T = () => H.theme.t;
 
   const NS = 'http://www.w3.org/2000/svg';
+  const COARSE = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
   const MIN_T = -7250, MAX_T = 340, MIN_SPAN = 24;
 
   const KIND_GROUPS = [
@@ -182,7 +183,7 @@
 
   function plotDims() {
     const W = Math.max(frame.clientWidth || 900, 320);
-    const ml = W < 680 ? 92 : 132, mr = 14;
+    const ml = W < 560 ? 66 : W < 680 ? 92 : 132, mr = 14;
     return { W, ml, mr };
   }
   function plotW() { const { W, ml, mr } = plotDims(); return W - ml - mr; }
@@ -356,6 +357,10 @@
         if (hi) make('circle', { cx: xx, cy: yy, r: 9, fill: 'none', stroke: T().hl, 'stroke-width': 2 }, svg);
         const dot = make('circle', { cx: xx, cy: yy, r: 4.2, fill: color, stroke: T().dotStroke, 'stroke-width': 1.2 }, svg);
         wire(dot, ev.id, () => A().tipHTML(ev.name, S.fmtYear(ev.year, ev.approx) + ' · ' + (S.KIND_LABEL[ev.kind] || ev.kind), ev.blurb));
+        if (COARSE) {
+          const hit = make('circle', { cx: xx, cy: yy, r: 12, fill: 'transparent' }, svg);
+          wire(hit, ev.id, () => A().tipHTML(ev.name, S.fmtYear(ev.year, ev.approx), ev.blurb));
+        }
         if (labelsOn) {
           const t = make('text', { x: xx + 8, y: yy + 3.5, 'font-family': 'Saira, sans-serif', 'font-size': 10.8, fill: hi ? T().ink : T().inkDim }, svg);
           t.textContent = ev.name;
@@ -375,8 +380,9 @@
       const rowH = 15;
       (S.academies || []).forEach(a => {
         const loc = S.get(a.loc);
-        const name = make('text', { x: 8, y: y + 8.5, 'font-family': 'Saira, sans-serif', 'font-size': 10, fill: a.side === 'sith' ? H.theme.align.sith : H.theme.align.jedi }, svg);
-        name.textContent = a.name.length > 20 ? a.name.slice(0, 19) + '…' : a.name;
+        const gutterChars = ml < 80 ? 11 : 20;
+        const name = make('text', { x: 8, y: y + 8.5, 'font-family': 'Saira, sans-serif', 'font-size': ml < 80 ? 8.6 : 10, fill: a.side === 'sith' ? H.theme.align.sith : H.theme.align.jedi }, svg);
+        name.textContent = a.name.length > gutterChars ? a.name.slice(0, gutterChars - 1) + '…' : a.name;
         wire(name, a.loc, () => A().tipHTML(a.name, loc ? 'on ' + loc.name : '', a.blurb));
         make('line', { x1: ml, y1: y + 5, x2: W - mr, y2: y + 5, stroke: T().grid, 'stroke-dasharray': '1 4' }, svg);
         a.periods.forEach(p => {
@@ -407,8 +413,9 @@
       y += 14;
       const rowH = 27;
       (S.lineages || []).forEach(lin => {
-        const name = make('text', { x: 8, y: y + 12, 'font-family': 'Saira, sans-serif', 'font-size': 10, fill: T().inkDim }, svg);
-        name.textContent = lin.name.length > 21 ? lin.name.slice(0, 20) + '…' : lin.name;
+        const linChars = ml < 80 ? 11 : 21;
+        const name = make('text', { x: 8, y: y + 12, 'font-family': 'Saira, sans-serif', 'font-size': ml < 80 ? 8.6 : 10, fill: T().inkDim }, svg);
+        name.textContent = lin.name.length > linChars ? lin.name.slice(0, linChars - 1) + '…' : lin.name;
         wire(name, null, () => A().tipHTML(lin.name, lin.members.map(m => (S.get(m) || {}).name).join(' → '), lin.note));
         const mid = y + 10;
         make('line', { x1: ml, y1: mid, x2: W - mr, y2: mid, stroke: T().grid, 'stroke-dasharray': '1 4' }, svg);

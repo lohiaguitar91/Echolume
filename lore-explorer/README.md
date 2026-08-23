@@ -20,6 +20,13 @@ star-streak jump**, and a depth-projected **starfield** with pointer parallax ru
 everything — throttled, layer-isolated, and paused when hidden, so it stays at 60fps even
 on software rendering.
 
+**Mobile is a first-class target**: filter walls collapse into swipeable chip rails,
+touch targets grow under coarse pointers, the timeline chart keeps vertical page scroll
+(`touch-action: pan-y`) while pinch-zooming stays custom, event dots get invisible tap
+pads, the drawer becomes a full-width sheet, the galaxy renders at a fixed width you swipe
+with scaled-up type, and every search input is 16px so iOS never zoom-jumps on focus. A
+dedicated touch-emulation test suite drives it all by tap.
+
 Two full skins, toggled from the top bar and persisted: **Archive** (the crimson Sith-
 holocron look) and **Console** — a classic Star Wars terminal/datapad mode: phosphor green
 on black, mono type throughout, CRT scanlines and vignette, a blinking prompt, and the

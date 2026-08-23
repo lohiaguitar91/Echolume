@@ -43,6 +43,7 @@
   let W = 900, Hh = 620, dpr = 1;
   const locEras = new Map();
   const FOV = 620;
+  const PICK_PAD = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ? 15 : 7;
 
   const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967295; };
 
@@ -251,7 +252,7 @@
     nodes.forEach(nn => {
       const dx = nn.px - p.x, dy = nn.py - p.y;
       const d = dx * dx + dy * dy;
-      const rr = nn.r * nn.ps + 7 / view.k;
+      const rr = nn.r * nn.ps + PICK_PAD / view.k;
       if (d < rr * rr && d < bd) { bd = d; best = nn; }
     });
     return best;

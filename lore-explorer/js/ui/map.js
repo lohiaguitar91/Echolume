@@ -9,7 +9,7 @@
   const NS = 'http://www.w3.org/2000/svg';
   const VW = 1000, VH = 640;
   const locEras = new Map();
-  let svgEl, eraSel;
+  let svgEl, eraSel, frameRef;
 
   /* label offsets for tight clusters [dx, dy] */
   const NUDGE = {
@@ -35,6 +35,7 @@
     const { el } = A();
     const root = document.getElementById('view-galaxy');
     const frameEl = root.querySelector('.map-frame');
+    frameRef = frameEl;
     const stage = el('div', { class: 'map-stage' });
     frameEl.append(stage);
     svgEl = make('svg', { viewBox: '0 0 ' + VW + ' ' + VH, role: 'img', 'aria-label': 'Galaxy map of Old Republic worlds' });
@@ -108,12 +109,17 @@
     });
 
     H.theme.onChange(render);
+    let rzT = null;
+    window.addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(render, 180); });
     render();
   }
 
   function render() {
     if (!svgEl) return;
     const era = eraSel.value || null;
+    /* On phones the chart renders at a fixed 760px inside a swipe container; scale
+       type and markers up so labels stay legible at that density. */
+    const F = (frameRef && frameRef.clientWidth < 720) ? 1.32 : 1;
     svgEl.innerHTML = '';
 
     /* starfield */
@@ -129,14 +135,14 @@
     const cx = 520, cy = 330;
     [['Deep Core', 46], ['Core', 105], ['Inner Rim', 170], ['Mid Rim', 240], ['Outer Rim', 320]].forEach(([name, r], i) => {
       make('ellipse', { cx, cy, rx: r * 1.35, ry: r, fill: 'none', stroke: T().line, 'stroke-width': 1, 'stroke-dasharray': i ? '2 5' : 'none', 'stroke-opacity': 0.8 }, svgEl);
-      const t = make('text', { x: cx, y: cy - r + 13, 'text-anchor': 'middle', 'font-family': 'Chivo Mono, monospace', 'font-size': 8.5, fill: T().inkFaint, 'letter-spacing': '2' }, svgEl);
+      const t = make('text', { x: cx, y: cy - r + 13, 'text-anchor': 'middle', 'font-family': 'Chivo Mono, monospace', 'font-size': 8.5 * F, fill: T().inkFaint, 'letter-spacing': '2' }, svgEl);
       t.textContent = name.toUpperCase();
     });
-    const ur = make('text', { x: 105, y: 90, 'font-family': 'Chivo Mono, monospace', 'font-size': 9, fill: T().inkFaint, 'letter-spacing': '3' }, svgEl);
+    const ur = make('text', { x: 105, y: 90, 'font-family': 'Chivo Mono, monospace', 'font-size': 9 * F, fill: T().inkFaint, 'letter-spacing': '3' }, svgEl);
     ur.textContent = 'UNKNOWN REGIONS';
-    const ws = make('text', { x: 92, y: 560, 'font-family': 'Chivo Mono, monospace', 'font-size': 9, fill: T().inkFaint, 'letter-spacing': '3' }, svgEl);
+    const ws = make('text', { x: 92, y: 560, 'font-family': 'Chivo Mono, monospace', 'font-size': 9 * F, fill: T().inkFaint, 'letter-spacing': '3' }, svgEl);
     ws.textContent = 'WILD SPACE';
-    const ss = make('text', { x: 828, y: 130, 'font-family': 'Chivo Mono, monospace', 'font-size': 9, fill: T().sithSpace, 'letter-spacing': '3' }, svgEl);
+    const ss = make('text', { x: 828, y: 130, 'font-family': 'Chivo Mono, monospace', 'font-size': 9 * F, fill: T().sithSpace, 'letter-spacing': '3' }, svgEl);
     ss.textContent = 'SITH SPACE';
 
     /* hyperlane hints */
@@ -146,7 +152,7 @@
       if (label) {
         const mid = S.get(labelAt);
         if (mid) {
-          const t = make('text', { x: (px(mid)), y: py(mid) + 30, 'text-anchor': 'middle', 'font-family': 'Chivo Mono, monospace', 'font-size': 8, fill: T().laneLabel, 'letter-spacing': '1.5' }, svgEl);
+          const t = make('text', { x: (px(mid)), y: py(mid) + 30, 'text-anchor': 'middle', 'font-family': 'Chivo Mono, monospace', 'font-size': 8 * F, fill: T().laneLabel, 'letter-spacing': '1.5' }, svgEl);
           t.textContent = label;
         }
       }
@@ -159,7 +165,7 @@
       const x = px(loc), y = py(loc);
       const degree = (S.neighbors(loc.id) || []).length;
       const isMoon = loc.id === 'dxun';
-      const r = isMoon ? 3.5 : Math.max(5, Math.min(11, 3.5 + degree * 0.55));
+      const r = (isMoon ? 3.5 : Math.max(5, Math.min(11, 3.5 + degree * 0.55))) * (F > 1 ? 1.25 : 1);
       const color = A().colorOf(loc);
       const active = !era || (locEras.get(loc.id) || new Set()).has(era);
       const g = make('g', { opacity: active ? 1 : 0.22 }, svgEl);
@@ -167,10 +173,11 @@
       make('circle', { cx: x, cy: y, r: r + 2.5, fill: color, 'fill-opacity': 0.16 }, g);
       const dot = make('circle', { cx: x, cy: y, r, fill: T().mapInner, stroke: color, 'stroke-width': 2 }, g);
       make('circle', { cx: x, cy: y, r: Math.max(r - 3.4, 1.2), fill: color, 'fill-opacity': 0.75, 'pointer-events': 'none' }, g);
-      const [dx, dy] = NUDGE[loc.id] || [0, 18];
+      let [dx, dy] = NUDGE[loc.id] || [0, 18];
+      if (F > 1) { dx *= 1.3; dy *= 1.3; }
       const lbl = make('text', {
         x: x + dx, y: y + (dy || 18), 'text-anchor': 'middle',
-        'font-family': 'Saira, sans-serif', 'font-size': 10, 'font-weight': 600,
+        'font-family': 'Saira, sans-serif', 'font-size': 10 * F, 'font-weight': 600,
         'letter-spacing': '1.4', fill: active ? T().ink : T().inkFaint
       }, g);
       lbl.textContent = loc.name.replace(/\s*\(.*\)/, '').toUpperCase();

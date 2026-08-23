@@ -254,7 +254,7 @@ main { max-width: 1480px; margin: 0 auto; padding: 26px 22px 90px; }
 
 /* ── Timeline ──────────────────────────────────────────────────── */
 .tl-frame { background-color: var(--frame-bg); border: 1px solid var(--line-soft); overflow: hidden; }
-.tl-svg { display: block; width: 100%; cursor: grab; touch-action: none; }
+.tl-svg { display: block; width: 100%; cursor: grab; touch-action: pan-y; }
 .tl-svg.dragging { cursor: grabbing; }
 .tl-legend { display: flex; gap: 13px; flex-wrap: wrap; padding: 10px 16px; border-top: 1px solid var(--line-soft); font-size: 12px; color: var(--ink-dim); }
 .tl-legend b { font-weight: 400; color: var(--ink-faint); font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; margin-right: 2px; }
@@ -465,17 +465,67 @@ select {
   .searchbox input { width: 170px; }
 }
 @media (max-width: 720px) {
-  .topbar { flex-wrap: wrap; gap: 8px 10px; padding: 10px 12px; }
+  .topbar { flex-wrap: wrap; gap: 8px 8px; padding: 8px 10px; }
   .brand-sub { display: none; }
-  .brand-name { font-size: 14px; }
-  .searchbox { order: 2; flex: 1; }
-  .searchbox input { width: 100%; }
+  .brand-name { font-size: 14px; letter-spacing: .2em; }
+  .skin-btn { order: 1; padding: 6px 9px; }
+  .skin-btn .skin-txt { display: none; }
+  .searchbox { order: 2; flex: 1; min-width: 110px; }
+  .searchbox input { width: 100%; font-size: 16px; }   /* 16px stops iOS zoom-on-focus */
   .tabs { order: 3; flex-basis: 100%; border-top: 1px solid var(--line-soft); padding-top: 4px; }
-  main { padding: 16px 12px 60px; }
+  main { padding: 14px 10px 60px; }
   .cmp-pickers { grid-template-columns: 1fr; }
   .cmp-vs { display: none; }
+  .cmp-pickers input, #g-find, .atlas-search input, .ask-input input { font-size: 16px; }
   .rel-verb { min-width: 70px; }
   .view-head h2 { font-size: 16px; }
+  .view-head { gap: 10px; }
+
+  /* Filter walls become single-row swipe rails with an edge fade */
+  .toolbar {
+    flex-wrap: nowrap; overflow-x: auto; padding: 2px 2px 6px;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 90%, transparent);
+    mask-image: linear-gradient(90deg, #000 90%, transparent);
+  }
+  .toolbar::-webkit-scrollbar { display: none; }
+  .toolbar > *, .toolbar .chip, .toolbar .btn { flex: none; }
+  .chips#ask-samples { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 90%, transparent);
+    mask-image: linear-gradient(90deg, #000 90%, transparent); }
+  .chips#ask-samples::-webkit-scrollbar { display: none; }
+  .chips#ask-samples .chip { flex: none; }
+
+  /* Drawer becomes a full-bleed sheet */
+  .drawer { width: 100vw; border-left: 0; }
+  .drawer-head { padding: 14px 14px 10px; }
+  .drawer-body { padding: 12px 14px 40px; }
+  #drawer-close { padding: 10px 14px; font-size: 18px; }
+
+  /* Galaxy: fixed-width chart the finger swipes, instead of a shrunken postage stamp */
+  .map-frame { overflow-x: auto; scrollbar-width: none; }
+  .map-frame::-webkit-scrollbar { display: none; }
+  .map-frame svg { width: 760px; max-width: none; }
+  .map-stage { transition: none; }
+  .world-list { max-height: none; }
+
+  .tl-legend { font-size: 10.5px; gap: 8px; padding: 8px 10px; }
+  .graph-legend { font-size: 10px; padding: 6px 9px; left: 8px; bottom: 8px; }
+  .graph-hud { right: 8px; top: 8px; }
+  .graph-hud .btn { padding: 5px 8px; font-size: 11px; }
+  .era-body { padding: 4px 14px 16px; }
+  .cmp-col, .panel, .qa-card { padding: 14px 14px; }
+}
+
+/* Fat-finger targets wherever the pointer is coarse */
+@media (pointer: coarse) {
+  .chip { padding: 7px 13px; font-size: 12px; }
+  .echip { padding: 6px 13px 6px 10px; }
+  .btn { padding: 10px 16px; }
+  .tab { padding: 11px 12px 13px; }
+  .world-row, .battle-row { padding-top: 9px; padding-bottom: 9px; }
+  .rel-row { padding: 6px 0; }
+  .era-head { padding: 16px 14px; }
 }
 
 /* ══ Cranked: motion, 3D, and Star Wars set-pieces ═══════════════ */
@@ -648,7 +698,6 @@ body[data-skin="console"] .holo3d .face {
   border-bottom-color: var(--accent);
 }
 .skin-btn { flex: none; font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; }
-@media (max-width: 720px) { .skin-btn { order: 4; } }
 
 </style>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 L29 27 H3 Z' fill='none' stroke='%23e0463c' stroke-width='2'/%3E%3Ccircle cx='16' cy='19.5' r='3' fill='%23e0463c'/%3E%3C/svg%3E">
@@ -3705,7 +3754,9 @@ HOLO_DATA.edges = [
     });
     document.body.dataset.skin = skin;
     const btn = document.getElementById('skin-toggle');
-    if (btn) btn.textContent = skin === 'archive' ? '▤ Console mode' : '◈ Archive mode';
+    if (btn) btn.innerHTML = skin === 'archive'
+      ? '<span class="skin-ico">▤</span><span class="skin-txt"> Console mode</span>'
+      : '<span class="skin-ico">◈</span><span class="skin-txt"> Archive mode</span>';
     /* repaint every tagged swatch */
     document.querySelectorAll('[data-hc]').forEach(el => {
       const i = el.dataset.hc.indexOf(':');
@@ -4371,6 +4422,7 @@ HOLO_DATA.edges = [
   const T = () => H.theme.t;
 
   const NS = 'http://www.w3.org/2000/svg';
+  const COARSE = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
   const MIN_T = -7250, MAX_T = 340, MIN_SPAN = 24;
 
   const KIND_GROUPS = [
@@ -4545,7 +4597,7 @@ HOLO_DATA.edges = [
 
   function plotDims() {
     const W = Math.max(frame.clientWidth || 900, 320);
-    const ml = W < 680 ? 92 : 132, mr = 14;
+    const ml = W < 560 ? 66 : W < 680 ? 92 : 132, mr = 14;
     return { W, ml, mr };
   }
   function plotW() { const { W, ml, mr } = plotDims(); return W - ml - mr; }
@@ -4719,6 +4771,10 @@ HOLO_DATA.edges = [
         if (hi) make('circle', { cx: xx, cy: yy, r: 9, fill: 'none', stroke: T().hl, 'stroke-width': 2 }, svg);
         const dot = make('circle', { cx: xx, cy: yy, r: 4.2, fill: color, stroke: T().dotStroke, 'stroke-width': 1.2 }, svg);
         wire(dot, ev.id, () => A().tipHTML(ev.name, S.fmtYear(ev.year, ev.approx) + ' · ' + (S.KIND_LABEL[ev.kind] || ev.kind), ev.blurb));
+        if (COARSE) {
+          const hit = make('circle', { cx: xx, cy: yy, r: 12, fill: 'transparent' }, svg);
+          wire(hit, ev.id, () => A().tipHTML(ev.name, S.fmtYear(ev.year, ev.approx), ev.blurb));
+        }
         if (labelsOn) {
           const t = make('text', { x: xx + 8, y: yy + 3.5, 'font-family': 'Saira, sans-serif', 'font-size': 10.8, fill: hi ? T().ink : T().inkDim }, svg);
           t.textContent = ev.name;
@@ -4738,8 +4794,9 @@ HOLO_DATA.edges = [
       const rowH = 15;
       (S.academies || []).forEach(a => {
         const loc = S.get(a.loc);
-        const name = make('text', { x: 8, y: y + 8.5, 'font-family': 'Saira, sans-serif', 'font-size': 10, fill: a.side === 'sith' ? H.theme.align.sith : H.theme.align.jedi }, svg);
-        name.textContent = a.name.length > 20 ? a.name.slice(0, 19) + '…' : a.name;
+        const gutterChars = ml < 80 ? 11 : 20;
+        const name = make('text', { x: 8, y: y + 8.5, 'font-family': 'Saira, sans-serif', 'font-size': ml < 80 ? 8.6 : 10, fill: a.side === 'sith' ? H.theme.align.sith : H.theme.align.jedi }, svg);
+        name.textContent = a.name.length > gutterChars ? a.name.slice(0, gutterChars - 1) + '…' : a.name;
         wire(name, a.loc, () => A().tipHTML(a.name, loc ? 'on ' + loc.name : '', a.blurb));
         make('line', { x1: ml, y1: y + 5, x2: W - mr, y2: y + 5, stroke: T().grid, 'stroke-dasharray': '1 4' }, svg);
         a.periods.forEach(p => {
@@ -4770,8 +4827,9 @@ HOLO_DATA.edges = [
       y += 14;
       const rowH = 27;
       (S.lineages || []).forEach(lin => {
-        const name = make('text', { x: 8, y: y + 12, 'font-family': 'Saira, sans-serif', 'font-size': 10, fill: T().inkDim }, svg);
-        name.textContent = lin.name.length > 21 ? lin.name.slice(0, 20) + '…' : lin.name;
+        const linChars = ml < 80 ? 11 : 21;
+        const name = make('text', { x: 8, y: y + 12, 'font-family': 'Saira, sans-serif', 'font-size': ml < 80 ? 8.6 : 10, fill: T().inkDim }, svg);
+        name.textContent = lin.name.length > linChars ? lin.name.slice(0, linChars - 1) + '…' : lin.name;
         wire(name, null, () => A().tipHTML(lin.name, lin.members.map(m => (S.get(m) || {}).name).join(' → '), lin.note));
         const mid = y + 10;
         make('line', { x1: ml, y1: mid, x2: W - mr, y2: mid, stroke: T().grid, 'stroke-dasharray': '1 4' }, svg);
@@ -4910,6 +4968,7 @@ HOLO_DATA.edges = [
   let W = 900, Hh = 620, dpr = 1;
   const locEras = new Map();
   const FOV = 620;
+  const PICK_PAD = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ? 15 : 7;
 
   const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967295; };
 
@@ -5118,7 +5177,7 @@ HOLO_DATA.edges = [
     nodes.forEach(nn => {
       const dx = nn.px - p.x, dy = nn.py - p.y;
       const d = dx * dx + dy * dy;
-      const rr = nn.r * nn.ps + 7 / view.k;
+      const rr = nn.r * nn.ps + PICK_PAD / view.k;
       if (d < rr * rr && d < bd) { bd = d; best = nn; }
     });
     return best;
@@ -5637,7 +5696,7 @@ HOLO_DATA.edges = [
   const NS = 'http://www.w3.org/2000/svg';
   const VW = 1000, VH = 640;
   const locEras = new Map();
-  let svgEl, eraSel;
+  let svgEl, eraSel, frameRef;
 
   /* label offsets for tight clusters [dx, dy] */
   const NUDGE = {
@@ -5663,6 +5722,7 @@ HOLO_DATA.edges = [
     const { el } = A();
     const root = document.getElementById('view-galaxy');
     const frameEl = root.querySelector('.map-frame');
+    frameRef = frameEl;
     const stage = el('div', { class: 'map-stage' });
     frameEl.append(stage);
     svgEl = make('svg', { viewBox: '0 0 ' + VW + ' ' + VH, role: 'img', 'aria-label': 'Galaxy map of Old Republic worlds' });
@@ -5736,12 +5796,17 @@ HOLO_DATA.edges = [
     });
 
     H.theme.onChange(render);
+    let rzT = null;
+    window.addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(render, 180); });
     render();
   }
 
   function render() {
     if (!svgEl) return;
     const era = eraSel.value || null;
+    /* On phones the chart renders at a fixed 760px inside a swipe container; scale
+       type and markers up so labels stay legible at that density. */
+    const F = (frameRef && frameRef.clientWidth < 720) ? 1.32 : 1;
     svgEl.innerHTML = '';
 
     /* starfield */
@@ -5757,14 +5822,14 @@ HOLO_DATA.edges = [
     const cx = 520, cy = 330;
     [['Deep Core', 46], ['Core', 105], ['Inner Rim', 170], ['Mid Rim', 240], ['Outer Rim', 320]].forEach(([name, r], i) => {
       make('ellipse', { cx, cy, rx: r * 1.35, ry: r, fill: 'none', stroke: T().line, 'stroke-width': 1, 'stroke-dasharray': i ? '2 5' : 'none', 'stroke-opacity': 0.8 }, svgEl);
-      const t = make('text', { x: cx, y: cy - r + 13, 'text-anchor': 'middle', 'font-family': 'Chivo Mono, monospace', 'font-size': 8.5, fill: T().inkFaint, 'letter-spacing': '2' }, svgEl);
+      const t = make('text', { x: cx, y: cy - r + 13, 'text-anchor': 'middle', 'font-family': 'Chivo Mono, monospace', 'font-size': 8.5 * F, fill: T().inkFaint, 'letter-spacing': '2' }, svgEl);
       t.textContent = name.toUpperCase();
     });
-    const ur = make('text', { x: 105, y: 90, 'font-family': 'Chivo Mono, monospace', 'font-size': 9, fill: T().inkFaint, 'letter-spacing': '3' }, svgEl);
+    const ur = make('text', { x: 105, y: 90, 'font-family': 'Chivo Mono, monospace', 'font-size': 9 * F, fill: T().inkFaint, 'letter-spacing': '3' }, svgEl);
     ur.textContent = 'UNKNOWN REGIONS';
-    const ws = make('text', { x: 92, y: 560, 'font-family': 'Chivo Mono, monospace', 'font-size': 9, fill: T().inkFaint, 'letter-spacing': '3' }, svgEl);
+    const ws = make('text', { x: 92, y: 560, 'font-family': 'Chivo Mono, monospace', 'font-size': 9 * F, fill: T().inkFaint, 'letter-spacing': '3' }, svgEl);
     ws.textContent = 'WILD SPACE';
-    const ss = make('text', { x: 828, y: 130, 'font-family': 'Chivo Mono, monospace', 'font-size': 9, fill: T().sithSpace, 'letter-spacing': '3' }, svgEl);
+    const ss = make('text', { x: 828, y: 130, 'font-family': 'Chivo Mono, monospace', 'font-size': 9 * F, fill: T().sithSpace, 'letter-spacing': '3' }, svgEl);
     ss.textContent = 'SITH SPACE';
 
     /* hyperlane hints */
@@ -5774,7 +5839,7 @@ HOLO_DATA.edges = [
       if (label) {
         const mid = S.get(labelAt);
         if (mid) {
-          const t = make('text', { x: (px(mid)), y: py(mid) + 30, 'text-anchor': 'middle', 'font-family': 'Chivo Mono, monospace', 'font-size': 8, fill: T().laneLabel, 'letter-spacing': '1.5' }, svgEl);
+          const t = make('text', { x: (px(mid)), y: py(mid) + 30, 'text-anchor': 'middle', 'font-family': 'Chivo Mono, monospace', 'font-size': 8 * F, fill: T().laneLabel, 'letter-spacing': '1.5' }, svgEl);
           t.textContent = label;
         }
       }
@@ -5787,7 +5852,7 @@ HOLO_DATA.edges = [
       const x = px(loc), y = py(loc);
       const degree = (S.neighbors(loc.id) || []).length;
       const isMoon = loc.id === 'dxun';
-      const r = isMoon ? 3.5 : Math.max(5, Math.min(11, 3.5 + degree * 0.55));
+      const r = (isMoon ? 3.5 : Math.max(5, Math.min(11, 3.5 + degree * 0.55))) * (F > 1 ? 1.25 : 1);
       const color = A().colorOf(loc);
       const active = !era || (locEras.get(loc.id) || new Set()).has(era);
       const g = make('g', { opacity: active ? 1 : 0.22 }, svgEl);
@@ -5795,10 +5860,11 @@ HOLO_DATA.edges = [
       make('circle', { cx: x, cy: y, r: r + 2.5, fill: color, 'fill-opacity': 0.16 }, g);
       const dot = make('circle', { cx: x, cy: y, r, fill: T().mapInner, stroke: color, 'stroke-width': 2 }, g);
       make('circle', { cx: x, cy: y, r: Math.max(r - 3.4, 1.2), fill: color, 'fill-opacity': 0.75, 'pointer-events': 'none' }, g);
-      const [dx, dy] = NUDGE[loc.id] || [0, 18];
+      let [dx, dy] = NUDGE[loc.id] || [0, 18];
+      if (F > 1) { dx *= 1.3; dy *= 1.3; }
       const lbl = make('text', {
         x: x + dx, y: y + (dy || 18), 'text-anchor': 'middle',
-        'font-family': 'Saira, sans-serif', 'font-size': 10, 'font-weight': 600,
+        'font-family': 'Saira, sans-serif', 'font-size': 10 * F, 'font-weight': 600,
         'letter-spacing': '1.4', fill: active ? T().ink : T().inkFaint
       }, g);
       lbl.textContent = loc.name.replace(/\s*\(.*\)/, '').toUpperCase();
