@@ -122,12 +122,14 @@ export class UI {
     const label = document.getElementById('hud-boon-label');
     const pips = document.getElementById('hud-boon-pips');
     let text = null, count = 0;
+    // Labels name what you will SEE, not the mechanism: "Glow" told a
+    // playtester nothing, "Afterglow" is the walls staying lit after you pass.
     if (boon.silentSongs > 0) { text = 'Silent'; count = boon.silentSongs; }
     else if (boon.orbitSecs > 0) { text = 'Orbits'; count = 0; }
     else if (boon.revealLures) { text = 'True sight'; count = 0; }
     else if (boon.iceSteady) { text = 'Steady'; count = 0; }
-    else if (boon.hushRelief > 0.05) { text = 'Carry'; count = 0; }
-    else if (boon.aura > 0.05) { text = 'Glow'; count = 0; }
+    else if (boon.hushRelief > 0.05) { text = 'Heard'; count = 0; }
+    else if (boon.aura > 0.05) { text = 'Afterglow'; count = 0; }
     if (!text) { el.hidden = true; return; }
     label.textContent = text;
     pips.innerHTML = '';
@@ -552,8 +554,17 @@ export class UI {
       ? `You reached ${stats.depth} m before the dark closed in.`
       : (lines[stats.lastHit] || lines.urchin);
     // A banked lair mouth turns Retry into "carry on from where it took you".
-    document.getElementById('btn-retry').textContent =
-      opts.fromCheckpoint ? 'Back to the lair mouth' : 'Try again';
+    const retry = document.getElementById('btn-retry');
+    retry.textContent = opts.fromCheckpoint ? 'Back to the lair mouth' : 'Try again';
+    // The rewarded revive is a choice, so it is a button — and the primary one
+    // only while it is genuinely on offer (a boss, an ad loaded, not yet used).
+    const revive = document.getElementById('btn-revive');
+    if (revive) {
+      revive.hidden = !opts.canRevive;
+      revive.disabled = false;
+      retry.classList.toggle('primary', !opts.canRevive);
+      retry.classList.toggle('ghost', !!opts.canRevive);
+    }
   }
 
   setVersion(v) { this.el.versionLine.textContent = `v${v}`; }

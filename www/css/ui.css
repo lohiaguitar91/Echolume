@@ -57,6 +57,11 @@ html, body {
 }
 .screen.visible { opacity: 1; pointer-events: auto; }
 .screen[hidden] { display: none; }
+/* `hidden` must mean hidden. Any author `display:` rule (.obj, .hud-stat, .btn,
+   .light-bank…) outranks the UA's [hidden] style, which is how an empty boon
+   chip and a "0 m" meter were sitting on every story depth. Every element that
+   carries the attribute is un-hidden by JS explicitly, so this is safe. */
+[hidden] { display: none !important; }
 
 .menu-inner {
   width: min(420px, 92vw);

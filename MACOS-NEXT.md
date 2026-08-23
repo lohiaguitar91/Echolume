@@ -63,6 +63,15 @@ session learned all three the hard way.
   `store/screenshots/` (cold open with the verbs strip, mote chain, gate screen,
   Listener mid-telegraph, hush + ice, Warm Dark finale), rendered by the actual
   game with the DOM HUD composited in. Nothing left to capture for submission.
+- **Playtest round (Aug 17), from Disha's TestFlight notes:** song budgets are
+  15% tighter on every depth (the second star was too easy); a thrown song now
+  *commits* its listeners for `castCommit` = 2.4s so your next tap cannot undo the
+  lie (the verb "didn't work as well as I thought" because it lasted one song);
+  the boon chip no longer ghosts on every depth and its label says what you see
+  ("Afterglow", "Heard") with a once-per-gate plain-words hint and a rewritten
+  depth-7 gate line (no more "glow 35%"); the "0 m" meter is Abyss-only again;
+  and the boss death screen gained the "Watch ad to try again" button (see §4).
+  Budget factor and `castCommit` are the two numbers most worth a human's opinion.
 - **Two small HUD fixes from the final layout battery:** the depth toast now
   wraps instead of clipping on ≤430px-wide screens ("The Trench Mouth" was 398px
   wide at its tracking), and on short screens (≤640px tall) the verbs strip
@@ -98,11 +107,27 @@ achievements exactly as listed in `SHIP.md` §3.5 — the IDs are emitted verbat
 by `www/js/gameservices.js`, so a typo silently breaks unlocks.
 
 ### 4. Ads and the one purchase
-`www/js/ads.js` is written, wired, and inert. `maybeInterstitial()` runs on every
-level win and `offerRevive()` on every boss death; both return false while
-`AD_IDS` is null. **The placement rules are enforced inside `ads.js`, not at the
-call sites** — an interstitial is refused for a death or a non-gate win no matter
-who asks. Keep it that way.
+**Merge note (Aug 17):** a TestFlight build showed a test interstitial after depth 7,
+so this Mac has ad integration that was never pushed — commit and push it before
+pulling, then reconcile `ads.js`: keep your device-proven SDK calls, but the shell
+now requires three methods — `maybeInterstitial({won,isGate})`, a synchronous
+`canRevive({isBoss})` (decides whether the "Watch ad to try again" button shows),
+and `showRevive({isBoss})` resolving true only on a completed reward. Everything
+else on the death screen is wired to those names.
+
+`www/js/ads.js` is written against the real plugin API (`Capacitor.Plugins.AdMob`,
+method and event names per the plugin's v8 README — no package import, because
+`www/` has no bundler) and stays inert until `AD_IDS` are filled and the plugin is
+installed. `maybeInterstitial()` runs on every level win. The rewarded revive is a
+**button** on the boss death screen — "Watch ad to try again" — shown only while
+an ad is actually loaded, once per attempt; it resumes the run where the dark
+took you, hearts back, with two seconds of grace, and the free "Back to the lair
+mouth" stays beside it. **The placement rules are enforced inside `ads.js`, not
+at the call sites** — an interstitial is refused for a death or a non-gate win no
+matter who asks. Keep it that way. The whole flow is verified here against a
+mocked plugin (ATT → non-personalised, reward → resume, early close → no reward,
+Remove Ads → no interstitials but the revive stays, listeners cleaned up); what
+is unverified is the real SDK on a real device — which is the part only you can do.
 
 Turning it on is: install `@capacitor-community/admob` (8.1.0 supports Capacitor
 8), paste the ids, create `remove_ads` in both consoles, set `IAP_PRODUCT_ID`.

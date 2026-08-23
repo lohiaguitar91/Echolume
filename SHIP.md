@@ -90,15 +90,20 @@ target is iOS 15, so every GameKit API used (all iOS 14+) is available.
 
 ## 3.6 Ads and the one purchase (v1.2 surface, currently dormant)
 
-`www/js/ads.js` is written, wired into the real flow, and **inert until the IDs exist**.
-`Ads.maybeInterstitial()` is called on every level win and `Ads.offerRevive()` on every
-boss death; both return false while `AD_IDS` are null, so shipping it dormant is safe.
+`www/js/ads.js` is written against the real plugin API (`Capacitor.Plugins.AdMob`, per
+the plugin's v8 README), wired into the real flow, and **inert until the IDs exist and
+the plugin is installed**. `Ads.maybeInterstitial()` is called on every level win; the
+boss death screen shows a **"Watch ad to try again"** button only while
+`Ads.canRevive()` is true (an ad loaded, a boss, not yet used this attempt) and
+`Ads.showRevive()` resolves true only on a completed reward. Everything returns false
+while dormant, so shipping it that way is safe.
 
 The placement rules are enforced **inside `ads.js`**, not at the call sites, so they hold
 no matter who calls them later:
 - Interstitial **only** after clearing a gate depth (every 7th), on the win screen.
 - **Never** after a death, a failed gate, on the gate warning, or on first launch.
-- Rewarded revive is offered at bosses only, once per attempt, never auto-played.
+- Rewarded revive at bosses only, once per attempt, as a button the player taps; it
+  resumes the run where it ended (hearts back) — the free lair-mouth retry stays.
 - `remove_ads` kills interstitials permanently; the revive stays as a player choice.
 
 To turn it on:

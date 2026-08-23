@@ -140,18 +140,22 @@ class Shell {
         }
         // A failed run still proves what you gathered — keep the haul.
         if (this.game.def) this.save.levelAttempt(this.game.def.id, stats);
+        // Never an interstitial here. The only ad a death may ever produce is a
+        // revive the player CHOOSES — a button, at a boss, once per attempt,
+        // only while an ad is actually loaded — and it resumes the run where
+        // the dark took you with your hearts back, never from the door. The
+        // free way back (the lair mouth) is always there beside it.
+        const dead = this.game.def;
+        const isBoss = this.game.mode === 'story' && !!dead && gateKind(dead.id) === 'boss';
+        this._reviveSnap = isBoss && this.game.reviveSnapshot
+          ? { levelId: dead.id, snap: this.game.reviveSnapshot } : null;
+        const canRevive = !!this._reviveSnap && this._reviveSpent !== dead.id
+          && this.ads.canRevive({ isBoss: true });
         this.ui.fillGameover(this.game.mode, stats, {
           fromCheckpoint: this._checkpointFor(this.currentLevelId) !== null,
+          canRevive,
         });
         this._show('gameover');
-        // Never an interstitial here. The only ad a death may ever produce is
-        // a revive the player chooses, offered once, at a boss.
-        const dead = this.game.def;
-        if (dead && gateKind(dead.id) === 'boss') {
-          this.ads.offerRevive({ isBoss: true }).then((took) => {
-            if (took) this.startLevel(dead.id, { fromCheckpoint: true, skipGate: true });
-          });
-        }
       },
       onWin: (stats) => {
         this.input.setActive(false);
@@ -366,8 +370,12 @@ class Shell {
       this._show('gate');
       return;
     }
-    const resume = opts.fromCheckpoint ? this._checkpointFor(id) : null;
+    const reviveSnap = opts.revive && this._reviveSnap && this._reviveSnap.levelId === id
+      ? this._reviveSnap.snap : null;
+    const resume = reviveSnap || (opts.fromCheckpoint ? this._checkpointFor(id) : null);
     if (!resume) this._checkpoint = null;
+    // A fresh entry earns a fresh revive offer; free lair-mouth retries do not.
+    if (!opts.fromCheckpoint && !opts.revive) this._reviveSpent = null;
     this.currentLevelId = id;
     this.particles.clear();
     this.ui.clearHints();
@@ -377,6 +385,14 @@ class Shell {
     this.audio.setMode(chapterOf(id).mode);
     this.game.startStory(def, resume, this._boonFor(id));
     const p = this.game.ents.player;
+    if (reviveSnap) {
+      // Back at the spot it took you, hearts restored, with a breath of grace so
+      // what killed you cannot simply do it again before you move. The lair
+      // mouth stays the free way back if the room takes you again.
+      p.invuln = TUNING.reviveGrace;
+      this.game.checkpoint = this._checkpointFor(id);
+      this._reviveSpent = id;
+    }
     this.renderer.cam.x = this.renderer.cam.targetX = p.x;
     this.renderer.cam.y = this.renderer.cam.targetY = p.y;
     const moteTotal = this.game.ents.motes.length;
@@ -393,6 +409,20 @@ class Shell {
     this._show('playing');
     // Show what the carried light is actually doing, for as long as it lasts.
     this.ui.showBoon(this.game.boon);
+    // The first time a given gate's light is actually working, say what it does
+    // in plain words. The chip is iconic by rule; its label alone ("Glow")
+    // told a playtester nothing. Once ever per gate, through the one slot.
+    const boon = this.game.boon;
+    const boonActive = !!boon && (boon.silentSongs > 0 || boon.orbitSecs > 0 ||
+      boon.revealLures || boon.iceSteady || boon.hushRelief > 0.05 || boon.aura > 0.05);
+    if (boonActive && !resume) {
+      const seen = this.save.data.teachSeen || (this.save.data.teachSeen = []);
+      const key = `boon${boon.id}`;
+      if (!seen.includes(key)) {
+        seen.push(key); this.save.persist();
+        this.ui.hint('Carried light is with you.', undefined, gateBoonLine(boon));
+      }
+    }
     this.ui.hideBossCard();
     // Only queue teaches for what this depth actually contains.
     this.teacher.arm(this.game.ents);
@@ -525,6 +555,20 @@ class Shell {
     click('btn-retry', () => {
       if (this.game.mode === 'abyss') this.startAbyss();
       else this.startLevel(this.currentLevelId, { fromCheckpoint: true });
+    });
+    // The rewarded revive. Disabled while the ad is up so a double tap cannot
+    // start two; if the ad fails or is closed early, the button goes away and
+    // the free way back is still right there.
+    click('btn-revive', () => {
+      const id = this.currentLevelId;
+      const btn = $('btn-revive');
+      if (btn.disabled) return;
+      btn.disabled = true;
+      this.ads.showRevive({ isBoss: true }).then((took) => {
+        btn.disabled = false;
+        if (took) this.startLevel(id, { revive: true, skipGate: true });
+        else btn.hidden = true;
+      });
     });
     click('btn-gameover-menu', () => this._show('title'));
     click('btn-recap-again', () => this._startAbyssNow());

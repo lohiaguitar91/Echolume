@@ -189,7 +189,7 @@ export class Game {
         newHunters.push({
           x: wx, y: wy, vx: 0, vy: 0, homeX: wx, homeY: wy,
           wanderR: 160, fast: depthM > 700 && rng() < 0.3,
-          state: 'wander', alertT: 0, targetX: wx, targetY: wy, retargetT: 0,
+          state: 'wander', alertT: 0, commitT: 0, targetX: wx, targetY: wy, retargetT: 0,
           reveal: 0, phase: rng() * 6.28,
         });
       }
@@ -287,24 +287,27 @@ export class Game {
       this.silentSongs--;
       if (this.cb.onSilentSong) this.cb.onSilentSong(this.silentSongs);
     }
-    this._emitPing(cx, cy, { free: quiet });
+    this._emitPing(cx, cy, { free: quiet, cast: true });
     if (this.cb.onCast) this.cb.onCast(p.x, p.y, cx, cy);
     return true;
   }
 
-  _emitPing(x, y, { free = false }) {
+  _emitPing(x, y, { free = false, cast = false }) {
     this.pings.push({ x, y, r: 6, prevR: 0, free, strength: this.hushFactor(x, y) });
     // Free light — the wake pulse, a chain bloom, a crystal's answer — carries
     // no sound, so nothing in the dark turns toward it.
-    if (!free) this._wakeListeners(x, y);
+    if (!free) this._wakeListeners(x, y, 0, false, cast);
   }
 
   // Everything that listens, hears. Hunters within their own range; leviathans
   // from much further, because the trench is theirs.
-  _wakeListeners(x, y, radius = 0, silent = false) {
+  // A thrown song (`cast`) is a lie worth committing to: for castCommit seconds
+  // the listener keeps going to it and ignores quieter, nearer sounds — which
+  // is what makes the verb work, since your very next tap is one of those.
+  _wakeListeners(x, y, radius = 0, silent = false, cast = false) {
     for (const h of this.ents.hunters) {
       if (dist(h.x, h.y, x, y) < (radius || TUNING.hunterSenseRadius)) {
-        this._alertHunter(h, x, y, silent);
+        this._alertHunter(h, x, y, silent, cast);
       }
     }
     // A warden does not chase what it hears — it aims at it, and commits.
@@ -322,19 +325,23 @@ export class Game {
       // `loud` is set by breaking ice, which is the only thing it can feel.
       if (lv.deaf && !this._loudWake) continue;
       if (dist(lv.x, lv.y, x, y) < (radius || TUNING.leviathanSenseRadius)) {
+        if (lv.commitT > 0 && !cast) continue;   // still chasing the thrown song
         const wasCalm = lv.state !== 'hunt';
         lv.state = 'hunt';
         lv.alertT = 0;
+        lv.commitT = cast ? TUNING.castCommit : 0;
         lv.targetX = x; lv.targetY = y;
         if (wasCalm && this.cb.onLeviathanWake) this.cb.onLeviathanWake(lv.x, lv.y);
       }
     }
   }
 
-  _alertHunter(h, x, y, silent = false) {
+  _alertHunter(h, x, y, silent = false, cast = false) {
+    if (h.commitT > 0 && !cast) return;          // still chasing the thrown song
     const wasCalm = h.state !== 'alert';
     h.state = 'alert';
     h.alertT = 0;
+    h.commitT = cast ? TUNING.castCommit : 0;
     h.targetX = x; h.targetY = y;
     if (wasCalm && !silent && this.cb.onAlert) this.cb.onAlert();
   }
@@ -504,9 +511,12 @@ export class Game {
           h.retargetT = 2 + Math.random() * 1.8;
         }
       } else {
-        // Alert: converge on last heard sound; close hunters track the player directly.
+        // Alert: converge on last heard sound; close hunters track the player
+        // directly — unless they are committed to a thrown song, which is the
+        // whole point of throwing one.
+        if (h.commitT > 0) h.commitT -= dt;
         const dp = dist(h.x, h.y, p.x, p.y);
-        if (dp < 170 && !p.dead) { h.targetX = p.x; h.targetY = p.y; }
+        if (dp < 170 && !p.dead && !(h.commitT > 0)) { h.targetX = p.x; h.targetY = p.y; }
         if (dist(h.x, h.y, h.targetX, h.targetY) < 30) {
           h.alertT += dt;
           if (h.alertT > TUNING.hunterCalmTime) { h.state = 'wander'; h.retargetT = 0; }
@@ -650,8 +660,9 @@ export class Game {
         lv.targetX = lv.homeX + Math.cos(lv.angle) * lv.patrolR;
         lv.targetY = lv.homeY + Math.sin(lv.angle) * lv.patrolR;
       } else {
+        if (lv.commitT > 0) lv.commitT -= dt;
         const dp = dist(lv.x, lv.y, p.x, p.y);
-        if (dp < 260 && !p.dead) { lv.targetX = p.x; lv.targetY = p.y; }
+        if (dp < 260 && !p.dead && !(lv.commitT > 0)) { lv.targetX = p.x; lv.targetY = p.y; }
         if (dist(lv.x, lv.y, lv.targetX, lv.targetY) < 50) {
           lv.alertT += dt;
           if (lv.alertT > TUNING.leviathanCalmTime) {
@@ -856,6 +867,9 @@ export class Game {
     if (p.hearts <= 0) {
       p.dead = true;
       this.state = 'dying';
+      // Where it took you, with what you had: a rewarded revive resumes from
+      // here (hearts back), never from the door. Bosses only — the shell decides.
+      this.reviveSnapshot = this.mode === 'story' ? this._snapshotAt(this.lastProgress) : null;
       this.stateT = 0;
       if (this.cb.onDeath) this.cb.onDeath();
     }

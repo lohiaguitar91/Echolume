@@ -74,7 +74,7 @@ export function setupEntities(def, geom) {
       homeX: p.x, homeY: p.y,
       wanderR: spec.wanderR || 140,
       fast: !!spec.fast,
-      state: 'wander', alertT: 0,
+      state: 'wander', alertT: 0, commitT: 0,
       targetX: p.x, targetY: p.y,
       retargetT: 0,
       reveal: 0, phase: rng() * 6.28,
@@ -179,7 +179,7 @@ export function setupEntities(def, geom) {
       speedScale: spec.speedScale || 1,
       angle: 0,
       spin: spec.reverse ? -1 : 1,
-      state: 'patrol', alertT: 0,
+      state: 'patrol', alertT: 0, commitT: 0,
       targetX: start.x, targetY: start.y,
       deaf: !!spec.deaf,          // ignores song; only a shatter reaches it
       reveal: 0, phase: rng() * 6.28,
