@@ -20,6 +20,12 @@ star-streak jump**, and a depth-projected **starfield** with pointer parallax ru
 everything — throttled, layer-isolated, and paused when hidden, so it stays at 60fps even
 on software rendering.
 
+Two full skins, toggled from the top bar and persisted: **Archive** (the crimson Sith-
+holocron look) and **Console** — a classic Star Wars terminal/datapad mode: phosphor green
+on black, mono type throughout, CRT scanlines and vignette, a blinking prompt, and the
+whole data palette (alignments, eras, event kinds, canvas and SVG rendering, the holo
+grid, even the starfield) remapped through a live theme engine in `js/ui/theme.js`.
+
 | View | What it does |
 |---|---|
 | **Timeline** | Zoomable/pannable SVG chronology, 7000 BBY → 138 ABY, with **eased spring zooming** and **two-finger pinch**. Era ribbon (click to zoom), conflict span bars, ~100 point events in packed lanes, an **academy-cycles layer** (every opening/closing of Korriban, Trayus, Ossus, Dantooine, the Coruscant Temple, Tython, Yavin 4…), and a **lineages layer** (Dark Lord succession, the Revan line, the Banite Rule of Two chain with its deliberately unrecorded centuries, the Yoda–Skywalker line). Filter by era, event kind, and layer. Export PNG. |

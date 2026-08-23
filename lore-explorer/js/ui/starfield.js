@@ -5,6 +5,7 @@
 (function () {
   'use strict';
   const H = window.HOLO;
+  const T = () => H.theme.t;
 
   const reduced = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -44,7 +45,8 @@
       const p = project(s);
       if (p.px < -4 || p.px > W + 4 || p.py < -4 || p.py > Hh + 4) continue;
       ctx.globalAlpha = p.a * (0.75 + 0.25 * Math.sin(s.tw));
-      ctx.fillStyle = s.z > 0.75 ? '#8fb4d8' : s.z < 0.25 ? '#f2e9dc' : '#cfc4ba';
+      const sc = T().starColors;
+      ctx.fillStyle = s.z > 0.75 ? sc[0] : s.z < 0.25 ? sc[1] : sc[2];
       ctx.fillRect(p.px, p.py, p.r, p.r);
     }
     ctx.globalAlpha = 1;
@@ -66,7 +68,7 @@
     resize();
     window.addEventListener('resize', resize);
     if (reduced()) {                                     // one calm, static frame
-      for (const s of stars) { const p = project(s); ctx.globalAlpha = p.a; ctx.fillStyle = '#cfc4ba'; ctx.fillRect(p.px, p.py, p.r, p.r); }
+      for (const s of stars) { const p = project(s); ctx.globalAlpha = p.a; ctx.fillStyle = T().starColors[2]; ctx.fillRect(p.px, p.py, p.r, p.r); }
       ctx.globalAlpha = 1;
       return;
     }

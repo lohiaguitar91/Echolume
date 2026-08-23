@@ -4,12 +4,9 @@
   const H = window.HOLO;
   const S = H.store;
 
-  const ALIGN_COLOR = { sith: '#e0463c', jedi: '#58a6f2', gray: '#c9a06a', neutral: '#8f8f9c' };
-  const KIND_COLOR = {
-    war: '#8e2a26', battle: '#e0463c', duel: '#e28f4a', founding: '#c9a06a', political: '#9c8f9c',
-    death: '#b9463e', catastrophe: '#a03cc2', academy: '#58a6f2', discovery: '#5fc6b8',
-    ritual: '#8f6fd8', turning: '#d8c26f'
-  };
+  /* Live theme palettes — H.theme mutates these objects in place on skin switch. */
+  const ALIGN_COLOR = H.theme.align;
+  const KIND_COLOR = H.theme.kind;
 
   const $ = sel => document.querySelector(sel);
   const $$ = sel => [...document.querySelectorAll(sel)];
@@ -52,7 +49,7 @@
     const n = S.get(id);
     if (!n) return null;
     opts = opts || {};
-    const dot = el('span', { class: 'dot' });
+    const dot = el('span', { class: 'dot', 'data-hc': 'ent:' + id });
     dot.style.background = colorOf(n);
     const kids = [dot, n.name];
     if (opts.year !== false) {
@@ -105,14 +102,14 @@
     meta.append(el('span', { class: 'type-tag' }, S.TYPE_LABEL[n.type] || n.type));
     if (n.type === 'event') meta.append(el('span', { class: 'type-tag' }, S.KIND_LABEL[n.kind] || n.kind));
     if (align && n.type !== 'event') {
-      const t = el('span', { class: 'align-tag' }, el('span', { class: 'dot' }), S.ALIGN_LABEL[align]);
+      const t = el('span', { class: 'align-tag' }, el('span', { class: 'dot', 'data-hc': 'align:' + align }), S.ALIGN_LABEL[align]);
       t.querySelector('.dot').style.background = ALIGN_COLOR[align];
       meta.append(t);
     }
     const yrs = yearsOf(n);
     if (yrs) meta.append(el('span', { class: 'type-tag yr' }, yrs));
     S.erasOf(n).forEach(e => {
-      const c = el('span', { class: 'align-tag' }, el('span', { class: 'dot' }), e.name);
+      const c = el('span', { class: 'align-tag' }, el('span', { class: 'dot', 'data-hc': 'era:' + e.id }), e.name);
       c.querySelector('.dot').style.background = e.color;
       c.style.cursor = 'pointer';
       c.addEventListener('click', () => { closeDrawer(); H.ui.timeline.focusEra(e.id); });

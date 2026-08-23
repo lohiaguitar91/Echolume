@@ -6,6 +6,7 @@
   const H = window.HOLO;
   const S = H.store;
   const A = () => H.app;
+  const T = () => H.theme.t;
 
   const TYPES = [
     { id: 'character', label: 'Characters' },
@@ -170,7 +171,7 @@
 
   function draw() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = '#120e12';
+    ctx.fillStyle = T().canvasBg;
     ctx.fillRect(0, 0, W, Hh);
     ctx.translate(view.tx, view.ty);
     ctx.scale(view.k, view.k);
@@ -204,7 +205,7 @@
         ctx.strokeStyle = col; ctx.lineWidth = 2 / Math.sqrt(view.k); ctx.stroke();
       } else {
         ctx.fillStyle = col; ctx.fill();
-        ctx.strokeStyle = 'rgba(13,10,12,.9)'; ctx.lineWidth = 1.2; ctx.stroke();
+        ctx.strokeStyle = T().dotStroke; ctx.lineWidth = 1.2; ctx.stroke();
       }
       ctx.shadowBlur = 0;
       const showLbl = hov || (selN && selN.has(p.id)) || p.d >= 9 || view.k >= 1.5;
@@ -213,9 +214,9 @@
         ctx.font = (hov ? '600 ' : '') + fs + 'px Saira, sans-serif';
         ctx.textAlign = 'center';
         ctx.lineWidth = 3 / view.k;
-        ctx.strokeStyle = 'rgba(13,10,12,.85)';
+        ctx.strokeStyle = T().dotStroke;
         ctx.strokeText(p.n.name, p.px, p.py - rr - 5 / view.k);
-        ctx.fillStyle = hov ? '#e9e2d9' : '#cfc4ba';
+        ctx.fillStyle = hov ? T().ink : T().labelInk;
         ctx.fillText(p.n.name, p.px, p.py - rr - 5 / view.k);
       }
     });
@@ -301,7 +302,7 @@
     });
     const alignBar = root.querySelector('#g-aligns');
     [['sith', 'Sith'], ['jedi', 'Jedi'], ['gray', 'Gray'], ['neutral', 'Neutral']].forEach(([id, label]) => {
-      const sw = el('span', { class: 'swatch' }); sw.style.background = A().ALIGN_COLOR[id];
+      const sw = el('span', { class: 'swatch', 'data-hc': 'align:' + id }); sw.style.background = A().ALIGN_COLOR[id];
       const c = el('button', { class: 'chip active', type: 'button' }, sw, label);
       c.addEventListener('click', () => {
         state.aligns.has(id) ? state.aligns.delete(id) : state.aligns.add(id);
@@ -315,7 +316,7 @@
     allChip.addEventListener('click', () => { state.era = null; mark(); rebuild(); start(); });
     eraBar.append(allChip);
     S.eras.forEach(e => {
-      const sw = el('span', { class: 'swatch' }); sw.style.background = e.color;
+      const sw = el('span', { class: 'swatch', 'data-hc': 'era:' + e.id }); sw.style.background = e.color;
       const c = el('button', { class: 'chip', type: 'button', 'data-era': e.id }, sw, e.name);
       c.addEventListener('click', () => { state.era = state.era === e.id ? null : e.id; mark(); rebuild(); start(); });
       eraBar.append(c);
@@ -419,10 +420,29 @@
       start();
     }, { passive: false });
 
+    buildLegend();
+    H.theme.onChange(() => { buildLegend(); start(); });
     if ('ResizeObserver' in window) new ResizeObserver(() => { resize(); start(); }).observe(frame);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) start(); });
     resize();
     rebuild();
+  }
+
+  function buildLegend() {
+    const { el } = A();
+    const lg = frame.querySelector('.graph-legend');
+    if (!lg) return;
+    lg.innerHTML = '';
+    [['sith', 'Sith'], ['jedi', 'Jedi'], ['gray', 'Gray'], ['neutral', 'Neutral']].forEach(([id, label]) => {
+      const i = el('i', { 'data-hc': 'align:' + id });
+      i.style.cssText = 'border-radius:50%;background:' + A().ALIGN_COLOR[id];
+      lg.append(el('span', { class: 'lg' }, i, ' ' + label));
+    });
+    lg.append(el('span', { class: 'lg' }, '\u25cf character \u00a0\u2b21 faction \u00a0\u25b2 artifact \u00a0\u25c6 concept \u00a0\u25cb world'));
+    const tr = el('i'); tr.style.cssText = 'height:2px;background:' + EDGE_COLOR.trained;
+    const ki = el('i'); ki.style.cssText = 'height:2px;background:' + EDGE_COLOR.killed;
+    const co = el('i'); co.style.cssText = 'height:2px;background:' + EDGE_COLOR.corrupted;
+    lg.append(el('span', { class: 'lg' }, tr, ' trained \u00a0', ki, ' killed \u00a0', co, ' corrupted'));
   }
 
   function fitView() {

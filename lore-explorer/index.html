@@ -7,7 +7,7 @@
 <meta name="description" content="An interactive lore atlas of the Old Republic: timeline, relationship graph, searchable database, Q&amp;A, era deep-dives, and a galaxy map — Legends continuity, hand-curated.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=Saira:wght@400;500;600&family=Chivo+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=Saira:wght@400;500;600&family=Chivo+Mono:wght@400;500&family=Share+Tech+Mono&display=swap">
 <link rel="stylesheet" href="css/style.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 L29 27 H3 Z' fill='none' stroke='%23e0463c' stroke-width='2'/%3E%3Ccircle cx='16' cy='19.5' r='3' fill='%23e0463c'/%3E%3C/svg%3E">
 </head>
@@ -38,6 +38,7 @@
     <button class="tab" id="tab-galaxy" type="button">Galaxy</button>
     <button class="tab" id="tab-compare" type="button">Compare</button>
   </nav>
+  <button class="btn skin-btn" id="skin-toggle" type="button" title="Switch between the Sith-archive and console/datapad skins">▤ Console mode</button>
   <div class="searchbox">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a8998f" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4.2-4.2"></path></svg>
     <input id="global-search" type="search" placeholder="Search the record… (Enter)" aria-label="Search the record">
@@ -66,22 +67,7 @@
       <button class="btn" id="tl-export" type="button">Export PNG</button>
     </div>
     <div class="tl-frame">
-      <div class="tl-legend">
-        <b>Events</b>
-        <span class="lg"><i style="background:#8e2a26"></i>war</span>
-        <span class="lg"><i style="background:#e0463c"></i>battle</span>
-        <span class="lg"><i style="background:#e28f4a"></i>duel</span>
-        <span class="lg"><i style="background:#b9463e"></i>death</span>
-        <span class="lg"><i style="background:#c9a06a"></i>founding</span>
-        <span class="lg"><i style="background:#9c8f9c"></i>politics</span>
-        <span class="lg"><i style="background:#a03cc2"></i>catastrophe</span>
-        <span class="lg"><i style="background:#8f6fd8"></i>ritual</span>
-        <span class="lg"><i style="background:#58a6f2"></i>academy</span>
-        <span class="lg"><i style="background:#5fc6b8"></i>discovery</span>
-        <span class="lg"><i style="background:#d8c26f"></i>turning point</span>
-        <span class="lg" style="margin-left:auto"><i style="background:#e0463c"></i>Sith academy open</span>
-        <span class="lg"><i style="background:#58a6f2"></i>Jedi academy open</span>
-      </div>
+      <div class="tl-legend"></div>
     </div>
   </section>
 
@@ -108,14 +94,7 @@
         <button class="btn" id="g-fit" type="button">Fit</button>
         <button class="btn" id="g-export" type="button">Export PNG</button>
       </div>
-      <div class="graph-legend">
-        <span class="lg"><i style="background:#e0463c;border-radius:50%"></i> Sith</span>
-        <span class="lg"><i style="background:#58a6f2;border-radius:50%"></i> Jedi</span>
-        <span class="lg"><i style="background:#c9a06a;border-radius:50%"></i> Gray</span>
-        <span class="lg"><i style="background:#8f8f9c;border-radius:50%"></i> Neutral</span>
-        <span class="lg">● character &nbsp;⬡ faction &nbsp;▲ artifact &nbsp;◆ concept &nbsp;○ world</span>
-        <span class="lg"><i style="background:#c9a06a;height:2px"></i> trained &nbsp;<i style="background:#e0463c;height:2px"></i> killed &nbsp;<i style="background:#8f6fd8;height:2px"></i> corrupted</span>
-      </div>
+      <div class="graph-legend"></div>
     </div>
   </section>
 
@@ -232,6 +211,7 @@
 <script src="js/core/store.js"></script>
 <script src="js/core/search.js"></script>
 <script src="js/core/qa.js"></script>
+<script src="js/ui/theme.js"></script>
 <script src="js/ui/app.js"></script>
 <script src="js/ui/starfield.js"></script>
 <script src="js/ui/crawl.js"></script>

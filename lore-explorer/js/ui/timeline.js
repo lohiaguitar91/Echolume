@@ -5,6 +5,7 @@
   const H = window.HOLO;
   const S = H.store;
   const A = () => H.app;
+  const T = () => H.theme.t;
 
   const NS = 'http://www.w3.org/2000/svg';
   const MIN_T = -7250, MAX_T = 340, MIN_SPAN = 24;
@@ -55,7 +56,7 @@
     const allChip = el('button', { class: 'chip active', type: 'button', onclick: () => { setEra(null); } }, 'All eras');
     eraBar.append(allChip);
     S.eras.forEach(e => {
-      const sw = el('span', { class: 'swatch' }); sw.style.background = e.color;
+      const sw = el('span', { class: 'swatch', 'data-hc': 'era:' + e.id }); sw.style.background = e.color;
       eraBar.append(el('button', {
         class: 'chip', type: 'button', 'data-era': e.id, title: e.tagline,
         onclick: () => setEra(state.era === e.id ? null : e.id, true)
@@ -71,7 +72,7 @@
     /* kind + layer chips */
     const kindBar = root.querySelector('#tl-kinds');
     KIND_GROUPS.forEach(g => {
-      const sw = el('span', { class: 'swatch' }); sw.style.background = A().KIND_COLOR[g.kinds[0]];
+      const sw = el('span', { class: 'swatch', 'data-hc': 'kind:' + g.kinds[0] }); sw.style.background = A().KIND_COLOR[g.kinds[0]];
       const c = el('button', { class: 'chip active', type: 'button' }, sw, g.label);
       c.addEventListener('click', () => {
         const on = g.kinds.every(k => state.kinds.has(k));
@@ -96,7 +97,7 @@
     root.querySelector('#tl-zoom-in').addEventListener('click', () => zoomAround((state.t0 + state.t1) / 2, 0.55));
     root.querySelector('#tl-zoom-out').addEventListener('click', () => zoomAround((state.t0 + state.t1) / 2, 1.8));
     root.querySelector('#tl-fit').addEventListener('click', () => fitTo(-7150, 240));
-    root.querySelector('#tl-export').addEventListener('click', () => H.ui.exportPNG.fromSVG(svg, 'holocron-timeline', '#120e12'));
+    root.querySelector('#tl-export').addEventListener('click', () => H.ui.exportPNG.fromSVG(svg, 'holocron-timeline', T().canvasBg));
 
     /* pointer interactions: one-finger drag pans, two fingers pinch-zoom */
     const pointers = new Map();
@@ -154,9 +155,29 @@
     }, { passive: false });
     svg.addEventListener('dblclick', e => zoomAround(tAt(e.clientX), 0.45));
 
+    buildLegend();
+    H.theme.onChange(() => { buildLegend(); sched(); });
     if ('ResizeObserver' in window) new ResizeObserver(sched).observe(frame);
     window.addEventListener('resize', sched);
     sched();
+  }
+
+  function buildLegend() {
+    const { el } = A();
+    const lg = frame.querySelector('.tl-legend');
+    if (!lg) return;
+    lg.innerHTML = '';
+    lg.append(el('b', null, 'Events'));
+    Object.entries(S.KIND_LABEL).forEach(([k, label]) => {
+      const i = el('i', { 'data-hc': 'kind:' + k });
+      i.style.background = A().KIND_COLOR[k];
+      lg.append(el('span', { class: 'lg' }, i, label.toLowerCase()));
+    });
+    const si = el('i', { 'data-hc': 'align:sith' }); si.style.background = H.theme.align.sith;
+    const ji = el('i', { 'data-hc': 'align:jedi' }); ji.style.background = H.theme.align.jedi;
+    const sithLg = el('span', { class: 'lg' }, si, 'Sith academy open');
+    sithLg.style.marginLeft = 'auto';
+    lg.append(sithLg, el('span', { class: 'lg' }, ji, 'Jedi academy open'));
   }
 
   function plotDims() {
@@ -250,7 +271,7 @@
 
     /* ── era ribbon ── */
     const ribbonH = 26;
-    make('rect', { x: 0, y: 0, width: W, height: ribbonH, fill: '#171114' }, svg);
+    make('rect', { x: 0, y: 0, width: W, height: ribbonH, fill: T().ribbonBg }, svg);
     S.eras.forEach(e => {
       if (e.to < state.t0 || e.from > state.t1) return;
       const x0 = clampX(x(e.from)), x1 = clampX(x(e.to));
@@ -262,7 +283,7 @@
         const t = make('text', {
           x: (x0 + x1) / 2, y: ribbonH / 2 + 4, 'text-anchor': 'middle',
           'font-family': 'Saira, sans-serif', 'font-size': 10.5, 'font-weight': 600,
-          'letter-spacing': '.8', fill: '#ece4da', 'pointer-events': 'none'
+          'letter-spacing': '.8', fill: T().ink, 'pointer-events': 'none'
         }, svg);
         t.textContent = e.name;
       }
@@ -278,10 +299,10 @@
     const first = Math.ceil(state.t0 / step) * step;
     for (let t = first; t <= state.t1; t += step) {
       const xx = x(t);
-      make('line', { x1: xx, y1: y + axisH, x2: xx, y2: 4000, stroke: '#241a1f', 'stroke-width': 1 }, svg);
+      make('line', { x1: xx, y1: y + axisH, x2: xx, y2: 4000, stroke: T().grid, 'stroke-width': 1 }, svg);
       const lbl = make('text', {
         x: xx, y: y + 15, 'text-anchor': 'middle',
-        'font-family': 'Chivo Mono, monospace', 'font-size': 9.5, fill: '#75655e'
+        'font-family': 'Chivo Mono, monospace', 'font-size': 9.5, fill: T().inkFaint
       }, svg);
       lbl.textContent = fmtTick(t);
     }
@@ -301,14 +322,14 @@
         const showLbl = (x1 - x0) > ev.name.length * 5.6 + 10;
         laneEnds[lane] = showLbl ? Math.max(x1, x0 + ev.name.length * 5.6) : x1;
         const yy = y + lane * rowH;
-        const color = A().KIND_COLOR[ev.kind] || '#8e2a26';
+        const color = A().KIND_COLOR[ev.kind] || H.theme.kind.war;
         const bar = make('rect', {
           x: x0, y: yy, width: Math.max(x1 - x0, 3), height: 11, rx: 3,
           fill: color, 'fill-opacity': 0.42, stroke: color, 'stroke-opacity': 0.8, 'stroke-width': ev.id === state.highlight ? 2.4 : 1
         }, svg);
         wire(bar, ev.id, () => A().tipHTML(ev.name, S.fmtYear(ev.year, ev.approx) + ' – ' + S.fmtYear(ev.endYear), ev.blurb));
         if (showLbl) {
-          const t = make('text', { x: x0 + 5, y: yy + 9, 'font-family': 'Saira, sans-serif', 'font-size': 10.5, fill: '#e9e2d9', 'pointer-events': 'none' }, svg);
+          const t = make('text', { x: x0 + 5, y: yy + 9, 'font-family': 'Saira, sans-serif', 'font-size': 10.5, fill: T().ink, 'pointer-events': 'none' }, svg);
           t.textContent = ev.name;
         }
       });
@@ -330,13 +351,13 @@
         if (lane > 13) return;                       // safety valve at extreme densities
         laneEnds[lane] = xx + w;
         const yy = y + 8 + lane * rowH;
-        const color = A().KIND_COLOR[ev.kind] || '#9c8f9c';
+        const color = A().KIND_COLOR[ev.kind] || H.theme.kind.political;
         const hi = ev.id === state.highlight;
-        if (hi) make('circle', { cx: xx, cy: yy, r: 9, fill: 'none', stroke: '#c9a06a', 'stroke-width': 2 }, svg);
-        const dot = make('circle', { cx: xx, cy: yy, r: 4.2, fill: color, stroke: '#0d0a0c', 'stroke-width': 1.2 }, svg);
+        if (hi) make('circle', { cx: xx, cy: yy, r: 9, fill: 'none', stroke: T().hl, 'stroke-width': 2 }, svg);
+        const dot = make('circle', { cx: xx, cy: yy, r: 4.2, fill: color, stroke: T().dotStroke, 'stroke-width': 1.2 }, svg);
         wire(dot, ev.id, () => A().tipHTML(ev.name, S.fmtYear(ev.year, ev.approx) + ' · ' + (S.KIND_LABEL[ev.kind] || ev.kind), ev.blurb));
         if (labelsOn) {
-          const t = make('text', { x: xx + 8, y: yy + 3.5, 'font-family': 'Saira, sans-serif', 'font-size': 10.8, fill: hi ? '#e9e2d9' : '#a8998f' }, svg);
+          const t = make('text', { x: xx + 8, y: yy + 3.5, 'font-family': 'Saira, sans-serif', 'font-size': 10.8, fill: hi ? T().ink : T().inkDim }, svg);
           t.textContent = ev.name;
           wire(t, ev.id, () => A().tipHTML(ev.name, S.fmtYear(ev.year, ev.approx), ev.blurb));
         }
@@ -347,22 +368,22 @@
     /* ── academy cycles ── */
     if (state.layers.academies) {
       y += 8;
-      make('line', { x1: 0, y1: y, x2: W, y2: y, stroke: '#33242b' }, svg);
+      make('line', { x1: 0, y1: y, x2: W, y2: y, stroke: T().line }, svg);
       y += 4;
       gutterLabel('ACADEMY CYCLES', y + 6);
       y += 14;
       const rowH = 15;
       (S.academies || []).forEach(a => {
         const loc = S.get(a.loc);
-        const name = make('text', { x: 8, y: y + 8.5, 'font-family': 'Saira, sans-serif', 'font-size': 10, fill: a.side === 'sith' ? '#b9463e' : '#58a6f2' }, svg);
+        const name = make('text', { x: 8, y: y + 8.5, 'font-family': 'Saira, sans-serif', 'font-size': 10, fill: a.side === 'sith' ? H.theme.align.sith : H.theme.align.jedi }, svg);
         name.textContent = a.name.length > 20 ? a.name.slice(0, 19) + '…' : a.name;
         wire(name, a.loc, () => A().tipHTML(a.name, loc ? 'on ' + loc.name : '', a.blurb));
-        make('line', { x1: ml, y1: y + 5, x2: W - mr, y2: y + 5, stroke: '#241a1f', 'stroke-dasharray': '1 4' }, svg);
+        make('line', { x1: ml, y1: y + 5, x2: W - mr, y2: y + 5, stroke: T().grid, 'stroke-dasharray': '1 4' }, svg);
         a.periods.forEach(p => {
           const to = p.to == null ? MAX_T : p.to;
           if (to < state.t0 || p.from > state.t1) return;
           const x0 = clampX(x(p.from)), x1 = clampX(x(to));
-          const color = a.side === 'sith' ? '#e0463c' : '#58a6f2';
+          const color = a.side === 'sith' ? H.theme.align.sith : H.theme.align.jedi;
           const soft = p.approx || p.approxEnd;
           const bar = make('rect', {
             x: x0, y: y, width: Math.max(x1 - x0, 2.5), height: 10, rx: 2,
@@ -380,17 +401,17 @@
     /* ── lineages ── */
     if (state.layers.lineages) {
       y += 8;
-      make('line', { x1: 0, y1: y, x2: W, y2: y, stroke: '#33242b' }, svg);
+      make('line', { x1: 0, y1: y, x2: W, y2: y, stroke: T().line }, svg);
       y += 4;
       gutterLabel('LINEAGES', y + 6);
       y += 14;
       const rowH = 27;
       (S.lineages || []).forEach(lin => {
-        const name = make('text', { x: 8, y: y + 12, 'font-family': 'Saira, sans-serif', 'font-size': 10, fill: '#a8998f' }, svg);
+        const name = make('text', { x: 8, y: y + 12, 'font-family': 'Saira, sans-serif', 'font-size': 10, fill: T().inkDim }, svg);
         name.textContent = lin.name.length > 21 ? lin.name.slice(0, 20) + '…' : lin.name;
         wire(name, null, () => A().tipHTML(lin.name, lin.members.map(m => (S.get(m) || {}).name).join(' → '), lin.note));
         const mid = y + 10;
-        make('line', { x1: ml, y1: mid, x2: W - mr, y2: mid, stroke: '#241a1f', 'stroke-dasharray': '1 4' }, svg);
+        make('line', { x1: ml, y1: mid, x2: W - mr, y2: mid, stroke: T().grid, 'stroke-dasharray': '1 4' }, svg);
         let prevEnd = null, idx = 0;
         lin.members.forEach(memberId => {
           const c = S.get(memberId);
@@ -402,7 +423,7 @@
           const connect = xTo => {
             if (prevEnd != null) make('line', {
               x1: prevEnd, y1: mid, x2: Math.max(xTo, prevEnd), y2: mid,
-              stroke: '#75655e', 'stroke-width': 1, 'stroke-dasharray': gapBefore ? '4 4' : 'none'
+              stroke: T().inkFaint, 'stroke-width': 1, 'stroke-dasharray': gapBefore ? '4 4' : 'none'
             }, svg);
           };
           const hi = memberId === state.highlight;
@@ -410,14 +431,14 @@
             if (c.died < state.t0 || c.born > state.t1) { prevEnd = clampX(x(c.died)); return; }
             const x0 = clampX(x(c.born)), x1 = clampX(x(c.died));
             connect(x0);
-            if (hi) make('rect', { x: x0 - 3, y: mid + stagger - 6.5, width: x1 - x0 + 6, height: 13, rx: 5, fill: 'none', stroke: '#c9a06a', 'stroke-width': 2 }, svg);
+            if (hi) make('rect', { x: x0 - 3, y: mid + stagger - 6.5, width: x1 - x0 + 6, height: 13, rx: 5, fill: 'none', stroke: T().hl, 'stroke-width': 2 }, svg);
             const bar = make('rect', {
               x: x0, y: mid + stagger - 4, width: Math.max(x1 - x0, 3), height: 8, rx: 4,
               fill: color, 'fill-opacity': 0.72
             }, svg);
             wire(bar, memberId, () => A().tipHTML(c.name, A().yearsOf(c), c.blurb));
             if (x1 - x0 > c.name.length * 5.6 + 8) {
-              const t = make('text', { x: x0 + 4, y: mid + stagger + 3, 'font-family': 'Saira, sans-serif', 'font-size': 9.4, fill: '#0d0a0c', 'font-weight': 600, 'pointer-events': 'none' }, svg);
+              const t = make('text', { x: x0 + 4, y: mid + stagger + 3, 'font-family': 'Saira, sans-serif', 'font-size': 9.4, fill: T().barLabel, 'font-weight': 600, 'pointer-events': 'none' }, svg);
               t.textContent = c.name;
             }
             prevEnd = x1;
@@ -430,7 +451,7 @@
             connect(xx - 4);
             const d = make('path', {
               d: 'M' + xx + ' ' + (mid + stagger - 5) + ' l5 5 l-5 5 l-5 -5 Z',
-              fill: color, 'fill-opacity': 0.85, stroke: hi ? '#c9a06a' : '#0d0a0c', 'stroke-width': hi ? 2 : 1
+              fill: color, 'fill-opacity': 0.85, stroke: hi ? T().hl : T().dotStroke, 'stroke-width': hi ? 2 : 1
             }, svg);
             wire(d, memberId, () => A().tipHTML(c.name, (c.died != null ? 'died ' : 'born ') + S.fmtYear(t, c.approx) + ' · lifespan unrecorded', c.blurb));
             prevEnd = xx + 4;
@@ -449,7 +470,7 @@
     svg.querySelectorAll('.era-tint').forEach(r => r.setAttribute('height', y - ribbonH));
 
     function gutterLabel(text, yy) {
-      const t = make('text', { x: 8, y: yy + 4, 'font-family': 'Chivo Mono, monospace', 'font-size': 8.6, fill: '#75655e', 'letter-spacing': '1.6' }, svg);
+      const t = make('text', { x: 8, y: yy + 4, 'font-family': 'Chivo Mono, monospace', 'font-size': 8.6, fill: T().inkFaint, 'letter-spacing': '1.6' }, svg);
       t.textContent = text;
     }
   }

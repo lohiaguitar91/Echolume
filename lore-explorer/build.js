@@ -29,8 +29,9 @@ if (OUT) {
   const bodyMatch = full.match(/<body>([\s\S]*)<\/body>/);
   const inner = bodyMatch ? bodyMatch[1] : full;
   const styleMatch = full.match(/<style>[\s\S]*?<\/style>/);
+  const fontsMatch = full.match(/<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com[^"]*">/);
   const artifact = '<title>Old Republic Holocron</title>\n' +
-    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Source+Sans+3:wght@400;600&family=Chivo+Mono:wght@400;500&display=swap">\n' +
+    (fontsMatch ? fontsMatch[0] : '') + '\n' +
     (styleMatch ? styleMatch[0] : '') + '\n' + inner;
   fs.writeFileSync(OUT, artifact);
   console.log(OUT + '  ' + (artifact.length / 1024).toFixed(0) + ' KB');
