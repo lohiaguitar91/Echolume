@@ -44,7 +44,9 @@ grid, even the starfield) remapped through a live theme engine in `js/ui/theme.j
 | **Compare** | Any two entries side by side — characters, eras, factions, worlds — including everything the record says connects the pair (direct edges, shared events, shared connections). |
 
 Everywhere: a shared entity drawer with bio, grouped relations, event record, sources, and
-**"Related rabbit holes"** computed from graph adjacency.
+**"Related rabbit holes"** computed from graph adjacency. Every entity is **deep-linkable**
+(`#/atlas/e/darth-bane` opens the app with that entry's drawer already open), and the
+footer carries the version stamp (v1.0).
 
 ## The dataset
 

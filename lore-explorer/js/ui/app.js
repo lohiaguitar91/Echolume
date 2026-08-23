@@ -91,8 +91,13 @@
     drawerEl.classList.add('open');
     drawerEl.setAttribute('aria-hidden', 'false');
     drawerBody.scrollTop = 0;
+    if (current) history.replaceState(null, '', '#/' + current + '/e/' + id);   // shareable deep link
   }
-  function closeDrawer() { drawerEl.classList.remove('open'); drawerEl.setAttribute('aria-hidden', 'true'); }
+  function closeDrawer() {
+    drawerEl.classList.remove('open');
+    drawerEl.setAttribute('aria-hidden', 'true');
+    if (current && /\/e\//.test(location.hash)) history.replaceState(null, '', '#/' + current);
+  }
 
   function entityDetail(n) {
     const parts = [];
@@ -242,12 +247,16 @@
       const elv = $('#view-' + v);
       if (elv) elv.hidden = v !== view;
       const tab = $('#tab-' + v);
-      if (tab) tab.classList.toggle('active', v === view);
+      if (tab) {
+        tab.classList.toggle('active', v === view);
+        if (v === view) tab.setAttribute('aria-current', 'page');
+        else tab.removeAttribute('aria-current');
+      }
     });
     const mod = H.ui[view === 'atlas' ? 'atlas' : view];
     if (mod && mod.onShow) mod.onShow();
     try { localStorage.setItem('holo-view', view); } catch (e) { /* private mode etc. */ }
-    if (location.hash !== '#/' + view) history.replaceState(null, '', '#/' + view);
+    if (!location.hash.startsWith('#/' + view)) history.replaceState(null, '', '#/' + view);
   }
 
   function boot() {
@@ -276,12 +285,13 @@
     /* init views */
     Object.values(H.ui).forEach(m => { if (m && m.init) m.init(); });
 
-    /* initial route */
-    let v = null;
-    const h = location.hash.match(/^#\/([a-z]+)/);
-    if (h && VIEWS.includes(h[1])) v = h[1];
+    /* initial route (view, optionally a deep-linked entity: #/atlas/e/darth-bane) */
+    let v = null, deepEntity = null;
+    const h = location.hash.match(/^#\/([a-z]+)(?:\/e\/([a-z0-9-]+))?/);
+    if (h && VIEWS.includes(h[1])) { v = h[1]; deepEntity = h[2] || null; }
     if (!v) { try { v = localStorage.getItem('holo-view'); } catch (e) { v = null; } }
     show(VIEWS.includes(v) ? v : 'timeline');
+    if (deepEntity && S.get(deepEntity)) setTimeout(() => openEntity(deepEntity), 80);
     window.addEventListener('hashchange', () => {
       const m = location.hash.match(/^#\/([a-z]+)/);
       if (m && VIEWS.includes(m[1]) && m[1] !== current) show(m[1]);

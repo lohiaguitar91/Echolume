@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0709">
 <title>Old Republic Holocron</title>
 <meta name="description" content="An interactive lore atlas of the Old Republic: timeline, relationship graph, searchable database, Q&amp;A, era deep-dives, and a galaxy map — Legends continuity, hand-curated.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,7 +88,7 @@
     <div class="toolbar" id="g-eras"></div>
     <div class="toolbar">
       <input id="g-find" type="search" placeholder="Find in graph… (Enter)" aria-label="Find in graph"
-             style="padding:8px 12px;background:var(--bg1);border:1px solid var(--line);border-radius:7px;color:var(--ink);width:min(320px,100%)">
+             style="padding:8px 12px;background:var(--input-bg);border:1px solid var(--line);border-left:3px solid var(--accent-deep);color:var(--ink);width:min(320px,100%)">
     </div>
     <div class="graph-frame">
       <div class="graph-hud">
@@ -175,7 +176,7 @@
   </section>
 
   <footer class="hint-note" style="margin-top:48px;border-top:1px solid var(--line);padding-top:14px">
-    A fan-made reference, hand-curated from Star Wars Legends sources — Tales of the Jedi, the KOTOR games and comics, The Old Republic, the Darth Bane trilogy, Darth Plagueis, and the Legacy comics. Dates follow the Legends timeline (BBY/ABY). Not affiliated with or endorsed by Lucasfilm.
+    <span class="num" style="color:var(--gold)">HOLOCRON v1.0</span> · A fan-made reference, hand-curated from Star Wars Legends sources — Tales of the Jedi, the KOTOR games and comics, The Old Republic, the Darth Bane trilogy, Darth Plagueis, and the Legacy comics. Dates follow the Legends timeline (BBY/ABY). Not affiliated with or endorsed by Lucasfilm.
     <button class="btn-ghost" id="replay-crawl" type="button" style="margin-left:10px">▸ Replay opening crawl</button>
   </footer>
 </main>

@@ -277,7 +277,10 @@
       if (e.to < state.t0 || e.from > state.t1) return;
       const x0 = clampX(x(e.from)), x1 = clampX(x(e.to));
       if (x1 - x0 < 1) return;
-      const r = make('rect', { x: x0, y: 3, width: x1 - x0, height: ribbonH - 6, rx: 3, fill: e.color, 'fill-opacity': state.era && state.era !== e.id ? 0.18 : 0.55 }, svg);
+      const dimmed = state.era && state.era !== e.id;
+      const r = make('rect', { x: x0, y: 3, width: x1 - x0, height: ribbonH - 6, rx: 4, fill: e.color, 'fill-opacity': dimmed ? 0.16 : 0.5 }, svg);
+      make('rect', { x: x0, y: ribbonH - 5.5, width: x1 - x0, height: 2.2, rx: 1.1, fill: e.color, 'fill-opacity': dimmed ? 0.3 : 0.95, 'pointer-events': 'none' }, svg);
+      if (state.era === e.id) make('rect', { x: x0, y: 2, width: x1 - x0, height: ribbonH - 4, rx: 5, fill: 'none', stroke: e.color, 'stroke-width': 1.4, 'pointer-events': 'none' }, svg);
       wire(r, null, () => A().tipHTML(e.name, S.fmtSpan(e.from, e.to), e.tagline));
       r.addEventListener('click', () => fitTo(e.from, e.to));
       if (x1 - x0 > 74) {
@@ -324,9 +327,13 @@
         laneEnds[lane] = showLbl ? Math.max(x1, x0 + ev.name.length * 5.6) : x1;
         const yy = y + lane * rowH;
         const color = A().KIND_COLOR[ev.kind] || H.theme.kind.war;
+        make('rect', {
+          x: x0 - 2, y: yy - 2, width: Math.max(x1 - x0, 3) + 4, height: 15, rx: 7,
+          fill: color, 'fill-opacity': 0.14, 'pointer-events': 'none'
+        }, svg);
         const bar = make('rect', {
-          x: x0, y: yy, width: Math.max(x1 - x0, 3), height: 11, rx: 3,
-          fill: color, 'fill-opacity': 0.42, stroke: color, 'stroke-opacity': 0.8, 'stroke-width': ev.id === state.highlight ? 2.4 : 1
+          x: x0, y: yy, width: Math.max(x1 - x0, 3), height: 11, rx: 5,
+          fill: color, 'fill-opacity': 0.5, stroke: color, 'stroke-opacity': 0.85, 'stroke-width': ev.id === state.highlight ? 2.4 : 1
         }, svg);
         wire(bar, ev.id, () => A().tipHTML(ev.name, S.fmtYear(ev.year, ev.approx) + ' – ' + S.fmtYear(ev.endYear), ev.blurb));
         if (showLbl) {
@@ -355,7 +362,10 @@
         const color = A().KIND_COLOR[ev.kind] || H.theme.kind.political;
         const hi = ev.id === state.highlight;
         if (hi) make('circle', { cx: xx, cy: yy, r: 9, fill: 'none', stroke: T().hl, 'stroke-width': 2 }, svg);
+        make('circle', { cx: xx, cy: yy, r: 10.5, fill: color, 'fill-opacity': 0.07, 'pointer-events': 'none' }, svg);
+        make('circle', { cx: xx, cy: yy, r: 6.6, fill: color, 'fill-opacity': 0.16, 'pointer-events': 'none' }, svg);
         const dot = make('circle', { cx: xx, cy: yy, r: 4.2, fill: color, stroke: T().dotStroke, 'stroke-width': 1.2 }, svg);
+        make('circle', { cx: xx - 1.2, cy: yy - 1.3, r: 1.15, fill: '#ffffff', 'fill-opacity': 0.55, 'pointer-events': 'none' }, svg);
         wire(dot, ev.id, () => A().tipHTML(ev.name, S.fmtYear(ev.year, ev.approx) + ' · ' + (S.KIND_LABEL[ev.kind] || ev.kind), ev.blurb));
         if (COARSE) {
           const hit = make('circle', { cx: xx, cy: yy, r: 12, fill: 'transparent' }, svg);
@@ -391,10 +401,14 @@
           const x0 = clampX(x(p.from)), x1 = clampX(x(to));
           const color = a.side === 'sith' ? H.theme.align.sith : H.theme.align.jedi;
           const soft = p.approx || p.approxEnd;
+          if (!soft) make('rect', {
+            x: x0 - 1.5, y: y - 1.5, width: Math.max(x1 - x0, 2.5) + 3, height: 13, rx: 6,
+            fill: color, 'fill-opacity': 0.12, 'pointer-events': 'none'
+          }, svg);
           const bar = make('rect', {
-            x: x0, y: y, width: Math.max(x1 - x0, 2.5), height: 10, rx: 2,
-            fill: color, 'fill-opacity': soft ? 0.28 : 0.5,
-            stroke: color, 'stroke-opacity': soft ? 0.45 : 0.75, 'stroke-width': 0.8
+            x: x0, y: y, width: Math.max(x1 - x0, 2.5), height: 10, rx: 4,
+            fill: color, 'fill-opacity': soft ? 0.28 : 0.52,
+            stroke: color, 'stroke-opacity': soft ? 0.45 : 0.8, 'stroke-width': 0.8
           }, svg);
           wire(bar, a.loc, () => A().tipHTML(a.name + ' — ' + p.by,
             S.fmtYear(p.from, p.approx) + ' – ' + (p.to == null ? '…' : S.fmtYear(p.to, p.approxEnd)), p.note || ''));
