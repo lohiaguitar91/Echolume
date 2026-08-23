@@ -4,6 +4,27 @@
   const H = window.HOLO;
 
   let modal, body, dl, title;
+  let current = null;   // {dataURL, name} for the mediated-save path
+
+  /* In the claude.ai artifact runtime, plain download links are inert; the `downloads`
+     capability mediates the save instead. Anywhere else (file://, a static server) the
+     native <a download> works and this resolves null. */
+  const downloadsNS = (async () => {
+    try {
+      if (typeof window.claude !== 'undefined' && typeof window.claude.use === 'function') {
+        return await window.claude.use('downloads');
+      }
+    } catch (e) { /* no runtime */ }
+    return null;
+  })();
+
+  function dataURLtoBlob(u) {
+    const b64 = u.split(',')[1];
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: 'image/png' });
+  }
 
   function init() {
     modal = document.getElementById('modal');
@@ -12,10 +33,34 @@
     title = document.getElementById('modal-title');
     document.getElementById('modal-close').addEventListener('click', close);
     modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+    /* If the runtime is present, replace the native link with the mediated save. */
+    downloadsNS.then(ns => {
+      if (typeof window.claude === 'undefined') return;   // plain page: keep the <a download>
+      dl.removeAttribute('href');
+      dl.removeAttribute('download');
+      dl.setAttribute('role', 'button');
+      dl.style.cursor = 'pointer';
+      dl.addEventListener('click', async e => {
+        e.preventDefault();
+        if (!current) return;
+        if (!ns) { noteFallback(); return; }
+        try {
+          await ns.save({ filename: current.name + '.png', data: dataURLtoBlob(current.dataURL) });
+        } catch (err) {
+          if (!err || err.code !== 'declined') noteFallback();
+        }
+      });
+    });
+  }
+  function noteFallback() {
+    const n = body.querySelector('.hint-note');
+    if (n) n.textContent = 'Saving is unavailable in this view — right-click (or long-press) the image and choose “Save image”.';
   }
   function close() { modal.classList.remove('open'); body.innerHTML = ''; }
 
   function show(dataURL, name) {
+    current = { dataURL, name };
     title.textContent = name + '.png';
     dl.href = dataURL;
     dl.download = name + '.png';
@@ -26,7 +71,7 @@
     body.append(img);
     const note = document.createElement('p');
     note.className = 'hint-note';
-    note.textContent = 'If the download button is blocked in this viewer, right-click (or long-press) the image and choose “Save image”.';
+    note.textContent = 'If the download button does nothing in this viewer, right-click (or long-press) the image and choose “Save image”.';
     body.append(note);
     modal.classList.add('open');
   }
