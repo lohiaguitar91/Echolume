@@ -133,9 +133,10 @@
       const [dx, dy] = NUDGE[loc.id] || [0, 18];
       const lbl = make('text', {
         x: x + dx, y: y + (dy || 18), 'text-anchor': 'middle',
-        'font-family': 'Marcellus, Georgia, serif', 'font-size': 11.5, fill: active ? '#e9e2d9' : '#75655e'
+        'font-family': 'Saira, sans-serif', 'font-size': 10, 'font-weight': 600,
+        'letter-spacing': '1.4', fill: active ? '#e9e2d9' : '#75655e'
       }, g);
-      lbl.textContent = loc.name.replace(/\s*\(.*\)/, '');
+      lbl.textContent = loc.name.replace(/\s*\(.*\)/, '').toUpperCase();
       [dot, lbl].forEach(elm => {
         elm.style.cursor = 'pointer';
         elm.addEventListener('pointerenter', e => A().showTip(e.clientX, e.clientY, A().tipHTML(loc.name, loc.region, loc.blurb)));

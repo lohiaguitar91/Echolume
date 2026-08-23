@@ -96,7 +96,7 @@
     root.querySelector('#tl-zoom-in').addEventListener('click', () => zoomAround((state.t0 + state.t1) / 2, 0.55));
     root.querySelector('#tl-zoom-out').addEventListener('click', () => zoomAround((state.t0 + state.t1) / 2, 1.8));
     root.querySelector('#tl-fit').addEventListener('click', () => fitTo(-7150, 240));
-    root.querySelector('#tl-export').addEventListener('click', () => H.ui.exportPNG.fromSVG(svg, 'holocron-timeline', '#141013'));
+    root.querySelector('#tl-export').addEventListener('click', () => H.ui.exportPNG.fromSVG(svg, 'holocron-timeline', '#120e12'));
 
     /* pointer interactions */
     let drag = null;
@@ -209,7 +209,8 @@
       if (x1 - x0 > 74) {
         const t = make('text', {
           x: (x0 + x1) / 2, y: ribbonH / 2 + 4, 'text-anchor': 'middle',
-          'font-family': 'Marcellus, Georgia, serif', 'font-size': 11.5, fill: '#e9e2d9', 'pointer-events': 'none'
+          'font-family': 'Saira, sans-serif', 'font-size': 10.5, 'font-weight': 600,
+          'letter-spacing': '.8', fill: '#ece4da', 'pointer-events': 'none'
         }, svg);
         t.textContent = e.name;
       }
@@ -220,7 +221,8 @@
 
     /* ── axis ── */
     const axisH = 24;
-    const step = tickStep(span);
+    let step = tickStep(span);
+    while (step * (W - ml - mr) / span < 62) step *= 2;   // keep labels from colliding on narrow plots
     const first = Math.ceil(state.t0 / step) * step;
     for (let t = first; t <= state.t1; t += step) {
       const xx = x(t);
@@ -254,7 +256,7 @@
         }, svg);
         wire(bar, ev.id, () => A().tipHTML(ev.name, S.fmtYear(ev.year, ev.approx) + ' – ' + S.fmtYear(ev.endYear), ev.blurb));
         if (showLbl) {
-          const t = make('text', { x: x0 + 5, y: yy + 9, 'font-family': 'Source Sans 3, sans-serif', 'font-size': 10.5, fill: '#e9e2d9', 'pointer-events': 'none' }, svg);
+          const t = make('text', { x: x0 + 5, y: yy + 9, 'font-family': 'Saira, sans-serif', 'font-size': 10.5, fill: '#e9e2d9', 'pointer-events': 'none' }, svg);
           t.textContent = ev.name;
         }
       });
@@ -282,7 +284,7 @@
         const dot = make('circle', { cx: xx, cy: yy, r: 4.2, fill: color, stroke: '#0d0a0c', 'stroke-width': 1.2 }, svg);
         wire(dot, ev.id, () => A().tipHTML(ev.name, S.fmtYear(ev.year, ev.approx) + ' · ' + (S.KIND_LABEL[ev.kind] || ev.kind), ev.blurb));
         if (labelsOn) {
-          const t = make('text', { x: xx + 8, y: yy + 3.5, 'font-family': 'Source Sans 3, sans-serif', 'font-size': 10.8, fill: hi ? '#e9e2d9' : '#a8998f' }, svg);
+          const t = make('text', { x: xx + 8, y: yy + 3.5, 'font-family': 'Saira, sans-serif', 'font-size': 10.8, fill: hi ? '#e9e2d9' : '#a8998f' }, svg);
           t.textContent = ev.name;
           wire(t, ev.id, () => A().tipHTML(ev.name, S.fmtYear(ev.year, ev.approx), ev.blurb));
         }
@@ -300,7 +302,7 @@
       const rowH = 15;
       (S.academies || []).forEach(a => {
         const loc = S.get(a.loc);
-        const name = make('text', { x: 8, y: y + 8.5, 'font-family': 'Source Sans 3, sans-serif', 'font-size': 10, fill: a.side === 'sith' ? '#b9463e' : '#58a6f2' }, svg);
+        const name = make('text', { x: 8, y: y + 8.5, 'font-family': 'Saira, sans-serif', 'font-size': 10, fill: a.side === 'sith' ? '#b9463e' : '#58a6f2' }, svg);
         name.textContent = a.name.length > 20 ? a.name.slice(0, 19) + '…' : a.name;
         wire(name, a.loc, () => A().tipHTML(a.name, loc ? 'on ' + loc.name : '', a.blurb));
         make('line', { x1: ml, y1: y + 5, x2: W - mr, y2: y + 5, stroke: '#241a1f', 'stroke-dasharray': '1 4' }, svg);
@@ -332,7 +334,7 @@
       y += 14;
       const rowH = 27;
       (S.lineages || []).forEach(lin => {
-        const name = make('text', { x: 8, y: y + 12, 'font-family': 'Source Sans 3, sans-serif', 'font-size': 10, fill: '#a8998f' }, svg);
+        const name = make('text', { x: 8, y: y + 12, 'font-family': 'Saira, sans-serif', 'font-size': 10, fill: '#a8998f' }, svg);
         name.textContent = lin.name.length > 21 ? lin.name.slice(0, 20) + '…' : lin.name;
         wire(name, null, () => A().tipHTML(lin.name, lin.members.map(m => (S.get(m) || {}).name).join(' → '), lin.note));
         const mid = y + 10;
@@ -363,7 +365,7 @@
             }, svg);
             wire(bar, memberId, () => A().tipHTML(c.name, A().yearsOf(c), c.blurb));
             if (x1 - x0 > c.name.length * 5.6 + 8) {
-              const t = make('text', { x: x0 + 4, y: mid + stagger + 3, 'font-family': 'Source Sans 3, sans-serif', 'font-size': 9.4, fill: '#0d0a0c', 'font-weight': 600, 'pointer-events': 'none' }, svg);
+              const t = make('text', { x: x0 + 4, y: mid + stagger + 3, 'font-family': 'Saira, sans-serif', 'font-size': 9.4, fill: '#0d0a0c', 'font-weight': 600, 'pointer-events': 'none' }, svg);
               t.textContent = c.name;
             }
             prevEnd = x1;

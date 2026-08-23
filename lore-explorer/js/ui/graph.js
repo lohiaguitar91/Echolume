@@ -137,7 +137,7 @@
 
   function draw() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = '#141013';
+    ctx.fillStyle = '#120e12';
     ctx.fillRect(0, 0, W, Hh);
     ctx.translate(view.tx * dpr / dpr, view.ty);
     ctx.scale(view.k, view.k);
@@ -166,7 +166,7 @@
       shapePath(ctx, p, p.r);
       if (p.n.type === 'location') {
         ctx.strokeStyle = col; ctx.lineWidth = 2 / Math.sqrt(view.k); ctx.stroke();
-        ctx.fillStyle = '#141013'; // ring
+        ctx.fillStyle = '#120e12'; // ring
       } else {
         ctx.fillStyle = col; ctx.fill();
         ctx.strokeStyle = 'rgba(13,10,12,.9)'; ctx.lineWidth = 1.2; ctx.stroke();
@@ -176,7 +176,7 @@
       const showLbl = hov || (selN && selN.has(p.id)) || p.d >= 9 || view.k >= 1.5;
       if (showLbl && !dim) {
         const fs = Math.max(10.5 / view.k, Math.min(12.5, 11 / Math.sqrt(view.k)));
-        ctx.font = (hov ? '600 ' : '') + fs + 'px "Source Sans 3", sans-serif';
+        ctx.font = (hov ? '600 ' : '') + fs + 'px Saira, sans-serif';
         ctx.textAlign = 'center';
         ctx.lineWidth = 3 / view.k;
         ctx.strokeStyle = 'rgba(13,10,12,.85)';
