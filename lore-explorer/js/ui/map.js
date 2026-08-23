@@ -34,8 +34,43 @@
     const { el } = A();
     const root = document.getElementById('view-galaxy');
     const frameEl = root.querySelector('.map-frame');
+    const stage = el('div', { class: 'map-stage' });
+    frameEl.append(stage);
     svgEl = make('svg', { viewBox: '0 0 ' + VW + ' ' + VH, role: 'img', 'aria-label': 'Galaxy map of Old Republic worlds' });
-    frameEl.append(svgEl);
+    stage.append(svgEl);
+
+    /* Holo table: perspective tilt with damped pointer parallax. Defaults on for
+       mouse-driven desktops, off for touch; the toggle persists. */
+    const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let holo = window.matchMedia && window.matchMedia('(pointer: fine)').matches && window.innerWidth > 900;
+    try { const saved = localStorage.getItem('holo-map-3d'); if (saved != null) holo = saved === '1'; } catch (e) { /* fine */ }
+    const holoBtn = root.querySelector('#map-holo');
+    let rx = 24, ry = 0, tiltRaf = 0;
+    const applyTilt = () => {
+      tiltRaf = 0;
+      stage.style.transform = holo ? 'perspective(1150px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)' : 'none';
+    };
+    function setHolo(on) {
+      holo = on;
+      frameEl.classList.toggle('holo', holo);
+      holoBtn.textContent = holo ? 'Holo table: On' : 'Holo table: Off';
+      holoBtn.classList.toggle('primary', holo);
+      rx = 24; ry = 0; applyTilt();
+      try { localStorage.setItem('holo-map-3d', holo ? '1' : '0'); } catch (e) { /* fine */ }
+    }
+    holoBtn.addEventListener('click', () => setHolo(!holo));
+    frameEl.addEventListener('pointermove', e => {
+      if (!holo || reducedMotion) return;
+      const r = frameEl.getBoundingClientRect();
+      rx = 24 - ((e.clientY - r.top) / r.height - 0.5) * 5;
+      ry = ((e.clientX - r.left) / r.width - 0.5) * 6;
+      if (!tiltRaf) tiltRaf = requestAnimationFrame(applyTilt);
+    });
+    frameEl.addEventListener('pointerleave', () => {
+      rx = 24; ry = 0;
+      if (!tiltRaf) tiltRaf = requestAnimationFrame(applyTilt);
+    });
+    setHolo(holo);
 
     S.nodes.forEach(n => {
       if (n.type !== 'event' || !n.loc) return;

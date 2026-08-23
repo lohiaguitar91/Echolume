@@ -103,6 +103,7 @@
     </div>
     <div class="graph-frame">
       <div class="graph-hud">
+        <button class="btn" id="g-3d" type="button" title="Depth-projected 3D layout">3D: Off</button>
         <button class="btn" id="g-reheat" type="button" title="Re-run the layout">Reheat</button>
         <button class="btn" id="g-fit" type="button">Fit</button>
         <button class="btn" id="g-export" type="button">Export PNG</button>
@@ -165,9 +166,11 @@
     </div>
     <div class="toolbar">
       <span class="toolbar-label">Highlight era</span>
-      <select id="map-era" style="padding:7px 10px;background:var(--bg1);border:1px solid var(--line);border-radius:7px;color:var(--ink)">
+      <select id="map-era" style="padding:7px 10px;background:var(--bg1);border:1px solid var(--line);color:var(--ink)">
         <option value="">— none —</option>
       </select>
+      <span class="sep"></span>
+      <button class="btn" id="map-holo" type="button">Holo table: On</button>
     </div>
     <div class="map-layout">
       <div class="map-frame"></div>
@@ -192,6 +195,7 @@
 
   <footer class="hint-note" style="margin-top:48px;border-top:1px solid var(--line);padding-top:14px">
     A fan-made reference, hand-curated from Star Wars Legends sources — Tales of the Jedi, the KOTOR games and comics, The Old Republic, the Darth Bane trilogy, Darth Plagueis, and the Legacy comics. Dates follow the Legends timeline (BBY/ABY). Not affiliated with or endorsed by Lucasfilm.
+    <button class="btn-ghost" id="replay-crawl" type="button" style="margin-left:10px">▸ Replay opening crawl</button>
   </footer>
 </main>
 
@@ -229,6 +233,8 @@
 <script src="js/core/search.js"></script>
 <script src="js/core/qa.js"></script>
 <script src="js/ui/app.js"></script>
+<script src="js/ui/starfield.js"></script>
+<script src="js/ui/crawl.js"></script>
 <script src="js/ui/export.js"></script>
 <script src="js/ui/timeline.js"></script>
 <script src="js/ui/graph.js"></script>

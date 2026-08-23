@@ -88,7 +88,9 @@
     if (!n) return;
     drawerTitle.textContent = n.name;
     drawerBody.innerHTML = '';
-    drawerBody.append(...entityDetail(n));
+    const parts = entityDetail(n);
+    parts.forEach((p, i) => { if (p && p.style) p.style.setProperty('--i', i); });
+    drawerBody.append(...parts);
     drawerEl.classList.add('open');
     drawerEl.setAttribute('aria-hidden', 'false');
     drawerBody.scrollTop = 0;
@@ -258,7 +260,12 @@
 
     VIEWS.forEach(v => {
       const tab = $('#tab-' + v);
-      if (tab) tab.addEventListener('click', () => show(v));
+      if (tab) tab.addEventListener('click', () => {
+        if (v === current) return;
+        const sf = H.ui.starfield;
+        if (sf && sf.jump) sf.jump(() => show(v));   // hyperspace between views
+        else show(v);
+      });
     });
 
     const gsearch = $('#global-search');

@@ -1,5 +1,6 @@
 /* Holocron UI — relationship graph: canvas force-directed network with era/type/alignment
-   filters, hover bios, selection focus, and PNG export. */
+   filters, hover bios, selection focus, PNG export — and a 3D depth mode: z-axis physics,
+   perspective projection with depth cueing, slow auto-orbit, drag-to-rotate, pinch zoom. */
 (function () {
   'use strict';
   const H = window.HOLO;
@@ -27,16 +28,20 @@
     types: new Set(['character', 'faction']),
     era: null,
     aligns: new Set(['sith', 'jedi', 'gray', 'neutral']),
-    selected: null, hovered: null
+    selected: null, hovered: null,
+    mode3d: false
   };
 
   let canvas, ctx, frame, running = false;
   let nodes = [], nodeById = new Map(), links = [];
   let alpha = 1;
+  let theta = 0.35;                 // 3D orbit angle
+  let dragging = false;
   const posCache = new Map();
   let view = { k: 1, tx: 0, ty: 0 };
   let W = 900, Hh = 620, dpr = 1;
   const locEras = new Map();
+  const FOV = 620;
 
   const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967295; };
 
@@ -61,7 +66,7 @@
     nodes = visible.filter(n => (deg.get(n.id) || 0) > 0 || n.id === state.selected).map(n => {
       const d = deg.get(n.id) || 0;
       const cached = posCache.get(n.id);
-      /* chronological seeding: x by era midpoint, y by id hash */
+      /* chronological seeding: x by era midpoint, y by id hash, z scattered */
       const eras = S.erasOf(n);
       const mid = eras.length ? (eras[0].from + eras[eras.length - 1].to) / 2 : (n.type === 'event' ? n.year : -3000);
       const fx = (mid + 7100) / 7400;
@@ -70,7 +75,9 @@
         r: Math.max(4, Math.min(15, 3.5 + Math.sqrt(d) * 2.1)),
         x: cached ? cached.x : W * (0.08 + 0.84 * fx) + (hash(n.id) - .5) * 60,
         y: cached ? cached.y : Hh * (0.12 + 0.76 * hash(n.id + 'y')),
-        vx: 0, vy: 0, fixed: false
+        z: cached && cached.z != null ? cached.z : (hash(n.id + 'z') - .5) * 300,
+        vx: 0, vy: 0, vz: 0, fixed: false,
+        px: 0, py: 0, ps: 1, zr: 0
       };
     });
     nodeById = new Map(nodes.map(nn => [nn.id, nn]));
@@ -81,67 +88,94 @@
   function physics() {
     const cx = W / 2, cy = Hh / 2;
     const n = nodes.length;
+    const d3 = state.mode3d;
     for (let i = 0; i < n; i++) {
       const a = nodes[i];
       for (let j = i + 1; j < n; j++) {
         const b = nodes[j];
-        let dx = b.x - a.x, dy = b.y - a.y;
-        let d2 = dx * dx + dy * dy;
+        let dx = b.x - a.x, dy = b.y - a.y, dz = d3 ? b.z - a.z : 0;
+        let d2 = dx * dx + dy * dy + dz * dz;
         if (d2 < 1) { dx = (hash(a.id + j) - .5); dy = (hash(b.id + i) - .5); d2 = 1; }
-        if (d2 > 62000) continue;
-        const f = 1450 / d2 * alpha;
+        if (d2 > 78000) continue;
+        const f = (d3 ? 2100 : 1450) / d2 * alpha;
         const d = Math.sqrt(d2);
-        const ux = dx / d, uy = dy / d;
+        const ux = dx / d, uy = dy / d, uz = dz / d;
         a.vx -= ux * f; a.vy -= uy * f;
         b.vx += ux * f; b.vy += uy * f;
+        if (d3) { a.vz -= uz * f; b.vz += uz * f; }
       }
     }
     links.forEach(l => {
       const a = nodeById.get(l.s), b = nodeById.get(l.t);
       const rest = l.r === 'trained' || l.r === 'killed' ? 74 : l.r === 'member' || l.r === 'took-part' ? 122 : 96;
-      let dx = b.x - a.x, dy = b.y - a.y;
-      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      let dx = b.x - a.x, dy = b.y - a.y, dz = d3 ? b.z - a.z : 0;
+      const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
       const f = (d - rest) * 0.016 * alpha;
-      const ux = dx / d, uy = dy / d;
+      const ux = dx / d, uy = dy / d, uz = dz / d;
       a.vx += ux * f; a.vy += uy * f;
       b.vx -= ux * f; b.vy -= uy * f;
+      if (d3) { a.vz += uz * f; b.vz -= uz * f; }
     });
     nodes.forEach(p => {
       p.vx += (cx - p.x) * 0.012 * alpha;
       p.vy += (cy - p.y) * 0.017 * alpha;
-      if (p.fixed) { p.vx = 0; p.vy = 0; return; }
-      p.vx *= 0.85; p.vy *= 0.85;
+      if (d3) p.vz += (0 - p.z) * 0.008 * alpha;
+      if (p.fixed) { p.vx = 0; p.vy = 0; p.vz = 0; return; }
+      p.vx *= 0.85; p.vy *= 0.85; p.vz *= 0.85;
       const vmax = 9;
       p.vx = Math.max(-vmax, Math.min(vmax, p.vx));
       p.vy = Math.max(-vmax, Math.min(vmax, p.vy));
+      p.vz = Math.max(-vmax, Math.min(vmax, p.vz));
       p.x += p.vx; p.y += p.vy;
-      posCache.set(p.id, { x: p.x, y: p.y });
+      if (d3) p.z += p.vz;
+      posCache.set(p.id, { x: p.x, y: p.y, z: p.z });
     });
     alpha = Math.max(alpha * 0.994, 0);
   }
 
-  function shapePath(c, p, r) {
-    const t = p.n.type;
-    c.beginPath();
-    if (t === 'character') c.arc(p.x, p.y, r, 0, 6.2832);
-    else if (t === 'faction') { // hexagon
-      for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; const px = p.x + r * 1.18 * Math.cos(a), py = p.y + r * 1.18 * Math.sin(a); i ? c.lineTo(px, py) : c.moveTo(px, py); }
-      c.closePath();
-    } else if (t === 'artifact') { // triangle (holocron)
-      c.moveTo(p.x, p.y - r * 1.25); c.lineTo(p.x + r * 1.15, p.y + r * 0.95); c.lineTo(p.x - r * 1.15, p.y + r * 0.95); c.closePath();
-    } else if (t === 'concept') { // diamond
-      c.moveTo(p.x, p.y - r * 1.25); c.lineTo(p.x + r * 1.25, p.y); c.lineTo(p.x, p.y + r * 1.25); c.lineTo(p.x - r * 1.25, p.y); c.closePath();
-    } else if (t === 'location') { c.arc(p.x, p.y, r * 1.05, 0, 6.2832); }
-    else { c.rect(p.x - r * .9, p.y - r * .9, r * 1.8, r * 1.8); }
+  /* Perspective projection into p.px/p.py/p.ps (scale) / p.zr (depth for sorting). */
+  function projectAll() {
+    const cx = W / 2, cy = Hh / 2;
+    if (!state.mode3d) {
+      nodes.forEach(p => { p.px = p.x; p.py = p.y; p.ps = 1; p.zr = 0; });
+      return;
+    }
+    const cos = Math.cos(theta), sin = Math.sin(theta);
+    nodes.forEach(p => {
+      const dx = p.x - cx;
+      const xr = dx * cos - p.z * sin;
+      const zr = dx * sin + p.z * cos;
+      const s = FOV / (FOV + zr);
+      p.px = cx + xr * s;
+      p.py = cy + (p.y - cy) * s;
+      p.ps = s; p.zr = zr;
+    });
   }
+
+  function shapePath(c, x, y, r, t) {
+    c.beginPath();
+    if (t === 'character') c.arc(x, y, r, 0, 6.2832);
+    else if (t === 'faction') {
+      for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; const qx = x + r * 1.18 * Math.cos(a), qy = y + r * 1.18 * Math.sin(a); i ? c.lineTo(qx, qy) : c.moveTo(qx, qy); }
+      c.closePath();
+    } else if (t === 'artifact') {
+      c.moveTo(x, y - r * 1.25); c.lineTo(x + r * 1.15, y + r * 0.95); c.lineTo(x - r * 1.15, y + r * 0.95); c.closePath();
+    } else if (t === 'concept') {
+      c.moveTo(x, y - r * 1.25); c.lineTo(x + r * 1.25, y); c.lineTo(x, y + r * 1.25); c.lineTo(x - r * 1.25, y); c.closePath();
+    } else if (t === 'location') { c.arc(x, y, r * 1.05, 0, 6.2832); }
+    else { c.rect(x - r * .9, y - r * .9, r * 1.8, r * 1.8); }
+  }
+
+  const depthAlpha = p => state.mode3d ? Math.max(0.25, Math.min(1, (p.ps - 0.55) / 0.6)) : 1;
 
   function draw() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = '#120e12';
     ctx.fillRect(0, 0, W, Hh);
-    ctx.translate(view.tx * dpr / dpr, view.ty);
+    ctx.translate(view.tx, view.ty);
     ctx.scale(view.k, view.k);
 
+    projectAll();
     const sel = state.selected ? nodeById.get(state.selected) : null;
     const selN = sel ? new Set([sel.id, ...S.neighbors(sel.id).map(x => x.other)]) : null;
 
@@ -150,39 +184,39 @@
       const a = nodeById.get(l.s), b = nodeById.get(l.t);
       const dim = selN && !(selN.has(a.id) && selN.has(b.id));
       ctx.strokeStyle = EDGE_COLOR[l.r] || 'rgba(120,100,110,.3)';
-      ctx.globalAlpha = dim ? 0.07 : 1;
+      ctx.globalAlpha = (dim ? 0.07 : 1) * Math.min(depthAlpha(a), depthAlpha(b));
       ctx.lineWidth = (l.r === 'trained' || l.r === 'killed' ? 1.5 : 1) / view.k;
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(a.px, a.py); ctx.lineTo(b.px, b.py); ctx.stroke();
     });
     ctx.globalAlpha = 1;
 
-    /* nodes */
-    nodes.forEach(p => {
+    /* nodes — far first in 3D so near ones paint on top */
+    const order = state.mode3d ? [...nodes].sort((a, b) => b.zr - a.zr) : nodes;
+    order.forEach(p => {
       const dim = selN && !selN.has(p.id);
       const hov = state.hovered === p.id || state.selected === p.id;
-      ctx.globalAlpha = dim ? 0.14 : 1;
+      ctx.globalAlpha = (dim ? 0.14 : 1) * depthAlpha(p);
       const col = A().colorOf(p.n);
+      const rr = p.r * p.ps;
       if (hov) { ctx.shadowColor = col; ctx.shadowBlur = 16; }
-      shapePath(ctx, p, p.r);
+      shapePath(ctx, p.px, p.py, rr, p.n.type);
       if (p.n.type === 'location') {
         ctx.strokeStyle = col; ctx.lineWidth = 2 / Math.sqrt(view.k); ctx.stroke();
-        ctx.fillStyle = '#120e12'; // ring
       } else {
         ctx.fillStyle = col; ctx.fill();
         ctx.strokeStyle = 'rgba(13,10,12,.9)'; ctx.lineWidth = 1.2; ctx.stroke();
       }
       ctx.shadowBlur = 0;
-      /* labels */
       const showLbl = hov || (selN && selN.has(p.id)) || p.d >= 9 || view.k >= 1.5;
-      if (showLbl && !dim) {
-        const fs = Math.max(10.5 / view.k, Math.min(12.5, 11 / Math.sqrt(view.k)));
+      if (showLbl && !dim && (!state.mode3d || p.ps > 0.72 || hov)) {
+        const fs = Math.max(10.5 / view.k, Math.min(12.5, 11 / Math.sqrt(view.k))) * (state.mode3d ? (0.8 + p.ps * 0.25) : 1);
         ctx.font = (hov ? '600 ' : '') + fs + 'px Saira, sans-serif';
         ctx.textAlign = 'center';
         ctx.lineWidth = 3 / view.k;
         ctx.strokeStyle = 'rgba(13,10,12,.85)';
-        ctx.strokeText(p.n.name, p.x, p.y - p.r - 5 / view.k);
+        ctx.strokeText(p.n.name, p.px, p.py - rr - 5 / view.k);
         ctx.fillStyle = hov ? '#e9e2d9' : '#cfc4ba';
-        ctx.fillText(p.n.name, p.x, p.y - p.r - 5 / view.k);
+        ctx.fillText(p.n.name, p.px, p.py - rr - 5 / view.k);
       }
     });
     ctx.globalAlpha = 1;
@@ -190,8 +224,9 @@
 
   function loop() {
     if (!running) return;
-    if (!canvas.offsetParent) { running = false; return; }
+    if (!canvas.offsetParent || document.hidden) { running = false; return; }
     if (alpha > 0.012) physics();
+    if (state.mode3d && !dragging && !state.hovered) theta += 0.0016;   // slow orbit
     draw();
     requestAnimationFrame(loop);
   }
@@ -205,20 +240,38 @@
     canvas.style.height = Hh + 'px';
   }
 
-  function toWorld(cx, cy) {
+  function toWorld(cxp, cyp) {
     const r = canvas.getBoundingClientRect();
-    return { x: (cx - r.left - view.tx) / view.k, y: (cy - r.top - view.ty) / view.k };
+    return { x: (cxp - r.left - view.tx) / view.k, y: (cyp - r.top - view.ty) / view.k };
   }
-  function pick(cx, cy) {
-    const p = toWorld(cx, cy);
+  function pick(cxp, cyp) {
+    const p = toWorld(cxp, cyp);
     let best = null, bd = 1e9;
     nodes.forEach(nn => {
-      const dx = nn.x - p.x, dy = nn.y - p.y;
+      const dx = nn.px - p.x, dy = nn.py - p.y;
       const d = dx * dx + dy * dy;
-      const rr = nn.r + 7 / view.k;
+      const rr = nn.r * nn.ps + 7 / view.k;
       if (d < rr * rr && d < bd) { bd = d; best = nn; }
     });
     return best;
+  }
+  /* Move a node so its projection lands on the given world point (z held fixed). */
+  function placeAt(p, w) {
+    const cx = W / 2, cy = Hh / 2;
+    if (!state.mode3d) { p.x = w.x; p.y = w.y; return; }
+    const s = p.ps || 1;
+    p.y = cy + (w.y - cy) / s;
+    const xr = (w.x - cx) / s;
+    const cos = Math.cos(theta), sin = Math.sin(theta);
+    const c = Math.abs(cos) < 0.2 ? (cos < 0 ? -0.2 : 0.2) : cos;
+    p.x = cx + (xr + p.z * sin) / c;
+  }
+
+  function applyZoom(k2, mxp, myp) {
+    k2 = Math.max(0.25, Math.min(3.2, k2));
+    view.tx = mxp - (mxp - view.tx) * (k2 / view.k);
+    view.ty = myp - (myp - view.ty) * (k2 / view.k);
+    view.k = k2;
   }
 
   function init() {
@@ -229,7 +282,6 @@
     frame.prepend(canvas);
     ctx = canvas.getContext('2d');
 
-    /* events at locations → era membership for the era filter */
     S.nodes.forEach(n => {
       if (n.type !== 'event' || !n.loc) return;
       if (!locEras.has(n.loc)) locEras.set(n.loc, new Set());
@@ -270,7 +322,6 @@
     });
     function mark() { eraBar.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', (c.dataset.era || null) === state.era)); }
 
-    /* find box */
     const find = root.querySelector('#g-find');
     find.addEventListener('keydown', e => {
       if (e.key !== 'Enter') return;
@@ -278,27 +329,56 @@
       if (hit.id && S.get(hit.id)) focusNode(hit.id);
     });
 
-    /* HUD buttons */
     root.querySelector('#g-reheat').addEventListener('click', () => { alpha = 1; start(); });
     root.querySelector('#g-fit').addEventListener('click', fitView);
     root.querySelector('#g-export').addEventListener('click', () => H.ui.exportPNG.fromCanvas(canvas, 'holocron-graph'));
+    const btn3d = root.querySelector('#g-3d');
+    btn3d.addEventListener('click', () => {
+      state.mode3d = !state.mode3d;
+      btn3d.textContent = state.mode3d ? '3D: On' : '3D: Off';
+      btn3d.classList.toggle('primary', state.mode3d);
+      alpha = Math.max(alpha, 0.5);
+      start();
+    });
 
-    /* pointer */
-    let drag = null;
+    /* pointer: drag nodes, pan/rotate background, pinch to zoom */
+    const pointers = new Map();
+    let drag = null, pinch = null;
     canvas.addEventListener('pointerdown', e => {
-      const hit = pick(e.clientX, e.clientY);
-      drag = { node: hit, x: e.clientX, y: e.clientY, tx: view.tx, ty: view.ty, moved: false };
-      if (hit) { hit.fixed = true; alpha = Math.max(alpha, 0.25); start(); }
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       canvas.setPointerCapture(e.pointerId);
+      if (pointers.size === 2) {
+        const [p1, p2] = [...pointers.values()];
+        pinch = { d0: Math.hypot(p1.x - p2.x, p1.y - p2.y), k0: view.k };
+        if (drag && drag.node) drag.node.fixed = false;
+        drag = null; dragging = true;
+        return;
+      }
+      const hit = pick(e.clientX, e.clientY);
+      drag = { node: hit, x: e.clientX, y: e.clientY, tx: view.tx, ty: view.ty, th0: theta, moved: false };
+      dragging = true;
+      if (hit) { hit.fixed = true; alpha = Math.max(alpha, 0.25); }
+      start();
     });
     canvas.addEventListener('pointermove', e => {
+      if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && pointers.size === 2) {
+        const [p1, p2] = [...pointers.values()];
+        const d1 = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+        const r = canvas.getBoundingClientRect();
+        applyZoom(pinch.k0 * (d1 / pinch.d0), (p1.x + p2.x) / 2 - r.left, (p1.y + p2.y) / 2 - r.top);
+        start();
+        return;
+      }
       if (drag) {
         const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
         if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
         if (drag.node) {
-          const p = toWorld(e.clientX, e.clientY);
-          drag.node.x = p.x; drag.node.y = p.y;
+          placeAt(drag.node, toWorld(e.clientX, e.clientY));
           alpha = Math.max(alpha, 0.18);
+        } else if (state.mode3d) {
+          theta = drag.th0 + dx * 0.005;          // horizontal drag orbits the cloud
+          view.ty = drag.ty + dy;
         } else {
           view.tx = drag.tx + dx; view.ty = drag.ty + dy;
         }
@@ -314,7 +394,9 @@
         start();
       }
     });
-    canvas.addEventListener('pointerup', e => {
+    const lift = e => {
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) pinch = null;
       if (drag) {
         if (drag.node) drag.node.fixed = false;
         if (!drag.moved) {
@@ -322,33 +404,34 @@
           if (hit) { state.selected = hit.id; A().openEntity(hit.id); }
           else state.selected = null;
         }
-        drag = null; start();
+        drag = null;
       }
-    });
+      if (!pointers.size) dragging = false;
+      start();
+    };
+    canvas.addEventListener('pointerup', lift);
+    canvas.addEventListener('pointercancel', lift);
     canvas.addEventListener('pointerleave', () => { state.hovered = null; A().hideTip(); });
     canvas.addEventListener('wheel', e => {
       e.preventDefault();
-      const f = Math.exp(-e.deltaY * 0.0016);
-      const k2 = Math.max(0.25, Math.min(3.2, view.k * f));
       const r = canvas.getBoundingClientRect();
-      const mx = e.clientX - r.left, my = e.clientY - r.top;
-      view.tx = mx - (mx - view.tx) * (k2 / view.k);
-      view.ty = my - (my - view.ty) * (k2 / view.k);
-      view.k = k2;
+      applyZoom(view.k * Math.exp(-e.deltaY * 0.0016), e.clientX - r.left, e.clientY - r.top);
       start();
     }, { passive: false });
 
     if ('ResizeObserver' in window) new ResizeObserver(() => { resize(); start(); }).observe(frame);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) start(); });
     resize();
     rebuild();
   }
 
   function fitView() {
     if (!nodes.length) return;
+    projectAll();
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
-    nodes.forEach(p => { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); });
+    nodes.forEach(p => { x0 = Math.min(x0, p.px); x1 = Math.max(x1, p.px); y0 = Math.min(y0, p.py); y1 = Math.max(y1, p.py); });
     const pad = 50;
-    const k = Math.min((W) / (x1 - x0 + pad * 2), (Hh) / (y1 - y0 + pad * 2), 2.4);
+    const k = Math.min(W / (x1 - x0 + pad * 2), Hh / (y1 - y0 + pad * 2), 2.4);
     view.k = Math.max(0.25, k);
     view.tx = W / 2 - (x0 + x1) / 2 * view.k;
     view.ty = Hh / 2 - (y0 + y1) / 2 * view.k;
@@ -368,11 +451,12 @@
     }
     if (!nodeById.has(id)) { state.era = null; rebuild(); }
     state.selected = id;
+    projectAll();
     const p = nodeById.get(id);
     if (p) {
       view.k = Math.max(view.k, 1.1);
-      view.tx = W / 2 - p.x * view.k;
-      view.ty = Hh / 2 - p.y * view.k;
+      view.tx = W / 2 - p.px * view.k;
+      view.ty = Hh / 2 - p.py * view.k;
     }
     alpha = Math.max(alpha, 0.3);
     start();

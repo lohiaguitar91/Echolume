@@ -98,27 +98,53 @@
     root.querySelector('#tl-fit').addEventListener('click', () => fitTo(-7150, 240));
     root.querySelector('#tl-export').addEventListener('click', () => H.ui.exportPNG.fromSVG(svg, 'holocron-timeline', '#120e12'));
 
-    /* pointer interactions */
-    let drag = null;
+    /* pointer interactions: one-finger drag pans, two fingers pinch-zoom */
+    const pointers = new Map();
+    let drag = null, pinch = null;
     svg.addEventListener('pointerdown', e => {
-      drag = { x: e.clientX, t0: state.t0, t1: state.t1, moved: false };
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       svg.setPointerCapture(e.pointerId);
+      animTarget = null;                                  // interactions take over instantly
+      if (pointers.size === 2) {
+        const [p1, p2] = [...pointers.values()];
+        const midX = (p1.x + p2.x) / 2;
+        pinch = { d0: Math.abs(p1.x - p2.x) || 1, span0: state.t1 - state.t0, tMid: tAt(midX) };
+        drag = null;
+        return;
+      }
+      drag = { x: e.clientX, t0: state.t0, t1: state.t1, moved: false };
       svg.classList.add('dragging');
     });
     svg.addEventListener('pointermove', e => {
+      if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && pointers.size >= 2) {
+        const [p1, p2] = [...pointers.values()];
+        const d1 = Math.abs(p1.x - p2.x) || 1;
+        let span = Math.max(MIN_SPAN, Math.min(pinch.span0 * pinch.d0 / d1, MAX_T - MIN_T));
+        const midX = (p1.x + p2.x) / 2;
+        const r = svg.getBoundingClientRect();
+        const { ml } = plotDims();
+        const frac = Math.max(0, Math.min(1, (midX - r.left - ml) / plotW()));
+        const [a, b] = clampDomain(pinch.tMid - span * frac, pinch.tMid - span * frac + span);
+        state.t0 = a; state.t1 = b;
+        sched();
+        return;
+      }
       if (!drag) return;
       const dx = e.clientX - drag.x;
       if (Math.abs(dx) > 3) drag.moved = true;
       const span = drag.t1 - drag.t0;
       const w = plotW();
-      let dt = -dx * span / w;
-      let a = drag.t0 + dt, b = drag.t1 + dt;
-      if (a < MIN_T) { b += MIN_T - a; a = MIN_T; }
-      if (b > MAX_T) { a -= b - MAX_T; b = MAX_T; }
+      const dt = -dx * span / w;
+      const [a, b] = clampDomain(drag.t0 + dt, drag.t1 + dt);
       state.t0 = a; state.t1 = b;
       sched();
     });
-    const endDrag = () => { svg.classList.remove('dragging'); drag = null; };
+    const endDrag = e => {
+      if (e && pointers.has(e.pointerId)) pointers.delete(e.pointerId);
+      if (pointers.size < 2) pinch = null;
+      if (!pointers.size) { svg.classList.remove('dragging'); drag = null; }
+    };
     svg.addEventListener('pointerup', endDrag);
     svg.addEventListener('pointercancel', endDrag);
     svg.addEventListener('wheel', e => {
@@ -144,18 +170,44 @@
     const { ml } = plotDims();
     return state.t0 + (clientX - r.left - ml) / plotW() * (state.t1 - state.t0);
   }
-  function zoomAround(t, f) {
-    let span = (state.t1 - state.t0) * f;
-    span = Math.max(MIN_SPAN, Math.min(span, MAX_T - MIN_T));
-    const frac = (t - state.t0) / (state.t1 - state.t0);
-    let a = t - span * frac, b = a + span;
+  /* Eased zooming: interactions set a target domain and a short spring chases it,
+     so wheel/button zooms feel fluid. Dragging writes the domain directly (finger-lock). */
+  const noMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let animTarget = null, animRunning = false;
+  function animateTo(a, b) {
+    if (noMotion()) { state.t0 = a; state.t1 = b; animTarget = null; sched(); return; }
+    animTarget = { a, b };
+    if (!animRunning) { animRunning = true; requestAnimationFrame(animStep); }
+  }
+  function animStep() {
+    if (!animTarget) { animRunning = false; return; }
+    const ease = 0.26;
+    state.t0 += (animTarget.a - state.t0) * ease;
+    state.t1 += (animTarget.b - state.t1) * ease;
+    const span = state.t1 - state.t0;
+    if (Math.abs(animTarget.a - state.t0) < span * 0.0015 && Math.abs(animTarget.b - state.t1) < span * 0.0015) {
+      state.t0 = animTarget.a; state.t1 = animTarget.b;
+      animTarget = null; animRunning = false;
+    } else requestAnimationFrame(animStep);
+    render();
+  }
+  function clampDomain(a, b) {
     if (a < MIN_T) { b += MIN_T - a; a = MIN_T; }
     if (b > MAX_T) { a -= b - MAX_T; b = MAX_T; }
-    state.t0 = a; state.t1 = b; sched();
+    return [Math.max(a, MIN_T), Math.min(b, MAX_T)];
+  }
+  function zoomAround(t, f) {
+    const base = animTarget || { a: state.t0, b: state.t1 };   // compound fast wheel ticks
+    let span = (base.b - base.a) * f;
+    span = Math.max(MIN_SPAN, Math.min(span, MAX_T - MIN_T));
+    const frac = (t - base.a) / (base.b - base.a);
+    const [a, b] = clampDomain(t - span * frac, t - span * frac + span);
+    animateTo(a, b);
   }
   function fitTo(a, b) {
     const pad = (b - a) * 0.06 + 4;
-    state.t0 = Math.max(MIN_T, a - pad); state.t1 = Math.min(MAX_T, b + pad); sched();
+    const [ca, cb] = clampDomain(a - pad, b + pad);
+    animateTo(ca, cb);
   }
 
   function tickStep(span) {

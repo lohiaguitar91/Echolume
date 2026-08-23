@@ -14,14 +14,20 @@ One Sith (138 ABY). Pure vanilla JS, zero dependencies, no build step required.
 
 ## What's inside
 
+On first visit the atlas opens with a skippable **opening crawl** (replayable from the
+footer; a static title card under reduced motion), views change through a **hyperspace
+star-streak jump**, and a depth-projected **starfield** with pointer parallax runs behind
+everything — throttled, layer-isolated, and paused when hidden, so it stays at 60fps even
+on software rendering.
+
 | View | What it does |
 |---|---|
-| **Timeline** | Zoomable/pannable SVG chronology, 7000 BBY → 138 ABY. Era ribbon (click to zoom), conflict span bars, ~100 point events in packed lanes, an **academy-cycles layer** (every opening/closing of Korriban, Trayus, Ossus, Dantooine, the Coruscant Temple, Tython, Yavin 4…), and a **lineages layer** (Dark Lord succession, the Revan line, the Banite Rule of Two chain with its deliberately unrecorded centuries, the Yoda–Skywalker line). Filter by era, event kind, and layer. Export PNG. |
-| **Graph** | Canvas force-directed network of characters, factions, artifacts, concepts, worlds, and events. Color = alignment (Sith red / Jedi blue / gray gold / neutral), shape = type, size = degree. Filter by type, alignment, and era; click to focus a node and dim everything unconnected; drag nodes; export PNG. |
+| **Timeline** | Zoomable/pannable SVG chronology, 7000 BBY → 138 ABY, with **eased spring zooming** and **two-finger pinch**. Era ribbon (click to zoom), conflict span bars, ~100 point events in packed lanes, an **academy-cycles layer** (every opening/closing of Korriban, Trayus, Ossus, Dantooine, the Coruscant Temple, Tython, Yavin 4…), and a **lineages layer** (Dark Lord succession, the Revan line, the Banite Rule of Two chain with its deliberately unrecorded centuries, the Yoda–Skywalker line). Filter by era, event kind, and layer. Export PNG. |
+| **Graph** | Canvas force-directed network of characters, factions, artifacts, concepts, worlds, and events — with a **3D depth mode**: z-axis physics, perspective projection with depth cueing, slow auto-orbit, and drag-to-rotate. Color = alignment (Sith red / Jedi blue / gray gold / neutral), shape = type, size = degree. Filter by type, alignment, and era; click to focus a node and dim everything unconnected; drag nodes; pinch or wheel to zoom; export PNG. |
 | **Atlas** | Full-text search over everything (hand-rolled inverted index: field weights, prefix matching, phrase bonus, highlighted snippets), plus an A–Z browse when the query is empty. |
 | **Ask** | Natural-language Q&A answered **from the lore graph itself** — intent parsing (who trained X, who killed X, when/where/how, who founded/led, lineages, academy cycles, "what happened in YEAR") + graph retrieval + templated synthesis. Every answer links its entities and cites its sources; unparseable questions fall back to search. Try: *"When did the Sith academy reopen after Bane?"* |
 | **Eras** | Nine deep-dives (Hyperspace War → Legacy), each with a period summary, battles, key figures, technological state, and the Jedi-vs-Sith balance — plus a jump to that span on the timeline. |
-| **Galaxy** | A stylized star map (Deep Core → Sith space → Unknown Regions) of the 21 worlds in the record, with the Daragon Trail and the Sith-space spine drawn in. Click a world for its history, academy cycles, and artifacts; highlight any era to see where that era happened. |
+| **Galaxy** | A **holo-table star map**: the chart tilts in 3D perspective over a holographic grid with damped pointer parallax (toggleable; defaults flat on touch). Deep Core → Sith space → Unknown Regions, 21 worlds, the Daragon Trail and Sith-space spine drawn in. Click a world for its history, academy cycles, and artifacts; highlight any era to see where that era happened. |
 | **Compare** | Any two entries side by side — characters, eras, factions, worlds — including everything the record says connects the pair (direct edges, shared events, shared connections). |
 
 Everywhere: a shared entity drawer with bio, grouped relations, event record, sources, and
