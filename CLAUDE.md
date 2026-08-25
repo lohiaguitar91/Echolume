@@ -93,6 +93,13 @@ already cost time, and the design rules that must not be broken.
 - A depth's t=0 hint fires **during the intro**, so the verbs strip and the hint slot
   genuinely coexist: on short screens (≤640px tall) the strip rides higher and smaller,
   and the toast wraps under a max-width. Both live in ui.css media rules — keep them.
+- `[hidden] { display: none !important }` is global in ui.css. Any author `display:`
+  rule outranks the UA's hidden style, which is how an empty boon chip and a "0 m"
+  meter sat on every story depth. Show things with `el.hidden = false`, never by
+  relying on a class alone.
+- **A thrown song commits its listeners** (`TUNING.castCommit`): hunters and
+  leviathans alerted by a cast ignore nearer, quieter sounds — including your next
+  tap — for that long. Without it the lie lasted exactly one song.
 
 ## Bosses
 - **Boss-ness is declared by the level, not by arithmetic.** A def with a `boss: { name,
@@ -132,4 +139,9 @@ already cost time, and the design rules that must not be broken.
   radius. Keep it well under the corridor half-width or it walls the passage off.
 - Monetization is ads + a single pay-once **Remove Ads** purchase. **No gems, no
   currency, no energy timers, no level packs.** Interstitials only after gate wins;
-  rewarded revive at bosses only; the placement rules live inside `ads.js`.
+  the rewarded revive is a button on the boss death screen ("Watch ad to try again"),
+  shown only while `ads.canRevive()` is true, once per attempt, resuming where the
+  run ended — never auto-played; the placement rules live inside `ads.js`.
+- `ads.js` talks to `Capacitor.Plugins.AdMob` directly (no package import — `www/` has
+  no bundler). Method/event names are the plugin's v8 README strings; if the plugin
+  major changes, check them first.

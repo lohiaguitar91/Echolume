@@ -143,7 +143,6 @@ export const TUNING = {
   // Health
   maxHearts: 3,
   invulnTime: 1.4,          // s of i-frames after damage
-  reviveGrace: 3.0,         // s of i-frames after a rewarded revive — whatever killed you is still there
   heartMoteCollectRadius: 22,
 
   // Camera
@@ -182,6 +181,13 @@ export const TUNING = {
   // instead of you. Range is bounded or every fight would be solved from the
   // far end of the corridor.
   castRange: 420,
+  // How long a thrown song holds a listener's attention. Without this the lie
+  // lasted exactly one tap: your next song (the one you need to move) pulled
+  // every hunter straight back onto you. Human-tuned; the bot never casts.
+  castCommit: 2.4,
+  // Grace after a rewarded revive: back at the spot it took you, hearts full,
+  // long enough to move before whatever killed you can simply do it again.
+  reviveGrace: 2.0,
 
   // ---- wardens (the depth-14 boss) ----
   // Anchored, enormous, and blind even by this game's standards. It cannot

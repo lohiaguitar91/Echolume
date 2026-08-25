@@ -326,13 +326,12 @@
     <div class="panel">
       <h2 id="gameover-title">The dark took you</h2>
       <p class="dim" id="gameover-sub"></p>
-      <!-- Rewarded revive: shown only at bosses, only with an ad loaded.
-           Declining is just using the ordinary buttons below. -->
-      <div id="revive-offer" class="revive-offer" hidden>
-        <button id="btn-revive" class="btn revive">Rise where you fell</button>
-        <p class="dim revive-note">Watch an ad · full hearts · the run unbroken</p>
-      </div>
       <div class="menu-buttons">
+        <!-- Rewarded revive: shown only at a boss, once per attempt, and only
+             when an ad is actually loaded (an ad watched, then the run resumes
+             where the dark took you). Mote-amber: an offer of carried light,
+             not interface-cyan. Declining is just using the other buttons. -->
+        <button id="btn-revive" class="btn revive" hidden>Rise where you fell</button>
         <button id="btn-retry" class="btn primary">Try again</button>
         <button id="btn-gameover-menu" class="btn ghost">Menu</button>
       </div>

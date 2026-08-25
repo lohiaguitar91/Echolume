@@ -63,6 +63,15 @@ session learned all three the hard way.
   `store/screenshots/` (cold open with the verbs strip, mote chain, gate screen,
   Listener mid-telegraph, hush + ice, Warm Dark finale), rendered by the actual
   game with the DOM HUD composited in. Nothing left to capture for submission.
+- **Playtest round (Aug 17), from Disha's TestFlight notes:** song budgets are
+  15% tighter on every depth (the second star was too easy); a thrown song now
+  *commits* its listeners for `castCommit` = 2.4s so your next tap cannot undo the
+  lie (the verb "didn't work as well as I thought" because it lasted one song);
+  the boon chip no longer ghosts on every depth and its label says what you see
+  ("Afterglow", "Heard") with a once-per-gate plain-words hint and a rewritten
+  depth-7 gate line (no more "glow 35%"); the "0 m" meter is Abyss-only again;
+  and the boss death screen gained the "Watch ad to try again" button (see §4).
+  Budget factor and `castCommit` are the two numbers most worth a human's opinion.
 - **Two small HUD fixes from the final layout battery:** the depth toast now
   wraps instead of clipping on ≤430px-wide screens ("The Trench Mouth" was 398px
   wide at its tracking), and on short screens (≤640px tall) the verbs strip
@@ -103,21 +112,29 @@ is console-side only: create the leaderboard and the 15 achievements exactly as
 listed in `SHIP.md` §3.5 — the IDs are emitted verbatim by
 `www/js/gameservices.js`, so a typo silently breaks unlocks.
 
-### 4. Ads and the one purchase — IMPLEMENTED, running on SAMPLE ids
-`www/js/ads.js` now drives `@capacitor-community/admob` 8.1.0 for real, against
-Google's published sample ids (`ADS_ARE_SAMPLE = true`), so the whole surface is
-testable on a device before the AdMob console work. Consent (UMP + ATT) and SDK
-init run lazily on the first gate/boss depth — the cold open stays untouched.
+### 4. Ads and the one purchase — MERGED AND DEVICE-PROVEN (Aug 2026)
+The Windows shell and the Mac SDK work are reconciled per the Aug-17 merge
+note: the shell owns the death-screen button ("Rise where you fell"),
+once-per-attempt (`_reviveSpent`), and the snapshot restart
+(`startLevel({revive})` restores `game.reviveSnapshot` — the world rebuilds,
+you keep position/motes/clock, `TUNING.reviveGrace` covers the first breath);
+`ads.js` answers the three-method contract — `maybeInterstitial({won,isGate})`,
+synchronous `canRevive({isBoss})`, `showRevive({isBoss})` true only on a
+completed reward — with the Mac's device-proven internals: lazy consent
+(UMP defensive + ATT, `npa` on every request after a denial), prepare resolves
+only when loaded, shows driven by plugin EVENTS (the show promises settle
+inconsistently and can hang forever — this wedged the button on device once),
+a 15s never-presented watchdog, and an honest toast when a taken offer fails.
 **The placement rules are still enforced inside `ads.js`, not at the call
-sites** — an interstitial is refused for a death or a non-gate win no matter who
-asks. Keep it that way. The rewarded revive resumes the run **where you fell**
-(`Game.revive()`) because the free retry already gives back the lair mouth — a
-revive that only re-sold the checkpoint would be a scam.
+sites.** Keep it that way. Real iOS ids are live (AdMob app + units, Aug 20);
+`FORCE_TEST_ADS` serves Google's sample units through every beta and flips
+false only for the store build; `AD_DEBUG` paints an on-screen breadcrumb log
+when a device needs interrogating. TestFlight: builds 5 (live ads, reserve),
+6 (ITMS-91064, superseded), 7 (the beta build).
 
-Remaining: swap the six sample ids for real ones (see the ⚠ comments in
-`ads.js`, `Info.plist`, `AndroidManifest.xml`), publish the GDPR message in
-AdMob, create `remove_ads` in both consoles + a purchase plugin, set
-`IAP_PRODUCT_ID`.
+Remaining: Android ids when the Play console work happens, publish the GDPR
+message in AdMob before public release, create `remove_ads` in both consoles +
+a purchase plugin, set `IAP_PRODUCT_ID`.
 
 **The metadata is already done.** Ads ship at launch, so the repo now describes
 an ad-supported app rather than an offline one: the privacy policy has an

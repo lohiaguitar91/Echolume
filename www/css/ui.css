@@ -57,6 +57,11 @@ html, body {
 }
 .screen.visible { opacity: 1; pointer-events: auto; }
 .screen[hidden] { display: none; }
+/* `hidden` must mean hidden. Any author `display:` rule (.obj, .hud-stat, .btn,
+   .light-bank…) outranks the UA's [hidden] style, which is how an empty boon
+   chip and a "0 m" meter were sitting on every story depth. Every element that
+   carries the attribute is un-hidden by JS explicitly, so this is safe. */
+[hidden] { display: none !important; }
 
 .menu-inner {
   width: min(420px, 92vw);
@@ -155,11 +160,6 @@ html, body {
   color: #fff4de;
 }
 .btn.revive:hover { box-shadow: 0 0 30px rgba(255, 196, 94, 0.32), inset 0 0 14px rgba(255, 196, 94, 0.14); }
-.revive-offer { display: flex; flex-direction: column; gap: 6px; width: min(300px, 80vw); margin-bottom: 14px; }
-/* Same trap as .screen[hidden] above: display:flex beats the UA's [hidden]
-   rule, and the offer rendered on every death as a wired-to-nothing ghost. */
-.revive-offer[hidden] { display: none; }
-.revive-offer .revive-note { font-size: 12px; margin: 0; text-align: center; }
 .btn.danger.armed { background: rgba(255, 79, 154, 0.18); color: #ffd7e8; }
 .btn:focus-visible, .icon-btn:focus-visible, .level-cell:focus-visible {
   outline: 2px solid var(--accent);
