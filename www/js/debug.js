@@ -173,6 +173,15 @@ export function installDebug(shell) {
       chk('urchin', g.ents.urchins, 4);
       chk('hunter', g.ents.hunters, 6);
       chk('vent', [g.ents.vent], 20);
+      // A mote within an urchin's reach (danger radius + collect radius)
+      // cannot be taken without paying a heart — placement bug, not challenge.
+      const moteReach = TUNING.urchinHitRadius + TUNING.playerRadius + TUNING.moteCollectRadius;
+      g.ents.motes.forEach((m, i) => {
+        for (const u of g.ents.urchins) {
+          const d = Math.hypot(u.x - m.x, u.y - m.y);
+          if (d < moteReach) bad.push({ kind: 'moteInUrchin', i, d: +d.toFixed(1) });
+        }
+      });
       // A warden is anchored and solid, so its whole body has to sit clear of
       // the wall or it silently plugs the corridor it is supposed to guard.
       chk('warden', g.ents.wardens || [], TUNING.wardenRadius + 10);

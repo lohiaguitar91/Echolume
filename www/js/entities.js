@@ -39,6 +39,37 @@ export function setupEntities(def, geom) {
   };
 
   // Motes
+  // Urchin positions resolve before motes so a mote can never seed inside an
+  // urchin's reach: within spikes + collect radius + body it cannot be taken
+  // without paying a heart. Clearance is against the *drawn* spikes, so a
+  // safe mote also reads safe.
+  const urchinPts = (def.urchins || []).map((spec) => resolvePos(spec, geom));
+  const moteClear = TUNING.urchinVisualRadius + TUNING.moteCollectRadius + TUNING.playerRadius;
+  const urchinGap = (x, y) => {
+    let d = Infinity;
+    for (const u of urchinPts) d = Math.min(d, Math.hypot(u.x - x, u.y - y));
+    return d;
+  };
+  // A blocked mote slides to a nearby clear (t, off); the scan order is fixed
+  // so placement stays deterministic per seed, and only blocked motes move.
+  // If nothing nearby clears fully, keep the farthest-from-spikes candidate.
+  const placeMoteClear = (corridor, t, off) => {
+    let p = pointOnCorridor(corridor, t, off);
+    let bestD = urchinGap(p.x, p.y);
+    if (bestD >= moteClear) return p;
+    const n = corridor.samples.length;
+    for (const dt of [0, 0.02, -0.02, 0.04, -0.04, 0.06, -0.06]) {
+      const t2 = clamp(t + dt, 0.08, 0.95);
+      const maxOff = Math.max(0, corridor.w[Math.round(t2 * (n - 1))] - 30);
+      for (const f of [-1, -0.5, 0, 0.5, 1]) {
+        const c = pointOnCorridor(corridor, t2, f * maxOff);
+        const d = urchinGap(c.x, c.y);
+        if (d >= moteClear) return c;
+        if (d > bestD) { bestD = d; p = c; }
+      }
+    }
+    return p;
+  };
   const motes = [];
   const placeMotes = (corridor, count, seedOffset) => {
     const r2 = mulberry32(def.seed * 31 + seedOffset);
@@ -48,7 +79,7 @@ export function setupEntities(def, geom) {
       const wi = Math.round(clamp(t, 0, 1) * (n - 1));
       const halfW = corridor.w[wi];
       const off = (r2() - 0.5) * 2 * Math.max(0, halfW - 30);
-      const p = pointOnCorridor(corridor, t, off);
+      const p = placeMoteClear(corridor, t, off);
       motes.push({ x: p.x, y: p.y, taken: false, reveal: 0, phase: r2() * 6.28, driftPhase: r2() * 6.28 });
     }
   };
@@ -58,8 +89,7 @@ export function setupEntities(def, geom) {
   }
 
   // Urchins
-  const urchins = (def.urchins || []).map((spec) => {
-    const p = resolvePos(spec, geom);
+  const urchins = urchinPts.map((p) => {
     const spikes = [];
     const nSpikes = 9 + Math.floor(rng() * 4);
     for (let i = 0; i < nSpikes; i++) spikes.push((i / nSpikes) * Math.PI * 2 + rng() * 0.3);

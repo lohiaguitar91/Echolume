@@ -163,13 +163,14 @@ export class Game {
     const newMotes = [], newUrchins = [], newHunters = [];
     const fresh = a.waypoints.slice(Math.max(0, a.waypoints.length - 9));
     const depthM = fresh[0][1] / TUNING.abyssDepthPerMeter;
+    // A mote inside an urchin's reach (spikes + collect radius + body) cannot
+    // be taken without paying a heart, so urchins roll first per waypoint and
+    // motes must seed clear of every urchin placed so far.
+    const moteClear = TUNING.urchinVisualRadius + TUNING.moteCollectRadius + TUNING.playerRadius;
+    const nearUrchin = (x, y) =>
+      newUrchins.some((o) => dist(o.x, o.y, x, y) < moteClear) ||
+      (prevEnts && this.ents.urchins.some((o) => dist(o.x, o.y, x, y) < moteClear));
     for (const [wx, wy] of fresh) {
-      if (rng() < 0.75) {
-        newMotes.push({
-          x: wx + (rng() - 0.5) * 120, y: wy + (rng() - 0.5) * 160,
-          taken: false, reveal: 0, phase: rng() * 6.28, driftPhase: rng() * 6.28,
-        });
-      }
       const urchinChance = clamp(0.09 + depthM * 0.0006, 0, 0.42);
       if (rng() < urchinChance) {
         const ux = wx + (rng() - 0.5) * 140, uy = wy + (rng() - 0.5) * 100;
@@ -182,6 +183,21 @@ export class Game {
           const nS = 9 + Math.floor(rng() * 4);
           for (let i = 0; i < nS; i++) spikes.push((i / nS) * Math.PI * 2 + rng() * 0.3);
           newUrchins.push({ x: ux, y: uy, reveal: 0, phase: rng() * 6.28, spikes });
+        }
+      }
+      if (rng() < 0.75) {
+        let placed = false, mx = 0, my = 0;
+        for (let tries = 0; tries < 10 && !placed; tries++) {
+          mx = wx + (rng() - 0.5) * 120; my = wy + (rng() - 0.5) * 160;
+          placed = !nearUrchin(mx, my);
+        }
+        // On a full miss streak skip the mote: an unreachable mote is worse
+        // than a missing one.
+        if (placed) {
+          newMotes.push({
+            x: mx, y: my,
+            taken: false, reveal: 0, phase: rng() * 6.28, driftPhase: rng() * 6.28,
+          });
         }
       }
       const hunterChance = depthM < 100 ? 0 : clamp(0.04 + depthM * 0.00035, 0, 0.22);
