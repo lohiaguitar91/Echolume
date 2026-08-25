@@ -326,6 +326,12 @@
     <div class="panel">
       <h2 id="gameover-title">The dark took you</h2>
       <p class="dim" id="gameover-sub"></p>
+      <!-- Rewarded revive: shown only at bosses, only with an ad loaded.
+           Declining is just using the ordinary buttons below. -->
+      <div id="revive-offer" class="revive-offer" hidden>
+        <button id="btn-revive" class="btn revive">Rise where you fell</button>
+        <p class="dim revive-note">Watch an ad · full hearts · the run unbroken</p>
+      </div>
       <div class="menu-buttons">
         <button id="btn-retry" class="btn primary">Try again</button>
         <button id="btn-gameover-menu" class="btn ghost">Menu</button>

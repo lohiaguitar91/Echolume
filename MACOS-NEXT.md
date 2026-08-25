@@ -91,21 +91,33 @@ Watch the gate screen appear, the boss card fade, and the verbs strip dissolve
 on first touch. Files: `#screen-gate` in `www/index.html`, styles under
 `/* ---------- gate ---------- */` in `www/css/ui.css`.
 
-### 3. Game Center capability
-One click, and it cannot be pre-committed because it needs the signing team:
-Signing & Capabilities → + → Game Center. Then create the leaderboard and the 15
-achievements exactly as listed in `SHIP.md` §3.5 — the IDs are emitted verbatim
-by `www/js/gameservices.js`, so a typo silently breaks unlocks.
+### 3. Game Center capability — DONE on the Mac (Aug 20 2026)
+The entitlement no longer needs an Xcode click: `App/App.entitlements` is in the
+repo and wired into both build configs. More importantly, the Mac session found
+and fixed a real registration hole: Capacitor 8 only auto-registers plugins named
+in the synced config's `packageClassList`, which the CLI rebuilds from npm
+packages on every sync — an app-target plugin never makes the list, so
+`Capacitor.Plugins.GameConnect` was silently undefined. `EchoBridgeViewController`
+(in `SceneDelegate.swift`) now registers it in `capacitorDidLoad()`. What remains
+is console-side only: create the leaderboard and the 15 achievements exactly as
+listed in `SHIP.md` §3.5 — the IDs are emitted verbatim by
+`www/js/gameservices.js`, so a typo silently breaks unlocks.
 
-### 4. Ads and the one purchase
-`www/js/ads.js` is written, wired, and inert. `maybeInterstitial()` runs on every
-level win and `offerRevive()` on every boss death; both return false while
-`AD_IDS` is null. **The placement rules are enforced inside `ads.js`, not at the
-call sites** — an interstitial is refused for a death or a non-gate win no matter
-who asks. Keep it that way.
+### 4. Ads and the one purchase — IMPLEMENTED, running on SAMPLE ids
+`www/js/ads.js` now drives `@capacitor-community/admob` 8.1.0 for real, against
+Google's published sample ids (`ADS_ARE_SAMPLE = true`), so the whole surface is
+testable on a device before the AdMob console work. Consent (UMP + ATT) and SDK
+init run lazily on the first gate/boss depth — the cold open stays untouched.
+**The placement rules are still enforced inside `ads.js`, not at the call
+sites** — an interstitial is refused for a death or a non-gate win no matter who
+asks. Keep it that way. The rewarded revive resumes the run **where you fell**
+(`Game.revive()`) because the free retry already gives back the lair mouth — a
+revive that only re-sold the checkpoint would be a scam.
 
-Turning it on is: install `@capacitor-community/admob` (8.1.0 supports Capacitor
-8), paste the ids, create `remove_ads` in both consoles, set `IAP_PRODUCT_ID`.
+Remaining: swap the six sample ids for real ones (see the ⚠ comments in
+`ads.js`, `Info.plist`, `AndroidManifest.xml`), publish the GDPR message in
+AdMob, create `remove_ads` in both consoles + a purchase plugin, set
+`IAP_PRODUCT_ID`.
 
 **The metadata is already done.** Ads ship at launch, so the repo now describes
 an ad-supported app rather than an offline one: the privacy policy has an
@@ -120,11 +132,12 @@ is absent *or* malformed, so a placeholder would have crashed every build. The
 exact snippets are in comments at the point of use in `Info.plist` and
 `AndroidManifest.xml`.
 
-One thing I could not settle from here: `NSPrivacyTrackingDomains` is empty on
-purpose, because this app makes no tracking connections of its own and the ad
-SDK declares its own domains. That reading matches Apple's aggregation model,
-but I could not test it against a real submission — if the validator complains,
-that is the first place to look.
+The `NSPrivacyTrackingDomains` question is now SETTLED by a real submission
+(Aug 20 2026): `NSPrivacyTracking=true` with an empty domains list drew
+ITMS-91064 "invalid tracking information" on build 1.0.0 (6). The fix that
+matches Google's own GMA manifest (which omits the top-level tracking key and
+declares tracking per data type): the app manifest says `false` + empty
+domains, and the SDK manifest + ASC App Privacy answers carry the disclosure.
 
 ### 5. Play with the new verb: hold to throw your voice
 Casting is the biggest gameplay change since the gate economy, and it is tuned

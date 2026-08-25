@@ -2,3 +2,5 @@ node_modules/
 assets-out/
 .DS_Store
 Thumbs.db
+ios/App/build-device/
+ios/App/output/

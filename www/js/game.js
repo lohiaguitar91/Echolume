@@ -122,6 +122,25 @@ export class Game {
     this.checkpointArmed = false;
   }
 
+  // The rewarded revive: rise exactly where you fell. Hearts refill and a long
+  // grace window covers whatever is still circling; the run itself — motes,
+  // songs, clock, the world's state — is untouched, so the stars still mean
+  // what they meant. This has to be worth an ad when the free retry already
+  // hands back the lair mouth: what it buys is the fight not starting over.
+  revive() {
+    const p = this.ents.player;
+    p.dead = false;
+    p.hearts = TUNING.maxHearts;
+    p.invuln = TUNING.reviveGrace;
+    p.vx = 0; p.vy = 0;
+    this.state = 'play';
+    this.stateT = 0;
+    this.timeScale = 1;
+    this.lastDamageSource = null;
+    // Same free wake pulse a spawn gets, so the player rises seeing something.
+    this._emitPing(p.x, p.y - 1, { free: true });
+  }
+
   // ---- abyss generation ----
   _extendAbyss() {
     const a = this.abyss;

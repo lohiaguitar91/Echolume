@@ -143,6 +143,7 @@ export const TUNING = {
   // Health
   maxHearts: 3,
   invulnTime: 1.4,          // s of i-frames after damage
+  reviveGrace: 3.0,         // s of i-frames after a rewarded revive — whatever killed you is still there
   heartMoteCollectRadius: 22,
 
   // Camera

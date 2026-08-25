@@ -3,25 +3,28 @@
 <plist version="1.0">
 <dict>
 	<!-- This is the APP's manifest, and it describes only what this bundle does.
-	     The Google Mobile Ads SDK (11.2.0+) ships its own privacy manifest and
-	     declares its own collection and tracking domains; Apple aggregates the
-	     two at submission, so do NOT copy Google's declarations in here.
+	     The Google Mobile Ads SDK ships its own privacy manifest and declares
+	     its own collection; Apple aggregates them at submission, so do NOT copy
+	     Google's declarations in here.
 
-	     What is ours: the app enables advertising that uses the advertising
-	     identifier once the user grants ATT, so NSPrivacyTracking is true. The
-	     one required-reason API in our own binary is UserDefaults, reached
+	     NSPrivacyTracking is FALSE here, settled by a real validator answer:
+	     build 1.0.0 (6) drew ITMS-91064 "invalid tracking information" for
+	     declaring true with an empty NSPrivacyTrackingDomains (Aug 20 2026).
+	     The rule reads: claim tracking, name your domains — and this binary
+	     makes no tracking connections of its own, so the truthful pair is
+	     false + empty. Google's own GMA manifest does the same dance: it omits
+	     the top-level tracking key entirely and marks DeviceID as
+	     used-for-tracking at the data-type level. The user-facing "yes, this
+	     app tracks" disclosure lives in the ATT prompt and the App Store
+	     Connect App Privacy answers — a SEPARATE exercise, NOT derived from
+	     this file; see store/listing-ios.md for the table.
+
+	     The one required-reason API in our own binary is UserDefaults, reached
 	     through @capacitor/preferences, which mirrors the local save so progress
 	     survives webview data eviction. That plugin compiles into this target as
-	     a Swift package and ships no manifest of its own, so it is attributed here.
-
-	     NSPrivacyTrackingDomains stays empty on purpose: this app makes no
-	     tracking connections of its own. The ad SDK lists its domains in its own
-	     manifest, which is where Apple expects them. Do not invent entries here.
-
-	     The App Store Connect App Privacy answers are a SEPARATE exercise and are
-	     NOT derived from this file — see store/listing-ios.md for the table. -->
+	     a Swift package and ships no manifest of its own, so it is attributed here. -->
 	<key>NSPrivacyTracking</key>
-	<true/>
+	<false/>
 	<key>NSPrivacyTrackingDomains</key>
 	<array/>
 	<key>NSPrivacyCollectedDataTypes</key>

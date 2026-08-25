@@ -8,6 +8,7 @@ export function installDebug(shell) {
   const api = {
     get state() { return shell.state; },
     get game() { return shell.game; },
+    get shell() { return shell; },   // full Main instance, for harness tests (ads/ui/gs)
     stats() {
       const g = shell.game;
       if (!g || !g.ents) return null;

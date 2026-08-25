@@ -32,8 +32,8 @@ class Shell {
     this.haptics = new Haptics();
     this.save = new Save();
     this.gs = new GameServices(this.save);
-    this.ads = new Ads(this.save);   // inert until AD_IDS are filled in
     this.ui = new UI();
+    this.ads = new Ads(this.save, this.ui);   // needs ui for the revive offer
     this.teacher = new Teacher(this.save, this.ui);   // needs ui, so it comes after
     this.input = new Input(this.canvas);
     this.palette = PALETTE;
@@ -68,7 +68,8 @@ class Shell {
     } else {
       this._show('title');
     }
-    // No-op while AD_IDS are null, so this is safe to ship dormant.
+    // Touches nothing native — consent prompts and SDK init wait for the
+    // first gate or boss depth, so the cold open stays a cold open.
     this.ads.init();
     // Debug/test API only in plain-web dev, never in shipped native builds.
     if (!window.Capacitor) installDebug(this);
@@ -149,7 +150,13 @@ class Shell {
         const dead = this.game.def;
         if (dead && gateKind(dead.id) === 'boss') {
           this.ads.offerRevive({ isBoss: true }).then((took) => {
-            if (took) this.startLevel(dead.id, { fromCheckpoint: true, skipGate: true });
+            if (!took || this.state !== 'gameover') return;
+            // Rise where you fell — the run continues, it does not restart.
+            this.game.revive();
+            const p = this.game.ents.player;
+            this.ui.setHearts(p.hearts, TUNING.maxHearts);
+            this._show('playing');
+            this.ui.toast('The song is not over');
           });
         }
       },
@@ -390,6 +397,9 @@ class Shell {
     this.ui.setMotes(p.motes, moteTotal);
     this.ui.setPings(p.pings);
     this.ui.hideDepth();
+    // Let the ad surface preload for depths where one could matter (gates,
+    // bosses). What shows and when stays decided inside ads.js.
+    this.ads.levelStarted({ isGate: !!gateKind(id), isBoss: gateKind(id) === 'boss' });
     this._show('playing');
     // Show what the carried light is actually doing, for as long as it lasts.
     this.ui.showBoon(this.game.boon);
@@ -523,10 +533,11 @@ class Shell {
     click('btn-replay', () => this.startLevel(this.currentLevelId));
     click('btn-results-menu', () => this._show('levels'));
     click('btn-retry', () => {
+      this.ui.hideRevive();   // declines a standing revive offer, if any
       if (this.game.mode === 'abyss') this.startAbyss();
       else this.startLevel(this.currentLevelId, { fromCheckpoint: true });
     });
-    click('btn-gameover-menu', () => this._show('title'));
+    click('btn-gameover-menu', () => { this.ui.hideRevive(); this._show('title'); });
     click('btn-recap-again', () => this._startAbyssNow());
     click('btn-recap-board', () => this.gs.showLeaderboard());
     click('btn-recap-menu', () => this._show('title'));

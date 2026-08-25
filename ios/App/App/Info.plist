@@ -71,15 +71,11 @@
 	     call is a no-op and the submission is rejected. -->
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Allow tracking to see ads matched to your interests. Decline and you will still see ads, just less relevant ones — nothing else in the game changes.</string>
-	<!-- GADApplicationIdentifier is DELIBERATELY ABSENT.
-	     The Google Mobile Ads SDK raises an exception at launch if this key is
-	     missing OR malformed, so a placeholder would crash every build. Add it
-	     with the real value at the same time you install the SDK:
-
-	       <key>GADApplicationIdentifier</key>
-	       <string>ca-app-pub-################~##########</string>
-
-	     See SHIP.md 3.6. -->
+	<!-- REAL AdMob app id (AdMob app "Echolume", Aug 20 2026). Must stay in
+	     step with AD_IDS.ios.appId in www/js/ads.js — the SDK throws at launch
+	     if this key is missing or malformed. See SHIP.md 3.6. -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-8548952723271768~2532274468</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<!-- Google's own SKAdNetwork identifier. Additional entries are needed

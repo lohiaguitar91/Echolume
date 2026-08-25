@@ -25,16 +25,16 @@
             android:name="com.google.android.gms.games.APP_ID"
             android:value="@string/game_services_project_id" />
 
-        <!-- AdMob's APPLICATION_ID is DELIBERATELY ABSENT.
-             The Google Mobile Ads SDK throws at startup if this is missing OR
-             malformed, so a placeholder would crash every build. Add it at the
-             same time you add the SDK dependency:
-
-               <meta-data
-                   android:name="com.google.android.gms.ads.APPLICATION_ID"
-                   android:value="ca-app-pub-################~##########" />
-
-             See SHIP.md 3.6. -->
+        <!-- ⚠ SAMPLE VALUE: Google's published sample AdMob app id — serves
+             "Test Ad" creatives, pays nothing, safe on any device. It exists so
+             the SDK does not throw at startup (it does if this is missing OR
+             malformed) and so ads are testable before the console work. BEFORE
+             RELEASE: replace with the real id from AdMob (Apps → Echolume
+             (Android) → App settings) and swap the matching values in
+             www/js/ads.js (AD_IDS + set ADS_ARE_SAMPLE to false). SHIP.md 3.6. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

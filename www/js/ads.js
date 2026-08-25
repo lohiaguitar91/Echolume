@@ -1,27 +1,67 @@
-// Ad and purchase surface. Inert until the IDs below are filled in.
+// Ad and purchase surface, driving @capacitor-community/admob through the
+// Capacitor plugin bridge (window.Capacitor.Plugins.AdMob — this project has
+// no bundler, so the npm package's JS wrapper is never imported; the native
+// plugin registers itself on the global and we call it directly).
 //
-// Nothing here is wired to a network yet: there is no AdMob account and no
-// store product, so every call is a no-op that resolves. The point of shipping
-// it dormant is that the *placement rules* get built and tested now, and
-// turning ads on later is a matter of pasting IDs rather than re-threading the
-// game's flow. Same pattern as game_services_project_id on the Android side.
+// On plain web, or if the plugin is missing, every call is a no-op that
+// resolves false — the game never knows the difference.
 //
-// TO ENABLE, once the accounts exist:
-//   1. npm i @capacitor-community/admob     (8.1.0 supports Capacitor 8)
-//   2. Fill AD_IDS below with the real unit ids, per platform.
-//   3. Create the `remove_ads` non-consumable in App Store Connect and Play
-//      Console, then fill IAP_PRODUCT_ID.
-//   4. Ads change your data disclosure: update PrivacyInfo.xcprivacy, the
-//      store data-safety forms, and add the iOS ATT prompt before shipping.
-//   5. npx cap sync
+// The SDK is deliberately NOT touched at boot. The first launch cold-opens
+// straight into the water, and no consent dialog is allowed to stand in front
+// of that. Everything native — the UMP consent form, the ATT prompt, SDK
+// init, the first ad load — happens lazily, the first time the player enters
+// a depth where an ad could actually matter (a gate or a boss). By then they
+// have played six depths and the prompt reads as part of growing up, not as a
+// toll booth at the door.
 
 // ---------------------------------------------------------------------------
-// FILL THESE IN. While any is null the whole surface stays dormant.
+// AD IDS.
+//
+// iOS ids are REAL (AdMob app "Echolume", Aug 20 2026) — the same app id also
+// lives in ios/App/App/Info.plist as GADApplicationIdentifier; change them
+// together or the SDK throws at launch. Android still carries Google's sample
+// ids (they serve "Test Ad" creatives regardless of any flag) until the Play
+// side of the console work happens — swap them plus AndroidManifest.xml then.
+//
+// ⚠ With real ids, live ads serve to any device NOT listed in
+// TEST_DEVICE_IDS. Never tap live ads on your own hardware — that is how
+// AdMob accounts get suspended. The SDK logs each unlisted device's id on the
+// first ad request ("To get test ads on this device, set ..."); put that
+// value here and the device gets test creatives forever after.
 // ---------------------------------------------------------------------------
 export const AD_IDS = {
-  ios:     { interstitial: null, rewarded: null, appId: null },
-  android: { interstitial: null, rewarded: null, appId: null },
+  ios: {
+    appId:        'ca-app-pub-8548952723271768~2532274468',
+    interstitial: 'ca-app-pub-8548952723271768/2668005832',
+    rewarded:     'ca-app-pub-8548952723271768/1354924167',
+  },
+  android: {
+    appId:        'ca-app-pub-3940256099942544~3347511713',   // sample — see above
+    interstitial: 'ca-app-pub-3940256099942544/1033173712',   // sample
+    rewarded:     'ca-app-pub-3940256099942544/5224354917',   // sample
+  },
 };
+export const ADS_ARE_SAMPLE = false;  // iOS runs real units now
+// ⚠ TEST-ADS MODE — true through every BETA round, false for the STORE build
+// (SHIP.md 3.6). Passes isTesting to the plugin, which swaps in Google's
+// sample ad UNITS at request time: guaranteed fill, "Test Ad" label, zero
+// invalid-traffic risk. Beta testers are ~100% of a brand-new account's
+// traffic, which is exactly the ratio Google's invalid-traffic systems
+// dislike — so betas serve test creatives, and the live units get their
+// pre-launch proof from an impressions-only smoke run instead (never tap).
+// The real unit ids above stay configured throughout.
+export const FORCE_TEST_ADS = true;
+// ⚠ DEBUG RIG — flip to false before any TestFlight/store build (SHIP.md 3.6).
+// Paints an on-screen breadcrumb log of the ad flow, because a USB console
+// attach dies whenever iOS relaunches the app and we were debugging blind.
+export const AD_DEBUG = false;
+export const TEST_DEVICE_IDS = [
+  // Disha's iPhone 14 Pro Max "Disha (2)" — identifierForVendor, captured from
+  // the UMP debug log Aug 20 2026. The GMA SDK accepts the IDFV as a test
+  // device id; registered devices get guaranteed TEST fill ("Test Ad" label),
+  // which also sidesteps the no-fill window on brand-new ad units.
+  '4DCB9E8E-D14A-4A0D-B275-3F1974FC81B5',
+];
 export const IAP_PRODUCT_ID = null;   // e.g. 'com.wibesllc.echolume.remove_ads'
 // ---------------------------------------------------------------------------
 
@@ -30,7 +70,8 @@ export const IAP_PRODUCT_ID = null;   // e.g. 'com.wibesllc.echolume.remove_ads'
 //   - Interstitials run after a GATE WIN only, never after a death, never after
 //     a failed gate, never on the gate warning screen, never on first launch.
 //   - The rewarded revive is offered at bosses, once per attempt, and is never
-//     auto-played.
+//     auto-played. Taking it resumes the run WHERE YOU FELL — that is what the
+//     ad buys, because the free retry already gives back the lair mouth.
 //   - Buying `remove_ads` removes interstitials permanently. The rewarded
 //     revive stays available, because it is a choice the player makes, not an
 //     interruption.
@@ -41,42 +82,200 @@ export const AD_RULES = {
 };
 
 export class Ads {
-  constructor(save) {
+  constructor(save, ui) {
     this.save = save;
-    this.ready = false;
+    this.ui = ui;
+    this.plugin = window.Capacitor?.Plugins?.AdMob || null;
+    this.platform = window.Capacitor?.getPlatform?.() === 'android' ? 'android' : 'ios';
+    this.ready = false;          // SDK initialized (consent gathered, listeners on)
+    this._starting = null;       // in-flight _ensureStarted, so it runs once
+    this._interstitialLoaded = false;
+    this._rewardLoaded = false;
+    this._offering = false;
+    this._earned = false;
+    this._closed = null;         // resolver for "the fullscreen ad went away"
+    // Boot stamp: pins down WHICH build is running, straight from the title
+    // screen — no gameplay needed. Bump the tag when debugging installs.
+    this._bug(`boot D4 plugin=${this.plugin ? 'yes' : 'no'} ids=${this.configured ? 'set' : 'missing'} testads=${FORCE_TEST_ADS}`);
   }
 
-  get configured() {
-    const p = window.Capacitor?.getPlatform?.() === 'android' ? AD_IDS.android : AD_IDS.ios;
-    return !!(p && p.interstitial && p.appId);
+  get ids() { return AD_IDS[this.platform]; }
+  get configured() { return !!(this.plugin && this.ids && this.ids.appId && this.ids.interstitial); }
+  get removed() { return !!this.save?.data?.adsRemoved; }
+
+  // On-screen breadcrumbs (AD_DEBUG only): the phone tells us what happened
+  // without a cable. Also exported as window.__adbug so ui.js can report taps.
+  _bug(msg) {
+    if (!AD_DEBUG) return;
+    try {
+      if (!this._bugEl) {
+        const el = document.createElement('div');
+        el.id = 'ad-debug';
+        el.style.cssText = 'position:fixed;top:70px;left:8px;z-index:9999;font:10px/1.5 ui-monospace,monospace;'
+          + 'color:#7ef0ff;background:rgba(3,7,17,0.72);border:1px solid rgba(126,240,255,0.4);'
+          + 'padding:4px 6px;border-radius:4px;'
+          + 'pointer-events:none;white-space:pre;max-width:74vw;overflow:hidden';
+        document.body.appendChild(el);
+        this._bugEl = el;
+        this._bugLines = [];
+        window.__adbug = (m) => this._bug(m);
+      }
+      const t = (performance.now() / 1000).toFixed(1);
+      this._bugLines.push(`${t} ${msg}`);
+      if (this._bugLines.length > 14) this._bugLines.shift();
+      this._bugEl.textContent = this._bugLines.join('\n');
+      console.log('[adbug] ' + msg);   // also reaches an attached native console
+    } catch (e) { /* the rig must never break the flow it watches */ }
   }
 
-  get removed() {
-    return !!this.save?.data?.adsRemoved;
+  // Called once at boot. Deliberately does nothing native — see header.
+  async init() { return this.configured; }
+
+  // Called by main on every real level entry with what the depth is. This is
+  // where ads preload, so a gate win or a boss death finds one already there.
+  levelStarted({ isGate, isBoss }) {
+    if (!this.configured) return;
+    if (isGate || isBoss) this._bug(`level gate=${isGate} boss=${isBoss}`);
+    if (isGate && !this.removed) this._prepInterstitial();
+    if (isBoss) this._prepReward();
   }
 
-  async init() {
-    if (!this.configured) return false;   // dormant on purpose
-    this.ready = true;
-    return true;
+  // Consent, SDK init, listeners. Runs once, the first time an ad could matter.
+  _ensureStarted() {
+    if (this._starting) return this._starting;
+    this._starting = (async () => {
+      // Google's UMP consent (GDPR). Until a consent message is published in
+      // the AdMob console this resolves NOT_REQUIRED or rejects; both fine.
+      try {
+        const info = await this.plugin.requestConsentInfo();
+        if (info?.isConsentFormAvailable && info?.status === 'REQUIRED') {
+          await this.plugin.showConsentForm();
+        }
+      } catch (e) { /* no message published, or not reachable — carry on */ }
+      // Apple's ATT prompt, once ever. Denied is a fine answer: ads simply
+      // stay non-personalized. The usage string lives in Info.plist.
+      try {
+        const { status } = await this.plugin.trackingAuthorizationStatus();
+        this._bug(`att=${status}`);
+        if (status === 'notDetermined') await this.plugin.requestTrackingAuthorization();
+      } catch (e) { /* pre-iOS-14 or plugin oddity — carry on */ }
+      try {
+        await this.plugin.initialize({
+          initializeForTesting: ADS_ARE_SAMPLE || TEST_DEVICE_IDS.length > 0,
+          testingDevices: TEST_DEVICE_IDS,
+        });
+        this._bug('sdk init ok');
+      } catch (e) {
+        this._bug(`sdk init FAIL: ${e?.message || e}`);
+        return false;             // SDK refused — stay silent for this session
+      }
+      this._listen();
+      this.ready = true;
+      return true;
+    })();
+    return this._starting;
   }
 
-  // Called on a gate win. Returns whether an ad was actually shown, so callers
-  // can keep their own flow honest rather than assuming.
+  _listen() {
+    const on = (ev, fn) => { try { this.plugin.addListener(ev, fn); } catch (e) {} };
+    // prepare* resolves once loaded, so the loaded flags are set at the call
+    // sites; listeners only need to notice ads going AWAY.
+    // FailedToLoad carries Google's real error text; the prepare* promise only
+    // ever rejects with the plugin's generic "Loading failed".
+    on('interstitialAdFailedToLoad',   (d) => { this._bug(`inter err: ${d?.message || '?'}`); });
+    on('onRewardedVideoAdFailedToLoad',  (d) => { this._bug(`reward err: ${d?.message || '?'}`); });
+    on('interstitialAdDismissed',      () => { this._bug('ev i.dismiss'); this._interstitialLoaded = false; this._closed?.('dismissed'); });
+    on('interstitialAdFailedToShow',   () => { this._bug('ev i.failshow'); this._interstitialLoaded = false; this._closed?.('failed'); });
+    on('onRewardedVideoAdReward',        () => { this._bug('ev r.reward'); this._earned = true; });
+    on('onRewardedVideoAdShowed',        () => { this._bug('ev r.showed'); this._showed = true; });
+    on('onRewardedVideoAdDismissed',     () => { this._bug('ev r.dismiss'); this._rewardLoaded = false; this._closed?.('dismissed'); });
+    on('onRewardedVideoAdFailedToShow',  () => { this._bug('ev r.failshow'); this._rewardLoaded = false; this._closed?.('failed'); });
+  }
+
+  async _prepInterstitial() {
+    if (this._interstitialLoaded || this._prepI) return;
+    this._prepI = true;
+    try {
+      if (!(await this._ensureStarted())) return;
+      await this.plugin.prepareInterstitial({ adId: this.ids.interstitial, isTesting: ADS_ARE_SAMPLE || FORCE_TEST_ADS });
+      this._interstitialLoaded = true;
+      this._bug('inter loaded');
+    } catch (e) { this._bug(`inter load FAIL: ${e?.message || e}`); }
+    finally { this._prepI = false; }
+  }
+
+  async _prepReward() {
+    if (this._rewardLoaded || this._prepR) return;
+    this._prepR = true;
+    try {
+      if (!(await this._ensureStarted())) return;
+      await this.plugin.prepareRewardVideoAd({ adId: this.ids.rewarded, isTesting: ADS_ARE_SAMPLE || FORCE_TEST_ADS });
+      this._rewardLoaded = true;
+      this._bug('reward loaded');
+    } catch (e) { this._bug(`reward load FAIL: ${e?.message || e}`); }
+    finally { this._prepR = false; }
+  }
+
+  // A promise that settles ('dismissed' | 'failed') when the current
+  // fullscreen ad goes away. Self-clearing so a stale resolver can't leak
+  // into the next ad.
+  _untilClosed() {
+    return new Promise((res) => {
+      this._closed = (why) => { this._closed = null; res(why); };
+    });
+  }
+
+  // NOTE on the plugin's show* promises: they are fire-and-observe here, never
+  // the sequencer. The native side settles them at inconsistent moments per ad
+  // type (interstitial: on present; rewarded: only when the reward is EARNED)
+  // and on some failure paths never settles them at all — awaiting one wedged
+  // the revive button on device with no visible effect. The events are the
+  // truth; the catch only converts an outright reject into a 'failed' close.
+
+  // Called on every level win. Returns whether an ad was actually shown, so
+  // callers can keep their own flow honest rather than assuming.
   async maybeInterstitial({ won, isGate }) {
     if (!won || !isGate) return false;    // the rule, enforced here not at call sites
-    if (this.removed || !this.ready) return false;
-    return false;                          // no network yet
+    if (this.removed || !this.ready || !this._interstitialLoaded) return false;
+    const closed = this._untilClosed();
+    this._interstitialLoaded = false;      // consumed either way
+    this._bug('inter show →');
+    this.plugin.showInterstitial().catch((e) => { this._bug(`inter show REJECT: ${e?.message || e}`); this._closed?.('failed'); });
+    return (await closed) === 'dismissed'; // hold until the player is back
   }
 
-  // Offer, never impose. Resolves false when there is nothing to offer.
+  // Offer, never impose. Resolves true only if the player chose the ad AND
+  // the network confirmed the reward. Resolves false for everything else.
   async offerRevive({ isBoss }) {
-    if (!isBoss || !this.ready) return false;
-    return false;
+    if (!isBoss) return false;             // the rule
+    if (!this.ready || !this._rewardLoaded || this._offering) return false;
+    this._offering = true;
+    try {
+      this._bug('offer shown');
+      const wants = await this.ui.askRevive();   // player decides; may be declined
+      this._bug(`offer answer=${wants}`);
+      if (!wants) return false;
+      this._earned = false;
+      this._showed = false;
+      const closed = this._untilClosed();
+      this._rewardLoaded = false;                // consumed either way
+      this._bug('reward show →');
+      this.plugin.showRewardVideoAd().catch((e) => { this._bug(`reward show REJECT: ${e?.message || e}`); this._closed?.('failed'); });
+      // Watchdog: if the ad hasn't even PRESENTED in 15s, call it failed —
+      // but once it's on screen, wait as long as the player does.
+      const dog = setTimeout(() => { if (!this._showed) { this._bug('watchdog: never presented'); this._closed?.('failed'); } }, 15000);
+      const how = await closed;                  // reward event lands before dismissal
+      clearTimeout(dog);
+      this._bug(`closed=${how} earned=${this._earned}`);
+      // The player said yes and got nothing — say so, or the button reads broken.
+      if (how === 'failed' && !this._earned) this.ui.toast('The ad never surfaced');
+      return this._earned;
+    } catch (e) { return false; }
+    finally { this._offering = false; this.ui.hideRevive(); }
   }
 
   async purchaseRemoveAds() {
-    if (!IAP_PRODUCT_ID) return false;
+    if (!IAP_PRODUCT_ID) return false;    // needs a purchase plugin + store product
     return false;
   }
 }

@@ -60,11 +60,15 @@ reference plugins (`Console.swift` et al.) exactly: `@objc(...)`,
 target is iOS 15, so every GameKit API used (all iOS 14+) is available.
 
 ### iOS
-- [x] `GameConnectPlugin.swift` is already registered in `App.xcodeproj` (file reference,
-      App group, and Sources build phase) — it compiles without any Xcode file wrangling.
-- [ ] Enable the **Game Center** capability on the App target
-      (Signing & Capabilities → + → Game Center). This needs your signing team, so it
-      can't be pre-set in the repo; it's one click and writes the entitlement for you.
+- [x] `GameConnectPlugin.swift` is in `App.xcodeproj` (file reference, App group, Sources
+      build phase) **and registered with the bridge at runtime** by
+      `EchoBridgeViewController` in `SceneDelegate.swift`. The runtime half matters:
+      Capacitor auto-registers only npm plugin packages (`cap sync` writes their class
+      names into the bundled config's `packageClassList` and overwrites it every run), so
+      an app-target plugin that isn't registered in `capacitorDidLoad()` silently never
+      exists on the JS side. Verified compiling on macOS/Xcode 26.4.
+- [x] **Game Center capability**: `App/App.entitlements` is now in the repo and wired to
+      both build configurations (`CODE_SIGN_ENTITLEMENTS`) — no Xcode click needed.
 - [ ] App Store Connect → your app → Game Center: create a leaderboard with ID
       `abyss_depth` (integer, higher is better, "Best score" aggregation) and 15
       achievements with EXACTLY these IDs (1 point each is fine):
@@ -101,15 +105,34 @@ no matter who calls them later:
 - Rewarded revive is offered at bosses only, once per attempt, never auto-played.
 - `remove_ads` kills interstitials permanently; the revive stays as a player choice.
 
-To turn it on:
-- [ ] `npm i @capacitor-community/admob` (8.1.0 supports Capacitor 8 — verified against
-      the registry; no hand-written bridge needed this time).
-- [ ] AdMob account → register both apps → fill `AD_IDS` in `www/js/ads.js` with the
-      per-platform app id and the interstitial/rewarded unit ids.
+Current state (Aug 2026): **implemented and live against Google's SAMPLE ids.**
+`@capacitor-community/admob` 8.1.0 is installed and `ads.js` drives it via
+`Capacitor.Plugins.AdMob` (no bundler, so the npm JS wrapper is never imported).
+Consent (UMP, defensive until a message is published) + the ATT prompt + SDK init all
+run lazily on the first gate/boss depth, so the cold open stays clean. Interstitials
+preload on gate-depth entry and show on the win screen; the rewarded revive preloads on
+boss-depth entry and **resumes the run where you fell** (`Game.revive()`: full hearts,
+`TUNING.reviveGrace` i-frames, world untouched) — it has to outbid the free lair-mouth
+retry or it would be a scam. Declining is just using the ordinary death-screen buttons.
+
+- [x] **iOS ids are real** (AdMob app + both units created Aug 20 2026; `ADS_ARE_SAMPLE`
+      is false). Still open: put the test iPhone's id in `TEST_DEVICE_IDS` (the SDK logs
+      it on the first ad request from an unlisted device), and swap the Android sample
+      ids in `AD_IDS` + `AndroidManifest.xml` when the Play console work happens. Then
+      `npx cap sync`.
+- [ ] Publish the GDPR consent message in AdMob (Privacy & messaging) before any
+      public release; the code already calls the consent APIs and no-ops until then.
 - [ ] Create the `remove_ads` non-consumable in **both** App Store Connect and Play
       Console, then set `IAP_PRODUCT_ID`. Pick a purchase plugin
       (`@revenuecat/purchases-capacitor` 13.x declares `@capacitor/core >=8.0.0`).
-- [ ] `npx cap sync`, then re-test that a death never produces an interstitial.
+      Until this lands, interstitials simply cannot be turned off — fine for testing.
+- [ ] Re-test that a death never produces an interstitial.
+- [ ] **`AD_DEBUG` stays false everywhere; `FORCE_TEST_ADS` stays TRUE through every
+      beta and flips to false only for the STORE submission build.** Test-ads betas are
+      deliberate: beta testers are ~100% of a new account's traffic, the worst possible
+      invalid-traffic ratio. Before submitting: flip false, rebuild, one impressions-only
+      smoke run (never tap), confirm requests appear in the AdMob dashboard, submit.
+      (TestFlight history: build 5 = live ads, build 6 = test ads / the beta build.)
 
 ### Metadata: already written for an ad-supported launch
 
@@ -124,18 +147,20 @@ describes the launch build. It is listed here so you can check it, not redo it.
       placement rules and the ATT prompt.
 - [x] `store/listing-android.md` — Data Safety answers **Yes**, declares the four
       collected-and-shared categories, and the listing is marked **contains ads**.
-- [x] `ios/App/App/PrivacyInfo.xcprivacy` — `NSPrivacyTracking` is now `true`.
-      `NSPrivacyTrackingDomains` is intentionally empty: the ad SDK declares its own
-      domains in its own manifest and Apple aggregates them. Do not copy Google's
+- [x] `ios/App/App/PrivacyInfo.xcprivacy` — `NSPrivacyTracking` is `false` with empty
+      domains, settled by ITMS-91064 on build 1.0.0 (6) (true + empty domains is
+      rejected as "invalid tracking information"). The SDK's own manifest and the ASC
+      App Privacy answers carry the tracking disclosure. Do not copy Google's
       declarations into ours.
 - [x] `ios/App/App/Info.plist` — `NSUserTrackingUsageDescription` added (without it the
       ATT call silently no-ops and the build is rejected), plus Google's SKAdNetwork id.
 
-Two identifiers are **deliberately absent**, because the SDK throws at launch if either
-is missing *or* malformed — a placeholder would crash every build. Add both at the same
-moment you add the SDK; the exact snippets are in comments at the point of use:
-- [ ] iOS `GADApplicationIdentifier` in `Info.plist`
-- [ ] Android `com.google.android.gms.ads.APPLICATION_ID` in `AndroidManifest.xml`
+The two app-id keys are now **present with Google's sample values** (the SDK throws at
+launch if either is missing *or* malformed, and the sample ids are the documented safe
+way to run before the console exists). Swap both to the real ids with the `AD_IDS` swap
+above — the ⚠ comments sit at the point of use:
+- [ ] iOS `GADApplicationIdentifier` in `Info.plist` — real id
+- [ ] Android `com.google.android.gms.ads.APPLICATION_ID` in `AndroidManifest.xml` — real id
 
 - [ ] **Re-check both disclosure tables against Google's current pages before each
       submission** ([iOS](https://developers.google.com/admob/ios/privacy/data-disclosure),

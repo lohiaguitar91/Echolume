@@ -542,6 +542,9 @@ export class UI {
   }
 
   fillGameover(mode, stats, opts = {}) {
+    // Only askRevive() may show the offer; a fresh death screen never
+    // inherits one, whatever state the last screen left behind.
+    document.getElementById('revive-offer').hidden = true;
     const lines = {
       hunter: 'Sing softer this time.',
       lure: 'Not everything that glows is food. Sing at it first.',
@@ -555,6 +558,32 @@ export class UI {
     document.getElementById('btn-retry').textContent =
       opts.fromCheckpoint ? 'Back to the lair mouth' : 'Try again';
   }
+
+  // The rewarded-revive offer on the boss death screen. Resolves the player's
+  // choice; never auto-plays. Declining happens either on its own button being
+  // ignored — Try again / Menu both call hideRevive(), which resolves false —
+  // so an abandoned offer can never wedge the ad surface.
+  askRevive() {
+    const offer = document.getElementById('revive-offer');
+    const btn = document.getElementById('btn-revive');
+    offer.hidden = false;
+    return new Promise((res) => {
+      this._reviveResolve = (v) => {
+        this._reviveResolve = null;
+        offer.hidden = true;
+        btn.onclick = btn.onpointerup = btn.onpointerdown = null;
+        res(v);
+      };
+      // Belt and braces: pointerup answers even if iOS declines to synthesize
+      // a click for this button; the self-clearing resolver makes the pair
+      // firing together harmless. __adbug (debug builds) records which arrived.
+      btn.onpointerdown = () => { window.__adbug?.('tap: down'); };
+      btn.onpointerup = () => { window.__adbug?.('tap: pointerup'); this._reviveResolve?.(true); };
+      btn.onclick = () => { window.__adbug?.('tap: click'); this._reviveResolve?.(true); };
+    });
+  }
+
+  hideRevive() { this._reviveResolve?.(false); }
 
   setVersion(v) { this.el.versionLine.textContent = `v${v}`; }
 
