@@ -1086,8 +1086,11 @@ export function gateBoonLine(b) {
         : 'Not enough to steady yourself. The vents will steer for you.';
     default:
       if (b.id % 28 === 7) {
+        // Lead with what the numbers buy, not the numbers: a playtester read
+        // "reaches 50% further" and asked what the benefit even was. The
+        // benefit is sight without sound.
         return b.aura > 0.05
-          ? `Enough that lit walls fade ${Math.round(b.decay * 100)}% slower and the light around you reaches ${Math.round(b.aura * 100)}% further.`
+          ? `Enough that your glow reaches ${Math.round(b.aura * 100)}% further and lit walls fade ${Math.round(b.decay * 100)}% slower. You will see hazards without spending songs on them.`
           : 'You will swim this one on your own light.';
       }
       if (b.id % 28 === 14) {
