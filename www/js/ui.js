@@ -556,15 +556,6 @@ export class UI {
     // A banked lair mouth turns Retry into "carry on from where it took you".
     const retry = document.getElementById('btn-retry');
     retry.textContent = opts.fromCheckpoint ? 'Back to the lair mouth' : 'Try again';
-    // The rewarded revive is a choice, so it is a button — and the primary one
-    // only while it is genuinely on offer (a boss, an ad loaded, not yet used).
-    const revive = document.getElementById('btn-revive');
-    if (revive) {
-      revive.hidden = !opts.canRevive;
-      revive.disabled = false;
-      retry.classList.toggle('primary', !opts.canRevive);
-      retry.classList.toggle('ghost', !!opts.canRevive);
-    }
   }
 
   setVersion(v) { this.el.versionLine.textContent = `v${v}`; }

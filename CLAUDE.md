@@ -138,10 +138,11 @@ already cost time, and the design rules that must not be broken.
 - A lure's real footprint is `lureBaitRadius` (the distance at which it springs), not its hit
   radius. Keep it well under the corridor half-width or it walls the passage off.
 - Monetization is ads + a single pay-once **Remove Ads** purchase. **No gems, no
-  currency, no energy timers, no level packs.** Interstitials only after gate wins;
-  the rewarded revive is a button on the boss death screen ("Watch ad to try again"),
-  shown only while `ads.canRevive()` is true, once per attempt, resuming where the
-  run ended — never auto-played; the placement rules live inside `ads.js`.
+  currency, no energy timers, no level packs.** Interstitials after level wins on a
+  2–3 win cadence (counter persists in the save), never after a death. The rewarded
+  revive was **retired** in the Aug 26 2026 playtest — any unlocked depth restarts
+  free, so it bought nothing; its device-proven internals stay dormant in `ads.js`.
+  The placement rules live inside `ads.js`, enforced there and not at call sites.
 - `ads.js` talks to `Capacitor.Plugins.AdMob` directly (no package import — `www/` has
   no bundler). Method/event names are the plugin's v8 README strings; if the plugin
   major changes, check them first.

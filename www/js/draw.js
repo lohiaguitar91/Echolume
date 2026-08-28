@@ -476,11 +476,14 @@ export function drawGame(R, game, particles, time, dt, palette) {
 
 // Ambient scene behind menus: slow drifting glow blobs, plankton, and an idle
 // lume singing to itself — the title screen is the game, already alive.
+// Wander periods are ~11s, not the original ~33s: during a normal glance at
+// the menu the lume must visibly swim (a playtester read the old drift as a
+// static dot and asked for the light to "move around for fun").
 const _menuLume = { cycle: 4.6 };
 function lumePos(R, t) {
   return {
-    x: R.cam.x + Math.sin(t * 0.19) * 110 + Math.sin(t * 0.063) * 55,
-    y: R.cam.y + Math.cos(t * 0.143) * 85 + Math.sin(t * 0.051) * 40 - 40,
+    x: R.cam.x + Math.sin(t * 0.55) * 120 + Math.sin(t * 0.21) * 60,
+    y: R.cam.y + Math.cos(t * 0.43) * 95 + Math.sin(t * 0.17) * 45 - 40,
   };
 }
 export function drawMenuAmbient(R, particles, time, dt, palette) {

@@ -7,8 +7,9 @@
 // session's shell contract — a synchronous canRevive() decides whether the
 // death screen shows the revive button, showRevive() resolves true only on a
 // completed reward, and the shell owns once-per-attempt and the snapshot
-// restart — and the Mac session's device-proven SDK internals, learned the
-// hard way on a real iPhone:
+// restart (that revive surface has since been RETIRED — see the placement
+// rules below — but its internals stay, dormant) — and the Mac session's
+// device-proven SDK internals, learned the hard way on a real iPhone:
 //   - Nothing native runs at boot. Consent (UMP, defensive until a message is
 //     published) + the ATT prompt + SDK init + the first loads all happen
 //     lazily on the first gate/boss depth, so the cold open stays a cold open.
@@ -68,20 +69,21 @@ export const TEST_DEVICE_IDS = [
 export const IAP_PRODUCT_ID = null;   // e.g. 'com.wibesllc.echolume.remove_ads'
 // ---------------------------------------------------------------------------
 
-// Placement rules, decided before any money was involved and not up for
-// renegotiation by whatever the network would prefer:
-//   - Interstitials run after a GATE WIN only, never after a death, never after
-//     a failed gate, never on the gate warning screen, never on first launch.
-//   - The rewarded revive is a button at bosses, once per attempt (the shell
-//     tracks spent), never auto-played. Taking it resumes the run WHERE THE
-//     DARK TOOK YOU — the free lair-mouth retry stays beside it.
-//   - Buying `remove_ads` removes interstitials permanently. The rewarded
-//     revive stays available, because it is a choice the player makes, not an
-//     interruption.
+// Placement rules (revised Aug 26 2026 playtest), decided by design and not
+// up for renegotiation by whatever the network would prefer:
+//   - Interstitials run after a LEVEL WIN, every 2–3 wins (the counter
+//     persists in the save; the 2-vs-3 rerolls after each ad). Never after a
+//     death, never after a failed gate, never on the gate warning screen.
+//   - No rewarded revive. Any unlocked depth can be restarted for free at any
+//     time, so an ad-to-revive bought nothing and read as noise. The rewarded
+//     plumbing below stays dormant (device-proven, a future placement may
+//     want it) but nothing preps or offers it.
+//   - Buying `remove_ads` removes interstitials permanently — with an ad
+//     every few depths, that purchase is the whole pitch.
 export const AD_RULES = {
-  interstitialOnGateWinOnly: true,
+  interstitialEveryNWins: [2, 3],
   neverAfterDeath: true,
-  rewardedReviveAtBossesOnly: true,
+  noRewardedRevive: true,
 };
 
 export class Ads {
@@ -134,13 +136,17 @@ export class Ads {
   // Called once at boot. Deliberately does nothing native — see header.
   async init() { return this.configured; }
 
-  // Called by the shell on every real level entry with what the depth is.
-  // This is where ads preload, so a gate win or a boss death finds one there.
-  levelStarted({ isGate, isBoss }) {
-    if (!this.configured) return;
-    if (isGate || isBoss) this._bug(`level gate=${isGate} boss=${isBoss}`);
-    if (isGate && !this.removed) this._prepInterstitial();
-    if (isBoss) this._prepReward();
+  // How many wins the next interstitial costs: 2 or 3, rerolled per cycle.
+  _rollCadence() { const [a, b] = AD_RULES.interstitialEveryNWins; return a + Math.floor(Math.random() * (b - a + 1)); }
+
+  // Called by the shell on every real level entry. This is where the
+  // interstitial preloads — only once the cadence says this depth's win could
+  // actually show one, so the first SDK start (consent + ATT) comes with the
+  // first depth that matters and not one screen later.
+  levelStarted() {
+    if (!this.configured || this.removed) return;
+    if (this._adEvery == null) this._adEvery = this._rollCadence();
+    if ((this.save.data.adWins || 0) + 1 >= this._adEvery) this._prepInterstitial();
   }
 
   // Consent, SDK init, listeners. Runs once, the first time an ad could matter.
@@ -239,24 +245,35 @@ export class Ads {
     });
   }
 
-  // Called on every level win. Returns whether an ad was actually shown, so
-  // callers can keep their own flow honest rather than assuming.
-  async maybeInterstitial({ won, isGate }) {
-    if (!won || !isGate) return false;    // the rule, enforced here not at call sites
-    if (this.removed || !this.ready || !this._interstitialLoaded || this._showing) return false;
+  // Called on every level win. Counts the win, and shows an interstitial once
+  // the cadence is due AND one is actually loaded — if the network was slow,
+  // the debt carries to the next win instead of being forgiven. Returns
+  // whether an ad was actually shown, so callers stay honest.
+  async maybeInterstitial({ won }) {
+    if (!won) return false;               // never after a death — enforced here
+    if (this.removed || !this.configured) return false;
+    if (this._adEvery == null) this._adEvery = this._rollCadence();
+    this.save.data.adWins = (this.save.data.adWins || 0) + 1;
+    this.save.persist();
+    if (this.save.data.adWins < this._adEvery) return false;
+    if (!this.ready || !this._interstitialLoaded || this._showing) return false;
     this._showing = true;
     try {
       const closed = this._untilClosed();
       this._interstitialLoaded = false;    // consumed either way
+      this.save.data.adWins = 0;
+      this.save.persist();
+      this._adEvery = this._rollCadence();
       this._bug('inter show →');
       this.plugin.showInterstitial().catch((e) => { this._bug(`inter show REJECT: ${e?.message || e}`); this._closed?.('failed'); });
       return (await closed) === 'dismissed';
     } finally { this._showing = false; }
   }
 
-  // Synchronous: may the death screen offer the revive button right now?
-  // The shell layers its own conditions on top (a boss, a snapshot banked,
-  // not yet spent this attempt).
+  // ---- DORMANT: the rewarded revive was retired in the Aug 26 2026 playtest
+  // (see AD_RULES). Nothing preps or calls these; they stay because the show/
+  // reward event handling was hard-won on device and a future rewarded
+  // placement will want it verbatim. ----
   canRevive({ isBoss }) {
     return !!isBoss && this.ready && this._rewardLoaded && !this._showing;
   }

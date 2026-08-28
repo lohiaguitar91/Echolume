@@ -78,8 +78,14 @@ export const TUNING = {
   // balance is unchanged.
   playerRadius: 10,
   drag: 0.70,               // exponential velocity decay per second (v *= exp(-drag*dt))
-  sink: 14,                 // gentle downward drift, u/s^2
+  // No passive sink: an idle lume stops where its momentum dies. Levels
+  // descend toward the vent, so any ambient downward drift is free progress —
+  // a playtester watched a motionless lume "cheat" toward the exit. Only
+  // currents and warm vents may move you for free.
   pingImpulse: 300,         // added velocity toward tap point
+  pingImpulseNearFull: 70,  // px: taps this far away get the full impulse…
+  pingImpulseNearFloor: 0.45, // …closer taps scale down to this fraction, so a
+                            // tap beside yourself is a nudge, not a dart
   maxSpeed: 440,
   wallBounce: 0.45,         // velocity kept along normal after wall hit
   wallFriction: 0.92,       // tangential velocity kept on wall hit
@@ -185,8 +191,10 @@ export const TUNING = {
   // lasted exactly one tap: your next song (the one you need to move) pulled
   // every hunter straight back onto you. Human-tuned; the bot never casts.
   castCommit: 2.4,
-  // Grace after a rewarded revive: back at the spot it took you, hearts full,
-  // long enough to move before whatever killed you can simply do it again.
+  // Grace after a revive: back at the spot it took you, hearts full, long
+  // enough to move before whatever killed you can simply do it again.
+  // DORMANT — the rewarded revive was retired Aug 26 2026 (see ads.js), but
+  // the snapshot machinery it tuned still exists in game.js.
   reviveGrace: 2.0,
 
   // ---- wardens (the depth-14 boss) ----

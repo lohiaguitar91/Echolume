@@ -152,14 +152,6 @@ html, body {
 .btn.ghost:hover { color: var(--text); }
 .btn:disabled { opacity: 0.38; cursor: default; transform: none; }
 .btn.danger { border-color: rgba(255, 79, 154, 0.4); color: #ff9fc6; }
-/* The rewarded revive reads as carried light: mote-amber, not interface-cyan. */
-.btn.revive {
-  background: linear-gradient(180deg, rgba(255, 196, 94, 0.26), rgba(255, 196, 94, 0.10));
-  border-color: rgba(255, 196, 94, 0.6);
-  box-shadow: 0 0 22px rgba(255, 196, 94, 0.2), inset 0 0 12px rgba(255, 196, 94, 0.1);
-  color: #fff4de;
-}
-.btn.revive:hover { box-shadow: 0 0 30px rgba(255, 196, 94, 0.32), inset 0 0 14px rgba(255, 196, 94, 0.14); }
 .btn.danger.armed { background: rgba(255, 79, 154, 0.18); color: #ffd7e8; }
 .btn:focus-visible, .icon-btn:focus-visible, .level-cell:focus-visible {
   outline: 2px solid var(--accent);

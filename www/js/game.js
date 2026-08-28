@@ -23,6 +23,7 @@ export class Game {
     this.stateT = 0;
     this.lastProgress = 0;
     this.hintsShown = new Set();
+    this.hintMute = null;      // teach subjects being taught this play (see _progressAndRescue)
     this.pingCooldown = 0;
     this.rescueT = 0;
     this.moteCombo = 0;
@@ -84,6 +85,7 @@ export class Game {
     this.stateT = 0;
     this.lastProgress = 0;
     this.hintsShown = new Set();
+    this.hintMute = null;      // the shell re-arms this after Teacher.arm
     this.pingCooldown = 0;
     this.moteCombo = 0;
     this.chainDisplay = 0;
@@ -231,8 +233,15 @@ export class Game {
     let dx = wx - p.x, dy = wy - p.y;
     const dl = Math.hypot(dx, dy);
     if (dl < 4) { dx = 0; dy = -1; } else { dx /= dl; dy /= dl; }
-    p.vx += dx * TUNING.pingImpulse;
-    p.vy += dy * TUNING.pingImpulse;
+    // A tap beside yourself is a nudge, not a dart: inside pingImpulseNearFull
+    // the impulse scales down toward the floor, which is what makes "thread
+    // the needle" corridors steerable. Beyond that distance nothing changes,
+    // so the autoplay bot's taps (always further ahead) keep their old physics.
+    const near = Math.min(1, dl / TUNING.pingImpulseNearFull);
+    const kick = TUNING.pingImpulse *
+      (TUNING.pingImpulseNearFloor + (1 - TUNING.pingImpulseNearFloor) * near);
+    p.vx += dx * kick;
+    p.vy += dy * kick;
     const sp = Math.hypot(p.vx, p.vy);
     if (sp > TUNING.maxSpeed) { p.vx *= TUNING.maxSpeed / sp; p.vy *= TUNING.maxSpeed / sp; }
     p.facing = Math.atan2(dy, dx);
@@ -364,7 +373,6 @@ export class Game {
 
     // ---- player physics ----
     if (!p.dead) {
-      p.vy += TUNING.sink * dt;
       for (const c of this.ents.currents) {
         const d = dist(p.x, p.y, c.x, c.y);
         if (d < c.r) {
@@ -847,6 +855,10 @@ export class Game {
         for (const h of this.def.hints) {
           if (bestT >= h.t && !this.hintsShown.has(h.t)) {
             this.hintsShown.add(h.t);
+            // A hint that restates a first-encounter teach card stays quiet on
+            // the play where that card fires (hintMute = the teacher's pending
+            // queue, set by the shell at level start).
+            if (h.subject && this.hintMute && this.hintMute.has(h.subject)) continue;
             if (this.cb.onHint) this.cb.onHint(h.text, h.plain);
           }
         }

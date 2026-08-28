@@ -33,7 +33,7 @@ class Shell {
     this.save = new Save();
     this.gs = new GameServices(this.save);
     this.ui = new UI();
-    this.ads = new Ads(this.save, this.ui);   // needs ui for the revive offer
+    this.ads = new Ads(this.save, this.ui);   // needs ui for honest failure toasts
     this.teacher = new Teacher(this.save, this.ui);   // needs ui, so it comes after
     this.input = new Input(this.canvas);
     this.palette = PALETTE;
@@ -56,20 +56,16 @@ class Shell {
     this._wireInput();
     this._wireLifecycle();
     this.ui.setVersion(GAME_VERSION);
-    // Cold open: the very first launch fades straight into the water. The
-    // story is a caption, the first tap is the tutorial, and no screen stands
-    // between a new player and the game.
+    // Fresh save: story first, then the verbs, then the water. The cold open
+    // (straight into level 1, story as a caption) read as disorienting in
+    // playtest — a new player wants to know what this is before it goes dark.
     if (!this.save.data.aboutSeen) {
-      this.save.data.aboutSeen = true;
-      this.save.data.tutorialSeen = true;
-      this.save.persist();
-      this.startLevel(1, { silent: true });
-      this.ui.toast('A small blind creature of the deep', 3600);
+      this._firstDoor();
     } else {
       this._show('title');
     }
     // Touches nothing native — consent prompts and SDK init wait for the
-    // first gate or boss depth, so the cold open stays a cold open.
+    // first depth whose win could show an ad (ads.js decides).
     this.ads.init();
     // Debug/test API only in plain-web dev, never in shipped native builds.
     if (!window.Capacitor) installDebug(this);
@@ -141,20 +137,11 @@ class Shell {
         }
         // A failed run still proves what you gathered — keep the haul.
         if (this.game.def) this.save.levelAttempt(this.game.def.id, stats);
-        // Never an interstitial here. The only ad a death may ever produce is a
-        // revive the player CHOOSES — a button, at a boss, once per attempt,
-        // only while an ad is actually loaded — and it resumes the run where
-        // the dark took you with your hearts back, never from the door. The
-        // free way back (the lair mouth) is always there beside it.
-        const dead = this.game.def;
-        const isBoss = this.game.mode === 'story' && !!dead && gateKind(dead.id) === 'boss';
-        this._reviveSnap = isBoss && this.game.reviveSnapshot
-          ? { levelId: dead.id, snap: this.game.reviveSnapshot } : null;
-        const canRevive = !!this._reviveSnap && this._reviveSpent !== dead.id
-          && this.ads.canRevive({ isBoss: true });
+        // No ad ever touches a death. The revive offer is retired (any
+        // unlocked depth restarts free, so it bought nothing); the lair-mouth
+        // checkpoint remains the way back at bosses.
         this.ui.fillGameover(this.game.mode, stats, {
           fromCheckpoint: this._checkpointFor(this.currentLevelId) !== null,
-          canRevive,
         });
         this._show('gameover');
       },
@@ -188,10 +175,10 @@ class Shell {
               setTimeout(() => this.audio.star(i + 1), 780 + i * 380);
             }
             this._show('results');
-            // The only interstitial in the game, and only ever here: a gate you
-            // just cleared. Dormant until ad ids exist; the rule lives in
-            // ads.js so it holds no matter who calls it.
-            this.ads.maybeInterstitial({ won: true, isGate: !!gateKind(def.id) });
+            // The only interstitial in the game, and only ever here: a depth
+            // you just cleared, every 2-3 wins. The cadence and the
+            // never-after-death rule live in ads.js, not at call sites.
+            this.ads.maybeInterstitial({ won: true });
           }, 900);
         }
       },
@@ -371,12 +358,8 @@ class Shell {
       this._show('gate');
       return;
     }
-    const reviveSnap = opts.revive && this._reviveSnap && this._reviveSnap.levelId === id
-      ? this._reviveSnap.snap : null;
-    const resume = reviveSnap || (opts.fromCheckpoint ? this._checkpointFor(id) : null);
+    const resume = opts.fromCheckpoint ? this._checkpointFor(id) : null;
     if (!resume) this._checkpoint = null;
-    // A fresh entry earns a fresh revive offer; free lair-mouth retries do not.
-    if (!opts.fromCheckpoint && !opts.revive) this._reviveSpent = null;
     this.currentLevelId = id;
     this.particles.clear();
     this.ui.clearHints();
@@ -386,14 +369,6 @@ class Shell {
     this.audio.setMode(chapterOf(id).mode);
     this.game.startStory(def, resume, this._boonFor(id));
     const p = this.game.ents.player;
-    if (reviveSnap) {
-      // Back at the spot it took you, hearts restored, with a breath of grace so
-      // what killed you cannot simply do it again before you move. The lair
-      // mouth stays the free way back if the room takes you again.
-      p.invuln = TUNING.reviveGrace;
-      this.game.checkpoint = this._checkpointFor(id);
-      this._reviveSpent = id;
-    }
     this.renderer.cam.x = this.renderer.cam.targetX = p.x;
     this.renderer.cam.y = this.renderer.cam.targetY = p.y;
     const moteTotal = this.game.ents.motes.length;
@@ -407,9 +382,9 @@ class Shell {
     this.ui.setMotes(p.motes, moteTotal);
     this.ui.setPings(p.pings);
     this.ui.hideDepth();
-    // Let the ad surface preload for depths where one could matter (gates,
-    // bosses). What shows and when stays decided inside ads.js.
-    this.ads.levelStarted({ isGate: !!gateKind(id), isBoss: gateKind(id) === 'boss' });
+    // Let the ad surface preload when this depth's win could show one. What
+    // shows and when stays decided inside ads.js.
+    this.ads.levelStarted();
     this._show('playing');
     // Show what the carried light is actually doing, for as long as it lasts.
     this.ui.showBoon(this.game.boon);
@@ -430,6 +405,9 @@ class Shell {
     this.ui.hideBossCard();
     // Only queue teaches for what this depth actually contains.
     this.teacher.arm(this.game.ents);
+    // Authored hints that restate a pending teach card stay quiet this play —
+    // one lesson, one voice (levels.js hints carry the matching `subject`).
+    this.game.hintMute = new Set(this.teacher.pending);
     if (!opts.silent) {
       this.ui.toast(resume ? 'The lair mouth' : `Depth ${id} · ${def.name}`);
       // A boss names itself, after the level card has cleared.
@@ -493,6 +471,18 @@ class Shell {
     this._show('playing');
   }
 
+  // The front door for a save with no progress (first launch, or after a
+  // reset): About once, then How to sing, whose Begin-the-dive starts depth 1.
+  _firstDoor() {
+    if (!this.save.data.aboutSeen) {
+      this.save.data.aboutSeen = true;
+      this.save.persist();
+      this._show('about');
+    } else {
+      this._show(this.save.data.tutorialSeen ? 'levels' : 'howto');
+    }
+  }
+
   // ---- wiring ----
   _wireUI() {
     const click = (id, fn) => $(id).addEventListener('click', () => { this.audio.ui(); fn(); });
@@ -502,7 +492,7 @@ class Shell {
       if (this.save.hasProgress()) {
         this.startLevel(this.save.nextDepth(LEVELS.length));
       } else {
-        this._show(this.save.data.tutorialSeen ? 'levels' : 'howto');
+        this._firstDoor();
       }
     });
     click('btn-depths', () => this._show('levels'));
@@ -532,7 +522,10 @@ class Shell {
     click('btn-gate-back', () => { this._pendingGate = null; this._show('levels'); });
     click('btn-settings', () => { this._settingsReturn = this.state; this._show('settings'); });
     click('btn-about', () => this._show('about'));
-    click('btn-about-continue', () => this._show('title'));
+    // "To the depths": mid-first-door it leads on to the verbs; from the menu
+    // link (tutorial long seen) it is simply the way back.
+    click('btn-about-continue', () =>
+      this._show(this.save.data.tutorialSeen ? 'title' : 'howto'));
 
     for (const el of document.querySelectorAll('[data-back]')) {
       el.addEventListener('click', () => {
@@ -559,20 +552,6 @@ class Shell {
     click('btn-retry', () => {
       if (this.game.mode === 'abyss') this.startAbyss();
       else this.startLevel(this.currentLevelId, { fromCheckpoint: true });
-    });
-    // The rewarded revive. Disabled while the ad is up so a double tap cannot
-    // start two; if the ad fails or is closed early, the button goes away and
-    // the free way back is still right there.
-    click('btn-revive', () => {
-      const id = this.currentLevelId;
-      const btn = $('btn-revive');
-      if (btn.disabled) return;
-      btn.disabled = true;
-      this.ads.showRevive({ isBoss: true }).then((took) => {
-        btn.disabled = false;
-        if (took) this.startLevel(id, { revive: true, skipGate: true });
-        else btn.hidden = true;
-      });
     });
     click('btn-gameover-menu', () => this._show('title'));
     click('btn-recap-again', () => this._startAbyssNow());
@@ -836,13 +815,22 @@ class Shell {
         const ctx = R.ctx;
         if (prog < 1) {
           // Charging: an arc closing around the held point. Full circle = ready.
+          // On device the held point is UNDER THE THUMB, so the same arc also
+          // closes around the player — the one glowing thing a finger never
+          // covers — or the charge reads as missing (a playtester asked if it
+          // had been removed). The held-point arc is drawn wide enough to peek
+          // out past a fingertip.
           ctx.save();
           ctx.globalCompositeOperation = 'lighter';
           ctx.strokeStyle = this.palette.ping;
           ctx.globalAlpha = 0.25 + prog * 0.45;
           ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.arc(s1.x, s1.y, 16 * R.cam.zoom, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2);
+          ctx.arc(s1.x, s1.y, 34 * R.cam.zoom, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2);
+          ctx.stroke();
+          const s2 = R.worldToScreen(p.x, p.y);
+          ctx.beginPath();
+          ctx.arc(s2.x, s2.y, 17 * R.cam.zoom, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2);
           ctx.stroke();
           ctx.restore();
         } else {
