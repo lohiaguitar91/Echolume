@@ -33,18 +33,26 @@ export function drawGame(R, game, particles, time, dt, palette) {
     });
   }
 
-  // ---- currents: flowing streaks ----
+  // ---- currents: a wash of blue water, full of flowing streaks ----
+  // Two layers by design (Aug 26 playtest, options screenshotted and chosen):
+  // the breathing wash gives the zone a visible body and edge before you
+  // commit to it, and the streaks carry the flow direction. The old
+  // streaks-only rendering was invisible enough that the push read as a bug.
   for (const c of game.ents.currents) {
     if (!R.inView(c.x, c.y, c.r)) continue;
+    R.glowDot(c.x, c.y, c.r * 0.85, palette.current,
+      0.12 + 0.03 * Math.sin(time * 1.3 + c.phase));
+    R.glowDot(c.x, c.y, c.r * 0.5, palette.current,
+      0.16 + 0.04 * Math.sin(time * 1.1 + c.phase), '#9dc0ff');
     c.emitT -= dt;
     if (c.emitT <= 0) {
-      c.emitT = 0.06;
+      c.emitT = 0.03;
       const a = Math.random() * Math.PI * 2, rr = Math.sqrt(Math.random()) * c.r;
       particles.spawn({
         x: c.x + Math.cos(a) * rr, y: c.y + Math.sin(a) * rr,
         vx: c.dirX * c.strength * 0.55, vy: c.dirY * c.strength * 0.55,
-        life: 0.9, r: 2.1, color: palette.current, coreColor: '#bcd2ff',
-        alpha: 0.4, drag: 0.2,
+        life: 1.15, r: 3.0, color: palette.current, coreColor: '#bcd2ff',
+        alpha: 0.7, drag: 0.2,
       });
     }
   }
