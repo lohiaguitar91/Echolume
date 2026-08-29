@@ -83,8 +83,11 @@ export class UI {
     const lean = boon.grade < 0.34;
     this.el.gateDepth.textContent = `Depth ${boon.id}`;
     this.el.gateName.textContent = def.name;
+    // Clamped like the level cells: a save can't honestly exceed capacity, but
+    // debug seeding (grantAllStars) can, and "5994 of 77" reads as broken.
+    const carried = Math.min(boon.banked, boon.capacity);
     this.el.gateCarry.textContent =
-      `You carry ${boon.banked} light${boon.banked === 1 ? '' : 's'} of ${boon.capacity}.`;
+      `You carry ${carried} light${carried === 1 ? '' : 's'} of ${boon.capacity}.`;
     this.el.gateBarFill.style.width = `${Math.round(boon.grade * 100)}%`;
     this.el.gateMark.classList.toggle('lean', lean);
     // Every depth behind this gate banked to its full light: the mark burns whole.
