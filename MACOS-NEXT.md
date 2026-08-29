@@ -5,14 +5,61 @@ this for you. Read `CLAUDE.md` (project rules), then this file, then `SHIP.md`
 for the full human checklist.
 
 **The state in one line:** all 50 depths are built and verified, the gate
-economy is in, the ad surface is written and wired but deliberately inert, and
-everything still open needs Xcode, Android Studio, or a store console — which is
-why it is waiting for you and not for the Windows box.
+economy (now v1.3, with carried boons) is in, ads are device-proven and run on
+a 2–3 win cadence, and everything still open needs Xcode, Android Studio, or a
+store console — which is why it is waiting for you and not for the Windows box.
 
 **The final Windows commit is `6bc70df`** ("Bosses perform casting; final
 verified pass before the Mac", Aug 17 2026). Its message lists exactly what was
 verified on that tree and what only thumbs can judge. If `git log` shows
 anything after it that did not come from your own Mac session, read that first.
+**After your Build 8 (`aa35883`), a remote session landed the Aug 26 feedback
+round** — `16e7b34..e7a967a`, Aug 28–29 2026 — summarized in the next section.
+
+---
+
+## The Aug 28–29 round (remote session) — new since Build 8
+
+All of it is `www/` + docs; nothing native moved. Pull main, `npx cap sync`,
+build. What changed, from Disha's Aug 26 TestFlight notes plus a design round:
+
+- **The water stopped cheating.** `TUNING.sink` is gone — an idle lume settles
+  to a stop; only currents and warm vents move you for free. Blue water got a
+  visible body: a two-layer breathing wash under denser, brighter streaks
+  (chosen from screenshotted options; a +30% `currentForce` variant was
+  deliberately NOT shipped — bump it only if the current looks right on device
+  but rides weak, and re-verify if you do).
+- **The light economy earns its keep (v1.3).** Each collect surges the aura
+  (~+25% for 4s); the gate boon now carries at 30% strength through the six
+  depths after its gate (`carriedBoon` in `levels.js`); cast commit and range
+  scale with this run's motes (2.4s→3.79s, 420→500 at the glow cap —
+  `effectiveCastCommit/Range`, and the aim glyph clamps with the same call);
+  a fully banked depth wears gold in the level select, a fully lit chapter
+  gilds its gate mark, and the last mote of a depth emits a grand silent bloom.
+  Hard mote quotas were considered and rejected on data — CLAUDE.md has the
+  numbers; do not reopen it without them.
+- **Ads were rewired (see §4, which was updated to match).** Interstitials now
+  run after level wins on a 2–3 win cadence; the rewarded revive is RETIRED —
+  the death screen has no ad button anymore and the shell plumbing is gone,
+  though the device-proven rewarded internals stay dormant in `ads.js`. Sole
+  monetization: ads + pay-once Remove Ads, framed as supporting the developer.
+- **Guidance dedupe.** Authored hints that restate a first-encounter teach card
+  carry a `subject` and stay quiet on the play where that card fires (the two
+  used to stack the same lesson back to back on depths 1/3/4/6/...).
+- **Feel fixes.** Taps within ~70px scale down to a 45% floor so "thread the
+  needle" is real; the cast charge arc also closes around the player (it drew
+  only under the thumb — a tester thought the charge was removed); the title
+  lume swims ~3× faster; fresh saves see About → How to sing → water, and the
+  About button says "To the depths".
+
+Verified before push: `verifyAll` 50/50, live bot 9/9 on the twenty sensitive
+depths on BOTH an empty save and a maxed bank, all economy numbers exact.
+
+**What only thumbs can judge in this round:** does the surge read on a phone
+in daylight (`moteSurge`/`moteSurgeTime`); is a 3.79s fed commit too soft on
+the double-hunter depths (19, 25); is `BOON_CARRY` = 0.3 too generous through
+chapter 2's opening; and does an ad every 2–3 wins feel fair in a real session
+(`AD_RULES.interstitialEveryNWins`).
 
 ---
 
@@ -70,8 +117,10 @@ session learned all three the hard way.
   the boon chip no longer ghosts on every depth and its label says what you see
   ("Afterglow", "Heard") with a once-per-gate plain-words hint and a rewritten
   depth-7 gate line (no more "glow 35%"); the "0 m" meter is Abyss-only again;
-  and the boss death screen gained the "Watch ad to try again" button (see §4).
-  Budget factor and `castCommit` are the two numbers most worth a human's opinion.
+  and the boss death screen gained the "Watch ad to try again" button (retired
+  in the Aug 28–29 round — see §4). Budget factor and `castCommit` are the two
+  numbers most worth a human's opinion (`castCommit` now also scales with
+  gathered light — judge the fed end too).
 - **Two small HUD fixes from the final layout battery:** the depth toast now
   wraps instead of clipping on ≤430px-wide screens ("The Trench Mouth" was 398px
   wide at its tracking), and on short screens (≤640px tall) the verbs strip
@@ -112,25 +161,29 @@ is console-side only: create the leaderboard and the 15 achievements exactly as
 listed in `SHIP.md` §3.5 — the IDs are emitted verbatim by
 `www/js/gameservices.js`, so a typo silently breaks unlocks.
 
-### 4. Ads and the one purchase — MERGED AND DEVICE-PROVEN (Aug 2026)
-The Windows shell and the Mac SDK work are reconciled per the Aug-17 merge
-note: the shell owns the death-screen button ("Rise where you fell"),
-once-per-attempt (`_reviveSpent`), and the snapshot restart
-(`startLevel({revive})` restores `game.reviveSnapshot` — the world rebuilds,
-you keep position/motes/clock, `TUNING.reviveGrace` covers the first breath);
-`ads.js` answers the three-method contract — `maybeInterstitial({won,isGate})`,
-synchronous `canRevive({isBoss})`, `showRevive({isBoss})` true only on a
-completed reward — with the Mac's device-proven internals: lazy consent
-(UMP defensive + ATT, `npa` on every request after a denial), prepare resolves
-only when loaded, shows driven by plugin EVENTS (the show promises settle
-inconsistently and can hang forever — this wedged the button on device once),
-a 15s never-presented watchdog, and an honest toast when a taken offer fails.
+### 4. Ads and the one purchase — DEVICE-PROVEN, REWIRED Aug 28–29
+The placement rules changed in the Aug 28–29 round, from Disha's Aug 26 notes:
+interstitials now run after a LEVEL WIN every 2–3 wins (the counter persists in
+the save, the 2-vs-3 rerolls per cycle, and an unloaded ad carries the debt to
+the next win instead of forgiving it), never after a death. **The rewarded
+revive is retired** — any unlocked depth restarts free, so it bought nothing;
+the death-screen button, `_reviveSpent`, and the `startLevel({revive})` path
+are gone from the shell, while the device-proven rewarded internals (event-
+driven shows, the 15s watchdog) stay dormant in `ads.js` for any future
+rewarded placement. The shell contract is now two calls: `levelStarted()` on
+every depth entry (preloads once the cadence says this win could show one —
+which also means consent/UMP + ATT now fire around depth 2, not depth 7,
+answering the Aug 20 note) and `maybeInterstitial({won})` on wins. The Mac's
+SDK internals are untouched: lazy consent with `npa` after a denial, prepare
+resolves only when loaded, shows driven by plugin EVENTS (the show promises
+settle inconsistently and can hang forever — this wedged a button on device
+once), and an honest toast on failure.
 **The placement rules are still enforced inside `ads.js`, not at the call
 sites.** Keep it that way. Real iOS ids are live (AdMob app + units, Aug 20);
 `FORCE_TEST_ADS` serves Google's sample units through every beta and flips
 false only for the store build; `AD_DEBUG` paints an on-screen breadcrumb log
 when a device needs interrogating. TestFlight: builds 5 (live ads, reserve),
-6 (ITMS-91064, superseded), 7 (the beta build).
+6 (ITMS-91064, superseded), 7 (the beta build), 8 (the reconciled tree).
 
 Remaining: Android ids when the Play console work happens, publish the GDPR
 message in AdMob before public release, create `remove_ads` in both consoles +
@@ -214,7 +267,12 @@ already found and fixed.
 - **The gate screen states a fact and offers a door back.** No shop, no
   purchase, nothing that could read as a paywall. There is no way to buy light,
   and the copy must never imply otherwise.
-- **Ads: after a win, never after a death.**
+- **Ads: after a win, never after a death.** The cadence (every 2–3 wins) and
+  the retired revive live inside `ads.js` — placement decisions stay there.
+- **Every gate winnable at zero light, the bank never consumed, no way to buy
+  light.** The carried boon (v1.3) dims the gate's gift through the chapter; it
+  must never become permission. Hard mote quotas were rejected on measured
+  floor data (CLAUDE.md has it) — don't reopen without new numbers.
 
 ---
 
