@@ -49,11 +49,23 @@ already cost time, and the design rules that must not be broken.
 - Store docs in `store/`; build/publish runbooks in `docs/`; the `docs/plan-v1.*.html`
   files are archived decision records, not live plans.
 
-## The gate economy (v1.2)
+## The gate economy (v1.3)
 - Every 7th depth is a gate, every 14th a boss (`gateKind` in `levels.js`). The motes banked
   across the seven depths behind it set a `boon` passed into `Game.startStory`.
+- **The boon carries through the chapter** (`carriedBoon`, `BOON_CARRY = 0.3`): non-gate
+  depths after a gate get a dimmed share (booleans need grade ≥ 0.67; at most 1 silent
+  song per depth), full strength at the gate itself. Depths 1–7 play bare.
+- Motes also pay off in-level: each collect **surges the aura** (`moteSurge`, ~4s) and
+  gathered light **feeds the voice** — cast commit and range scale with this run's motes
+  (`effectiveCastCommit/Range`; the bot never casts, so floors are untouched). A depth
+  banked to its full light wears **gold** in the level select; a fully lit chapter gilds
+  its gate mark. Cosmetic only, never power. The last mote of a depth emits a grand
+  silent bloom.
 - **Every gate must stay winnable at zero motes.** The bank buys margin, never permission.
   Check with `__echo.autoplay(id, {})` against an empty save before shipping any gate change.
+  Hard mote quotas were considered and rejected (Aug 29 2026): the zero-effort floor the
+  bot measures swings 6%–67% by depth, so any flat X is either dead noise or a wall for
+  exactly the wrong players.
 - **The bank is never consumed.** It is the sum of `bestMotes` per depth (already saved on
   deaths as well as wins), so replaying raises it and a failed gate costs nothing.
 - The gate screen states a fact and offers a door back. No shop, no purchase, nothing that
@@ -99,7 +111,9 @@ already cost time, and the design rules that must not be broken.
   relying on a class alone.
 - **A thrown song commits its listeners** (`TUNING.castCommit`): hunters and
   leviathans alerted by a cast ignore nearer, quieter sounds — including your next
-  tap — for that long. Without it the lie lasted exactly one song.
+  tap — for that long. Without it the lie lasted exactly one song. Both commit and
+  range now scale with light gathered this run (`effectiveCastCommit/Range`) — a fed
+  lume sings a fuller song.
 
 ## Bosses
 - **Boss-ness is declared by the level, not by arithmetic.** A def with a `boss: { name,

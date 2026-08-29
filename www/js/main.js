@@ -16,6 +16,7 @@ import { Teacher } from './teach.js';
 import {
   getLevel, LEVELS, parTime, chapterOf,
   gateKind, gateSpan, gateCapacity, gateBoon, gateBoonLine,
+  carriedBoon, moteCapacity, GATE_EVERY,
 } from './levels.js';
 import { drawGame, drawMenuAmbient } from './draw.js';
 import { installDebug } from './debug.js';
@@ -353,7 +354,7 @@ class Shell {
     if (gateKind(id) && !opts.fromCheckpoint && !opts.skipGate && !opts.silent) {
       this._pendingGate = id;
       const boon = this._boonFor(id);
-      this.ui.fillGate(def, boon);
+      this.ui.fillGate(def, boon, this._chapterFullyLit(id));
       this.ui.setGateBuys(gateBoonLine(boon));
       this._show('gate');
       return;
@@ -396,10 +397,16 @@ class Shell {
       boon.revealLures || boon.iceSteady || boon.hushRelief > 0.05 || boon.aura > 0.05);
     if (boonActive && !resume) {
       const seen = this.save.data.teachSeen || (this.save.data.teachSeen = []);
-      const key = `boon${boon.id}`;
+      // Per-gate explainer at gates; one explainer ever for the carry itself.
+      const key = boon.carried ? 'boonCarried' : `boon${boon.id}`;
       if (!seen.includes(key)) {
         seen.push(key); this.save.persist();
-        this.ui.hint('Carried light is with you.', undefined, gateBoonLine(boon));
+        this.ui.hint(
+          boon.carried ? 'The gate’s light stays with you.' : 'Carried light is with you.',
+          undefined,
+          boon.carried
+            ? 'A dimmed share of the gate’s gift holds until the next gate. Bank more light and it burns brighter.'
+            : gateBoonLine(boon));
       }
     }
     this.ui.hideBossCard();
@@ -417,12 +424,29 @@ class Shell {
     }
   }
 
-  // What the seven depths behind a gate are worth right now. Null everywhere
-  // else, so an ordinary depth plays exactly as it always did.
+  // Every depth feeding this gate banked to its full light? (The gold mark.)
+  _chapterFullyLit(gateId) {
+    const { from, to } = gateSpan(gateId);
+    for (let i = from; i <= to; i++) {
+      const d = LEVELS.find((l) => l.id === i);
+      const rec = this.save.data.levels[i];
+      if (!d || !rec || rec.bestMotes < moteCapacity(d)) return false;
+    }
+    return true;
+  }
+
+  // What the seven depths behind a gate are worth right now — full strength at
+  // the gate itself, and carried (dimmed, see carriedBoon) through the six
+  // depths that follow it. Depths 1-7 have no gate behind them and play bare.
   _boonFor(id) {
-    if (!gateKind(id)) return null;
-    const { from, to } = gateSpan(id);
-    return gateBoon(id, this.save.moteBank(from, to), gateCapacity(id));
+    if (gateKind(id)) {
+      const { from, to } = gateSpan(id);
+      return gateBoon(id, this.save.moteBank(from, to), gateCapacity(id));
+    }
+    const prevGate = Math.floor((id - 1) / GATE_EVERY) * GATE_EVERY;
+    if (prevGate < GATE_EVERY) return null;
+    const { from, to } = gateSpan(prevGate);
+    return carriedBoon(gateBoon(prevGate, this.save.moteBank(from, to), gateCapacity(prevGate)));
   }
 
   startAbyss() {
@@ -801,7 +825,7 @@ class Shell {
         const a = this._castAim;
         const prog = a.progress ?? 1;
         const d = Math.hypot(a.x - p.x, a.y - p.y);
-        const max = TUNING.castRange;
+        const max = this.game.effectiveCastRange();
         const tx = d > max ? p.x + (a.x - p.x) * (max / d) : a.x;
         const ty = d > max ? p.y + (a.y - p.y) * (max / d) : a.y;
         // Any warden that would hear the landing turns toward it from the first

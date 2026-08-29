@@ -28,6 +28,7 @@ export class Game {
     this.rescueT = 0;
     this.moteCombo = 0;
     this.comboT = 0;
+    this.surgeT = 0;         // seconds of collect-bloom left (see effectiveAura)
     this.chainDisplay = 0;   // fractional tier index; rises fast, cools slow
     this.auraScale = 1;
     this.decayScale = 1;
@@ -88,6 +89,7 @@ export class Game {
     this.hintMute = null;      // the shell re-arms this after Teacher.arm
     this.pingCooldown = 0;
     this.moteCombo = 0;
+    this.surgeT = 0;
     this.chainDisplay = 0;
     this.checkpoint = null;
     this.checkpointArmed = this.mode === 'story' && this.def?.checkpoint != null;
@@ -218,11 +220,26 @@ export class Game {
     }
   }
 
-  // Motes feed the lume's glow: aura widens with each one gathered this run.
+  // Motes feed the lume's glow: aura widens with each one gathered this run,
+  // and each collect blooms it further for a few seconds (the surge) so the
+  // payoff is felt at the moment of taking, not read off a stat.
   effectiveAura() {
     const bonus = Math.min(this.ents.player.motes * TUNING.moteGlowPerMote, TUNING.moteGlowCap);
-    return this.auraScale * (1 + bonus);
+    return this.auraScale * (1 + bonus + TUNING.moteSurge * this.surge());
   }
+
+  surge() { return this.surgeT / TUNING.moteSurgeTime; }
+
+  // The fed voice: 0..1 with light gathered this run (same curve as the glow).
+  // A brighter lume sings a fuller song — the lie reaches further and holds
+  // listeners longer. This is the mote system's answer to hard depths, routed
+  // through the verb that already exists instead of a third one.
+  castPower() {
+    return Math.min(this.ents.player.motes * TUNING.moteGlowPerMote, TUNING.moteGlowCap)
+      / TUNING.moteGlowCap;
+  }
+  effectiveCastRange() { return TUNING.castRange + TUNING.castRangeFed * this.castPower(); }
+  effectiveCastCommit() { return TUNING.castCommit * (1 + TUNING.castCommitFed * this.castPower()); }
 
   // ---- input ----
   tapAt(wx, wy) {
@@ -284,8 +301,10 @@ export class Game {
     if (this.pingCooldown > 0) return false;
     const p = this.ents.player;
     // Range is generous but real; past it the voice dies before arriving.
+    // A fed lume reaches further (effectiveCastRange) — the aim glyph in
+    // main.js clamps with the same call, so preview and sim never disagree.
     const d = dist(p.x, p.y, wx, wy);
-    const max = TUNING.castRange;
+    const max = this.effectiveCastRange();
     let cx = wx, cy = wy;
     if (d > max) { cx = p.x + (wx - p.x) * (max / d); cy = p.y + (wy - p.y) * (max / d); }
     p.pings++;
@@ -301,8 +320,8 @@ export class Game {
     return true;
   }
 
-  _emitPing(x, y, { free = false, cast = false }) {
-    this.pings.push({ x, y, r: 6, prevR: 0, free, strength: this.hushFactor(x, y) });
+  _emitPing(x, y, { free = false, cast = false, strength = null }) {
+    this.pings.push({ x, y, r: 6, prevR: 0, free, strength: strength ?? this.hushFactor(x, y) });
     // Free light — the wake pulse, a chain bloom, a crystal's answer — carries
     // no sound, so nothing in the dark turns toward it.
     if (!free) this._wakeListeners(x, y, 0, false, cast);
@@ -338,7 +357,7 @@ export class Game {
         const wasCalm = lv.state !== 'hunt';
         lv.state = 'hunt';
         lv.alertT = 0;
-        lv.commitT = cast ? TUNING.castCommit : 0;
+        lv.commitT = cast ? this.effectiveCastCommit() : 0;
         lv.targetX = x; lv.targetY = y;
         if (wasCalm && this.cb.onLeviathanWake) this.cb.onLeviathanWake(lv.x, lv.y);
       }
@@ -350,7 +369,7 @@ export class Game {
     const wasCalm = h.state !== 'alert';
     h.state = 'alert';
     h.alertT = 0;
-    h.commitT = cast ? TUNING.castCommit : 0;
+    h.commitT = cast ? this.effectiveCastCommit() : 0;
     h.targetX = x; h.targetY = y;
     if (wasCalm && !silent && this.cb.onAlert) this.cb.onAlert();
   }
@@ -366,6 +385,7 @@ export class Game {
     if (this.orbitT > 0) this.orbitT = Math.max(0, this.orbitT - dt);
     if (this.pingCooldown > 0) this.pingCooldown -= rawDt;
     if (this.comboT > 0) { this.comboT -= dt; if (this.comboT <= 0) this.moteCombo = 0; }
+    if (this.surgeT > 0) this.surgeT = Math.max(0, this.surgeT - dt);
     // Chain color rises the instant you collect, then cools over ~2s.
     const targetTier = chainTierIndex(this.moteCombo);
     const rate = targetTier > this.chainDisplay ? 16 : 1.7;
@@ -444,6 +464,7 @@ export class Game {
         p.motes++;
         this.moteCombo++;
         this.comboT = 2.4;
+        this.surgeT = TUNING.moteSurgeTime;
         if (this.mode === 'abyss') this.abyss.motesScore++;
         if (this.cb.onMote) this.cb.onMote(this.moteCombo, m.x, m.y);
         // Deep chains bloom: a silent reveal pulse. Light, not noise —
@@ -452,8 +473,12 @@ export class Game {
           this._emitPing(p.x, p.y, { free: true });
           if (this.cb.onChainBloom) this.cb.onChainBloom(this.moteCombo, p.x, p.y);
         }
-        if (this.mode === 'story' && p.motes === this.ents.motes.length &&
-            this.cb.onAllMotes) this.cb.onAllMotes(m.x, m.y);
+        if (this.mode === 'story' && p.motes === this.ents.motes.length) {
+          // The last mote answers with a grand silent bloom: the depth's full
+          // light, given back the moment it is completed.
+          this._emitPing(p.x, p.y, { free: true, strength: 1.4 });
+          if (this.cb.onAllMotes) this.cb.onAllMotes(m.x, m.y);
+        }
       }
     }
 

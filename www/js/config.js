@@ -106,6 +106,16 @@ export const TUNING = {
   moteCollectRadius: 17,
   moteGlowPerMote: 0.04,    // aura growth per mote eaten this run
   moteGlowCap: 0.45,
+  // The surge: each mote also blooms the aura briefly, so a mote line is a lit
+  // corridor that dims behind you. Teaches "motes = sight" wordlessly. Bonus
+  // light only — no fairness floor moves.
+  moteSurge: 0.25,          // extra aura fraction at full surge
+  moteSurgeTime: 4.0,       // s for the surge to breathe back down
+  // The fed voice: light gathered this run makes the thrown song more
+  // commanding. Human-only power (the bot never casts), so every verified
+  // floor is unchanged; scales on the same motes/glow-cap curve as the aura.
+  castCommitFed: 0.58,      // castCommit grows to ×(1+this) at the glow cap
+  castRangeFed: 80,         // extra cast reach (px) at the glow cap
 
   // Hazards
   urchinHitRadius: 20,

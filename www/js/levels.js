@@ -1067,6 +1067,30 @@ export function gateBoon(id, banked, capacity) {
   return b;
 }
 
+// Carried light: the gate's gift does not die at its own door. A dimmed
+// version persists through the six depths that follow — light gathered above,
+// carried into the darker water below — which lands the payoff exactly where
+// the next chapter's listeners make sight valuable (the full boon used to
+// expire on the one depth where, e.g., wider glow had nothing to out-see).
+// Full strength returns at the next gate. Floors unchanged: every depth is
+// still winnable at zero light, and the bank is still never consumed.
+export const BOON_CARRY = 0.3;
+export function carriedBoon(b) {
+  if (!b) return null;
+  return {
+    ...b, carried: true,
+    aura: b.aura * BOON_CARRY,
+    decay: b.decay * BOON_CARRY,
+    hushRelief: b.hushRelief * BOON_CARRY,
+    orbitSecs: Math.round(b.orbitSecs * BOON_CARRY),
+    // Counted and boolean gifts carry only from a strong bank: one silent
+    // song per depth at most, and true sight / steadiness above 2/3 light.
+    silentSongs: Math.min(1, Math.floor(b.silentSongs * 0.34)),
+    revealLures: b.revealLures && b.grade >= 0.67,
+    iceSteady: b.iceSteady && b.grade >= 0.67,
+  };
+}
+
 // One line telling the player exactly what they bought. States a fact and never
 // implies a purchase — there is no way to buy light.
 export function gateBoonLine(b) {

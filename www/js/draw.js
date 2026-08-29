@@ -463,7 +463,9 @@ export function drawGame(R, game, particles, time, dt, palette) {
     // Aura and tail take on the chain color, but never lose the lume's identity.
     const chainMix = clamp(game.chainDisplay / 4, 0, 1) * 0.75;
     const auraCol = hexLerp(palette.playerAura, chain.accent, chainMix);
-    R.glowDot(p.x, p.y, 20 * breathe * game.effectiveAura() + 4, auraCol, 0.28 * alpha);
+    // The collect-surge brightens as well as widens, so taking a mote is felt.
+    R.glowDot(p.x, p.y, 20 * breathe * game.effectiveAura() + 4, auraCol,
+      (0.28 + 0.10 * game.surge()) * alpha);
     R.glowDot(p.x, p.y, 10.5, auraCol, 0.75 * alpha);
     R.glowDot(p.x, p.y, 5.2, palette.player, alpha, '#ffffff');
     // motion tail

@@ -262,6 +262,12 @@ html, body {
 .level-stars { font-size: 12px; color: var(--mote); letter-spacing: 0.1em; }
 .level-best { font-size: 9.5px; color: var(--mote); opacity: 0.75; letter-spacing: 0.04em; }
 .level-best.dim { color: var(--text-dim); opacity: 0.7; }
+/* A depth banked to its full light wears gold, permanently. */
+.level-cell.fulllight {
+  border-color: rgba(255, 196, 94, 0.5);
+  box-shadow: 0 0 14px rgba(255, 196, 94, 0.16), inset 0 0 10px rgba(255, 196, 94, 0.07);
+}
+.level-cell.fulllight .level-best { opacity: 1; }
 .stat-row.best span:last-child { color: var(--mote); }
 .total-stars { font-size: 12.5px; letter-spacing: 0.22em; color: var(--text-dim); text-transform: uppercase; }
 
@@ -802,6 +808,9 @@ body.reduced-motion .star.earned { animation: none; }
 /* Arriving short is a fact about the dark, not a scolding and not a storefront. */
 .gate-mark.lean::before { border-color: var(--danger); opacity: 0.45; }
 .gate-mark.lean::after { background: var(--danger); opacity: 0.2; box-shadow: 0 0 26px rgba(255, 59, 92, 0.4); }
+/* A chapter banked to its full light gilds its gate: the mark burns whole. */
+.gate-mark.fulllight::before { opacity: 1; box-shadow: 0 0 18px rgba(255, 196, 94, 0.55); }
+.gate-mark.fulllight::after { opacity: 0.55; box-shadow: 0 0 42px rgba(255, 196, 94, 0.85); }
 .gate-carry { font-size: 15px; margin: 4px 0 0; }
 .gate-bar {
   width: 100%; height: 7px; border-radius: 4px;

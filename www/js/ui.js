@@ -79,7 +79,7 @@ export class UI {
 
   // The gate. Says what you carry, what it buys, and offers the way back.
   // "Lean" is a warning about the dark, never a prompt to buy anything.
-  fillGate(def, boon) {
+  fillGate(def, boon, fullLight = false) {
     const lean = boon.grade < 0.34;
     this.el.gateDepth.textContent = `Depth ${boon.id}`;
     this.el.gateName.textContent = def.name;
@@ -87,6 +87,8 @@ export class UI {
       `You carry ${boon.banked} light${boon.banked === 1 ? '' : 's'} of ${boon.capacity}.`;
     this.el.gateBarFill.style.width = `${Math.round(boon.grade * 100)}%`;
     this.el.gateMark.classList.toggle('lean', lean);
+    // Every depth behind this gate banked to its full light: the mark burns whole.
+    this.el.gateMark.classList.toggle('fulllight', fullLight);
     this.el.gateBarFill.classList.toggle('lean', lean);
     this.el.gateBuys.classList.toggle('lean', lean);
     return lean;
@@ -395,7 +397,9 @@ export class UI {
       const total = UI.moteTotal(lvl);
       tally(rec ? Math.min(rec.bestMotes, total) : 0, total);
       const btn = document.createElement('button');
-      btn.className = 'level-cell' + (unlocked ? '' : ' locked');
+      // A depth banked to its full light wears gold, permanently.
+      const fullLight = !!rec && total > 0 && rec.bestMotes >= total;
+      btn.className = 'level-cell' + (unlocked ? '' : ' locked') + (fullLight ? ' fulllight' : '');
       btn.disabled = !unlocked;
       const stars = rec ? rec.stars : 0;
       const bestLine = rec
