@@ -1,7 +1,22 @@
 # Echolume — ship checklist
 
-Everything automatable is done and committed. These are the remaining human steps, in order.
+Everything automatable is done and committed. These are the remaining human steps.
 Details for each live in docs/BUILDING.md and docs/PUBLISHING.md.
+
+**Release order (decided Aug 31 2026): iOS first, Android as a fast follow.** The
+sections below are numbered by topic, not by sequence — §2 (Android) comes after §3
+(iOS) in time. Two consequences worth acting on early rather than late:
+
+- **Compile Android during the iOS beta window, not when the fast follow starts.**
+  It has never been built once on any machine, so that Gradle run is the schedule
+  risk; discovering a missing Android plugin implementation is cheap now and
+  expensive when "fast follow" is supposed to be fast. A debug build on an emulator
+  is enough to retire it.
+- **Do paired store work once.** The `remove_ads` product uses the SAME id in both
+  consoles, and the purchase plugin should be a cross-platform one (see §3.6) so the
+  Android half is configuration rather than a second implementation. Android AdMob
+  ids can be created before the app is published, which retires the sample ids still
+  sitting in `AD_IDS` and `AndroidManifest.xml`.
 
 ## 0. Repo
 - [x] Pushed to github.com/lohiaguitar91/Echolume, `main` tracking `origin/main`.

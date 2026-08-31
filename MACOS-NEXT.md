@@ -158,6 +158,10 @@ session learned all three the hard way.
 Ordered by what unblocks the most.
 
 ### 1. Android has never been compiled — do this first
+**Release order (Aug 31 2026): iOS ships first, Android is a fast follow.** That
+does NOT move this item later. Build Android during the iOS beta window: it is the
+one unknown that could make a "fast" follow slow, and an emulator debug build is
+enough to find out.
 It is the single biggest untested surface in the project. `npx cap open android`,
 let Gradle sync, `assembleDebug`. Resource linking is known-good (it caught a
 real adaptive-icon bug already), and `GameConnectPlugin.java` type-checks against
