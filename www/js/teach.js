@@ -19,7 +19,7 @@ export const TEACH = {
   mote: {
     glyph: g(`<circle cx="16" cy="16" r="5" fill="#ffc45e"/><circle cx="16" cy="16" r="10" stroke="#ffc45e" stroke-opacity=".4"/>`),
     lead: 'Amber motes',
-    plain: 'Every one you take is banked, and carried into the next gate.',
+    plain: 'Each one widens your glow now, and helps you see further in the depths below.',
   },
   vent: {
     glyph: g(`<circle cx="16" cy="16" r="11" stroke="#5effc2" stroke-width="2"/><circle cx="16" cy="16" r="5" fill="#5effc2" fill-opacity=".5"/><path d="M11 14l5 6 5-6" stroke="#5effc2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`),

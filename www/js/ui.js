@@ -202,7 +202,7 @@ export class UI {
     document.getElementById('light-bank-count').textContent = `${banked} / ${cap}`;
     document.getElementById('light-bank-fill').style.width = `${Math.round(pct * 100)}%`;
     document.getElementById('light-bank-note').textContent =
-      `Carried into depth ${target}. Your best run of each depth counts.`;
+      `Carried into depth ${target}, where it widens your glow. Your best run of each depth counts.`;
     wrap.hidden = false;
   }
 
