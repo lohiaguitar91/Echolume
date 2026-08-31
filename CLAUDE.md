@@ -157,6 +157,15 @@ already cost time, and the design rules that must not be broken.
   revive was **retired** in the Aug 26 2026 playtest — any unlocked depth restarts
   free, so it bought nothing; its device-proven internals stay dormant in `ads.js`.
   The placement rules live inside `ads.js`, enforced there and not at call sites.
+- **Buying lives in `www/js/purchases.js`**, never in `ads.js` (which only asks
+  `save.data.adsRemoved`). Two surfaces: a Settings block (buy + **Restore purchase**,
+  which App Store Review 3.1.1 requires for a non-consumable) and an offer shown just
+  before an interstitial. Both are **hidden unless the store side is live**
+  (`PURCHASE.productId` + plugin + key), so a button that cannot work never ships.
+  The pre-ad offer is rate-limited by `AD_RULES.offerBeforeAd` — every Nth ad, silent
+  for good after `stopAfterDeclines` — and "Watch the ad" is always one plain tap.
+  **`save.reset()` deliberately preserves `adsRemoved`**: erasing progress must never
+  revoke something a player paid for.
 - `ads.js` talks to `Capacitor.Plugins.AdMob` directly (no package import — `www/` has
   no bundler). Method/event names are the plugin's v8 README strings; if the plugin
   major changes, check them first.

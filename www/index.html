@@ -171,7 +171,7 @@
             <circle cx="50" cy="18" r="9" class="hg-ring"/>
             <circle cx="50" cy="18" r="15" class="hg-ring dim"/>
           </svg>
-          <p>Hold, then let go, to throw your voice. The song lands where you held &mdash; it moves you nowhere, and everything listening goes there instead of here.</p>
+          <p>Hold, then let go, to throw your voice. The song lands where you held. You stay where you are, and everything listening goes to the sound.</p>
         </div>
         <div class="howto-row">
           <svg class="howto-glyph" viewBox="0 0 64 64" aria-hidden="true">
@@ -181,13 +181,13 @@
             <circle cx="45" cy="31" r="7" class="hg-vent faint"/>
             <path d="M40 28 L45 34 L50 28" class="hg-vent-arrow"/>
           </svg>
-          <p>Gather the amber motes: each one brightens your glow. The vent below, ringed and green, takes you deeper.</p>
+          <p>Gather the amber motes. Each one brightens your glow. The green ringed vent below takes you deeper.</p>
         </div>
         <div class="howto-row">
           <svg class="howto-glyph" viewBox="0 0 64 64" aria-hidden="true">
             <path d="M32 14 l4.7 9.5 10.5 1.5 -7.6 7.4 1.8 10.4 -9.4 -4.9 -9.4 4.9 1.8 -10.4 -7.6 -7.4 10.5 -1.5 z" class="hg-star"/>
           </svg>
-          <p>Every song counts. Stars want two things: the vent reached, and few songs spent. Every mote you gather is banked for the gates below.</p>
+          <p>Every song counts. You earn one star for reaching the vent and another for getting there on few songs. Motes are banked for the gates below.</p>
         </div>
         <div class="howto-row">
           <svg class="howto-glyph" viewBox="0 0 64 64" aria-hidden="true">
@@ -196,7 +196,7 @@
             <path d="M23 42 Q28 47 32 47 Q36 47 41 42" class="hg-abyss-wall dimmer"/>
             <circle cx="32" cy="54" r="2.6" class="hg-core"/>
           </svg>
-          <p>Clear depth 7 to open the Abyss: an endless dive where depth is your score and the deep never stops narrowing.</p>
+          <p>Clear depth 7 to open the Abyss. It is an endless dive. How far you get is your score, and the walls keep closing in.</p>
         </div>
       </div>
       <div class="menu-buttons">
@@ -232,6 +232,14 @@
         <label class="setting-row">
           <span class="setting-label">Show danger on screen<small>Rings anything hunting you, so you can see what you would normally only hear.</small></span>
           <input type="checkbox" id="set-visualthreat" class="toggle"></label>
+      </div>
+      <!-- The one purchase. Hidden entirely unless the store side is live, so
+           a button that cannot work is never on screen. -->
+      <div class="purchase-block" id="purchase-block" hidden>
+        <p class="purchase-pitch" id="purchase-pitch">Echolume is free, and ads between depths pay for it. One purchase turns them off for good and supports the work.</p>
+        <button id="btn-remove-ads" class="btn support">Remove ads</button>
+        <button id="btn-restore-purchase" class="link-btn">Restore purchase</button>
+        <p class="purchase-note" id="purchase-note" hidden></p>
       </div>
       <div class="settings-actions">
         <button id="btn-reset-save" class="btn danger ghost">Reset progress</button>
@@ -399,6 +407,21 @@
         <button id="btn-gate-descend" class="btn primary">Descend</button>
         <button id="btn-gate-back" class="btn ghost">Go back for more light</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Remove Ads offer, shown just before an interstitial. States what is
+       about to happen and offers the way out. Continuing is one plain tap and
+       is never disguised, delayed, or made to look like the lesser choice. -->
+  <div class="screen overlay" id="screen-ad-offer" hidden>
+    <div class="panel">
+      <h2>An ad is next</h2>
+      <p class="offer-body">Ads between depths keep Echolume free. You can turn them off for good with one purchase, or watch this one and carry on.</p>
+      <div class="menu-buttons">
+        <button id="btn-offer-buy" class="btn support">Remove ads</button>
+        <button id="btn-offer-continue" class="btn">Watch the ad</button>
+      </div>
+      <p class="offer-note" id="offer-note" hidden></p>
     </div>
   </div>
 

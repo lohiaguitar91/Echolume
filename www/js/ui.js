@@ -211,6 +211,70 @@ export class UI {
     this.screens.rotate.classList.toggle('visible', on);
   }
 
+  // ---- the one purchase ----
+  // The ad offer is deliberately NOT in `this.screens`, so `show()` never
+  // touches it: it layers over whatever is underneath (the results screen) and
+  // leaves that screen intact when it closes.
+  showAdOffer(on) {
+    const el = $('screen-ad-offer');
+    if (!el) return;
+    if (on) {
+      el.hidden = false;
+      requestAnimationFrame(() => el.classList.add('visible'));
+    } else {
+      el.classList.remove('visible');
+      setTimeout(() => { el.hidden = true; }, 380);   // matches the fade
+    }
+  }
+
+  // Render the settings purchase block from the live purchase state. Hidden
+  // outright when nothing can be bought, so a dead button never ships.
+  syncPurchase(purchases) {
+    const block = $('purchase-block');
+    if (!block) return;
+    const owned = purchases.owned;
+    // Owned stays visible (it is the thank-you); unavailable disappears.
+    block.hidden = !purchases.configured && !owned;
+    block.classList.toggle('owned', owned);
+    const buy = $('btn-remove-ads');
+    const restore = $('btn-restore-purchase');
+    const pitch = $('purchase-pitch');
+    if (owned) {
+      pitch.textContent = 'Ads are off. Thank you for supporting Echolume.';
+      buy.hidden = true;
+      restore.hidden = true;
+    } else {
+      pitch.textContent = 'Echolume is free, and ads between depths pay for it. One purchase turns them off for good and supports the work.';
+      buy.hidden = false;
+      buy.disabled = false;
+      buy.textContent = `Remove ads · ${purchases.priceText()}`;
+      restore.hidden = false;
+    }
+  }
+
+  setPurchaseNote(text, good = false) {
+    const el = $('purchase-note');
+    if (!el) return;
+    el.hidden = !text;
+    el.textContent = text || '';
+    el.classList.toggle('good', !!good);
+  }
+
+  setOfferPrice(text) {
+    const b = $('btn-offer-buy');
+    if (b) { b.textContent = `Remove ads · ${text}`; b.disabled = false; }
+    const n = $('offer-note');
+    if (n) { n.hidden = true; n.textContent = ''; }
+  }
+
+  setOfferNote(text, good = false) {
+    const el = $('offer-note');
+    if (!el) return;
+    el.hidden = !text;
+    el.textContent = text || '';
+    el.classList.toggle('good', !!good);
+  }
+
   // ---- HUD ----
   setHearts(n, max) {
     const h = this.el.hearts;

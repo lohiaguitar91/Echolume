@@ -41,7 +41,7 @@ export const TEACH = {
   cast: {
     glyph: g(`<circle cx="8" cy="22" r="4" fill="#eafcff"/><path d="M12 20q6-6 12-9" stroke="#8ef4ff" stroke-width="1.6" stroke-dasharray="2 4" stroke-linecap="round"/><circle cx="26" cy="9" r="5" stroke="#8ef4ff" stroke-width="1.8"/>`),
     lead: 'Throw your voice',
-    plain: 'Hold, then let go. The song lands where you held — and so does everything listening.',
+    plain: 'Hold, then let go. The song lands where you held, and so does everything listening.',
   },
   current: {
     glyph: g(`<g stroke="#3f6fff" stroke-width="2" stroke-linecap="round"><path d="M5 11q6-4 11 0t11 0M5 20q6-4 11 0t11 0"/></g>`),
@@ -51,7 +51,7 @@ export const TEACH = {
   lure: {
     glyph: g(`<circle cx="16" cy="11" r="4" fill="#ffc45e"/><path d="M16 15v6" stroke="#ff5fb0" stroke-width="2"/><path d="M11 21h10l-2 6h-6z" fill="#ff5fb0" fill-opacity=".6"/>`),
     lead: 'Not all light is food',
-    plain: 'Some amber is bait. Sing at a light first — a false one shows its tether.',
+    plain: 'Some amber is bait. Sing at a light first. A false one shows its tether.',
   },
   crystal: {
     glyph: g(`<path d="M16 5l7 6-3 10h-8l-3-10z" stroke="#dcefff" stroke-width="2" stroke-linejoin="round"/><circle cx="16" cy="14" r="3" fill="#dcefff" fill-opacity=".7"/>`),

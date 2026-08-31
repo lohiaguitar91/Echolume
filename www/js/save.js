@@ -17,6 +17,12 @@ const DEFAULTS = {
   abyssNudgeSeen: false,   // the one-time "sing to see again" nudge
   aboutSeen: false,
   achievements: [],    // milestone ids unlocked locally (source of truth)
+  // Ads and the one purchase. `adsRemoved` is an entitlement, not progress:
+  // reset() deliberately preserves it.
+  adsRemoved: false,
+  adWins: 0,           // level wins since the last interstitial
+  adOfferTick: 0,      // interstitials that have reached the "remove ads?" offer
+  adOfferDeclines: 0,  // times the offer was declined; enough of them silences it
   settings: {
     sound: true,
     music: true,
@@ -191,8 +197,14 @@ export class Save {
     return Object.values(this.data.levels).reduce((sum, l) => sum + (l.stars || 0), 0);
   }
 
+  // Erases progress, NEVER entitlements. Someone who paid to remove ads still
+  // paid; wiping that here would charge them again for restarting the game.
+  // (The store is the real source of truth and a restore would bring it back,
+  // but a player should never have to discover that.)
   reset() {
+    const paid = !!this.data.adsRemoved;
     this.data = structuredClone(DEFAULTS);
+    this.data.adsRemoved = paid;
     try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ }
     if (this.capPrefs) this.capPrefs.remove({ key: SAVE_KEY }).catch(() => {});
     this.persist();

@@ -66,7 +66,8 @@ export const TEST_DEVICE_IDS = [
   // live requests once real units serve to them.
   '4DCB9E8E-D14A-4A0D-B275-3F1974FC81B5',
 ];
-export const IAP_PRODUCT_ID = null;   // e.g. 'com.wibesllc.echolume.remove_ads'
+// Buying lives in purchases.js (product id, plugin, restore). This file only
+// ever ASKS whether ads were removed, via save.data.adsRemoved.
 // ---------------------------------------------------------------------------
 
 // Placement rules (revised Aug 26 2026 playtest), decided by design and not
@@ -80,10 +81,16 @@ export const IAP_PRODUCT_ID = null;   // e.g. 'com.wibesllc.echolume.remove_ads'
 //     want it) but nothing preps or offers it.
 //   - Buying `remove_ads` removes interstitials permanently — with an ad
 //     every few depths, that purchase is the whole pitch.
+//   - The player is TOLD the ad is coming, and offered the way out, before it
+//     plays. Continuing is always one plain tap and never disguised. The offer
+//     is rate-limited (`offerBeforeAd`) so it stays an offer instead of a toll
+//     booth, and it stops asking entirely once someone has declined enough
+//     times to have clearly meant it.
 export const AD_RULES = {
   interstitialEveryNWins: [2, 3],
   neverAfterDeath: true,
   noRewardedRevive: true,
+  offerBeforeAd: { everyNAds: 2, stopAfterDeclines: 6 },
 };
 
 export class Ads {
@@ -245,11 +252,27 @@ export class Ads {
     });
   }
 
+  // Is the "remove ads instead?" offer due before this ad? Rate-limited so it
+  // is an offer and not a toll booth, and silenced for good once the player
+  // has declined `stopAfterDeclines` times — at that point they have answered.
+  _offerDue() {
+    const rule = AD_RULES.offerBeforeAd;
+    const d = this.save.data;
+    if ((d.adOfferDeclines || 0) >= rule.stopAfterDeclines) return false;
+    // Offered on the first due ad, then every Nth after it.
+    return ((d.adOfferTick || 0) % rule.everyNAds) === 0;
+  }
+
   // Called on every level win. Counts the win, and shows an interstitial once
   // the cadence is due AND one is actually loaded — if the network was slow,
   // the debt carries to the next win instead of being forgiven. Returns
   // whether an ad was actually shown, so callers stay honest.
-  async maybeInterstitial({ won }) {
+  //
+  // `offer` is an optional async callback the shell provides to put the
+  // Remove Ads offer on screen right before the ad. It resolves 'bought' or
+  // 'continue'. It is invoked HERE rather than at the call site so the offer's
+  // frequency stays part of the placement rules, like everything else.
+  async maybeInterstitial({ won, offer }) {
     if (!won) return false;               // never after a death — enforced here
     if (this.removed || !this.configured) return false;
     if (this._adEvery == null) this._adEvery = this._rollCadence();
@@ -257,6 +280,33 @@ export class Ads {
     this.save.persist();
     if (this.save.data.adWins < this._adEvery) return false;
     if (!this.ready || !this._interstitialLoaded || this._showing) return false;
+    // The ad is genuinely about to play, so this is the honest moment to offer
+    // the way out. A bought offer cancels the ad and leaves the win counter
+    // alone — ads are gone from here on anyway.
+    if (offer) {
+      const d = this.save.data;
+      const due = this._offerDue();
+      // The tick counts every ad that got this far, shown offer or not —
+      // advancing it only when the offer appeared froze it on a non-offering
+      // remainder, and the offer was never seen a second time.
+      d.adOfferTick = (d.adOfferTick || 0) + 1;
+      this.save.persist();
+      if (!due) return this._showInterstitial();
+      let choice = 'continue';
+      try { choice = await offer(); } catch (e) { this._bug(`offer failed: ${e?.message || e}`); }
+      if (choice === 'bought' || this.removed) { this._bug('offer taken'); return false; }
+      d.adOfferDeclines = (d.adOfferDeclines || 0) + 1;
+      this.save.persist();
+      // The player may have left the screen while the sheet was up.
+      if (!this._interstitialLoaded || this._showing) return false;
+    }
+    return this._showInterstitial();
+  }
+
+  // Present the loaded interstitial and settle when it goes away. Resets the
+  // win counter and rerolls the 2-vs-3 cadence, so those happen exactly once
+  // per ad no matter which path reached here.
+  async _showInterstitial() {
     this._showing = true;
     try {
       const closed = this._untilClosed();
@@ -302,8 +352,4 @@ export class Ads {
     } finally { this._showing = false; }
   }
 
-  async purchaseRemoveAds() {
-    if (!IAP_PRODUCT_ID) return false;    // needs a purchase plugin + store product
-    return false;
-  }
 }

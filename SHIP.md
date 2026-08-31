@@ -103,12 +103,15 @@ boss death screen shows a **"Watch ad to try again"** button only while
 while dormant, so shipping it that way is safe.
 
 The placement rules are enforced **inside `ads.js`**, not at the call sites, so they hold
-no matter who calls them later:
-- Interstitial **only** after clearing a gate depth (every 7th), on the win screen.
+no matter who calls them later (revised Aug 26 and Aug 31 2026):
+- Interstitial after a **level win**, every 2–3 wins; the counter persists in the save
+  and the 2-vs-3 rerolls per cycle.
 - **Never** after a death, a failed gate, on the gate warning, or on first launch.
-- Rewarded revive at bosses only, once per attempt, as a button the player taps; it
-  resumes the run where it ended (hearts back) — the free lair-mouth retry stays.
-- `remove_ads` kills interstitials permanently; the revive stays as a player choice.
+- **No rewarded revive.** Retired Aug 26: any unlocked depth restarts free, so it bought
+  nothing. Its device-proven internals stay dormant in `ads.js` for a future placement.
+- Before an interstitial the player is offered the way out (`AD_RULES.offerBeforeAd`,
+  every Nth ad, silent for good after enough declines). Continuing is one plain tap.
+- `remove_ads` kills interstitials permanently.
 
 Current state (Aug 2026): **implemented and live against Google's SAMPLE ids.**
 `@capacitor-community/admob` 8.1.0 is installed and `ads.js` drives it via
@@ -127,9 +130,24 @@ retry or it would be a scam. Declining is just using the ordinary death-screen b
       `npx cap sync`.
 - [ ] Publish the GDPR consent message in AdMob (Privacy & messaging) before any
       public release; the code already calls the consent APIs and no-ops until then.
-- [ ] Create the `remove_ads` non-consumable in **both** App Store Connect and Play
-      Console, then set `IAP_PRODUCT_ID`. Pick a purchase plugin
-      (`@revenuecat/purchases-capacitor` 13.x declares `@capacitor/core >=8.0.0`).
+- [ ] **Turn the purchase on.** `www/js/purchases.js` holds the whole buying surface
+      (settings block + pre-ad offer, both already built and verified against a fake
+      plugin). It stays invisible until all of this exists, so shipping without it is
+      safe. To enable, in order:
+      1. Create the `remove_ads` **non-consumable** in App Store Connect AND Play
+         Console (same product id in both).
+      2. Install a purchase plugin and put its registered global in
+         `PURCHASE.pluginName`. `@revenuecat/purchases-capacitor` 13.x (registers as
+         `Purchases`, declares `@capacitor/core >=8.0.0`) is what the adapter at the
+         bottom of `purchases.js` is written for. **Note it is a third-party SDK: it
+         adds a privacy-manifest / data-safety entry.** A direct StoreKit + Play
+         Billing plugin avoids that, and swapping means rewriting `_adapter` only.
+      3. Set `PURCHASE.productId` (and `apiKey`/`entitlementId` if the plugin needs
+         them). `npx cap sync`.
+      4. **Verify the adapter's calls against the plugin's own source, not its
+         README** — that exact mistake wedged the ad button on device once. Then test
+         on a device with a sandbox account: buy, restore, and a **cancelled** sheet
+         (cancel must be silent, not an error), plus a fresh install → Restore.
       Until this lands, interstitials simply cannot be turned off — fine for testing.
 - [ ] Re-test that a death never produces an interstitial.
 - [ ] **`AD_DEBUG` stays false everywhere; `FORCE_TEST_ADS` stays TRUE through every

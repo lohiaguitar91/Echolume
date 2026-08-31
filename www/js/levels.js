@@ -289,7 +289,7 @@ export const LEVELS = [
       { t: 0.08, text: 'This dark drinks light. Your songs will not hold for long.',
         plain: 'Reveal fades very fast at this depth.' },
       { t: 0.19, subject: 'crystal',
-        text: 'The pale glass answers a song with one of its own — free, and silent.',
+        text: 'The pale glass answers a song with one of its own. Free, and silent.',
         plain: 'Sing near a white crystal and it blooms light for you. Costs no song and wakes nothing.' },
     ],
   },
@@ -420,7 +420,7 @@ export const LEVELS = [
     hunters: [{ t: 0.4, off: 0, wanderR: 170 }, { t: 0.78, off: 0, wanderR: 170, fast: true }],
     heartMotes: [{ t: 0.64, off: -50 }],
     stars: { motePct: 0.65, maxPings: 27 },
-    hints: [{ t: 0.1, text: 'Six lights and two ears. Choose slowly — the trench rewards patience, once.',
+    hints: [{ t: 0.1, text: 'Six lights and two ears. Choose slowly. The trench rewards patience, once.',
         plain: 'Six lures and two hunters. Sing to check each light before you approach it.' }],
   },
   {
@@ -753,7 +753,7 @@ export const LEVELS = [
     stars: { motePct: 0.6, maxPings: 46 },
     hints: [
       { t: 0.1, text: 'Everything the hush taught you, all at once.',
-        plain: 'Silence, ice, lures and two hunters. Nothing new — just no room for error.' },
+        plain: 'Silence, ice, lures and two hunters. Nothing new, just no room for error.' },
     ],
   },
   {

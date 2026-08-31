@@ -12,6 +12,7 @@ import { UI } from './ui.js';
 import { Game, starBreakdown, starTargets } from './game.js';
 import { GameServices, MILESTONES } from './gameservices.js';
 import { Ads } from './ads.js';
+import { Purchases } from './purchases.js';
 import { Teacher } from './teach.js';
 import {
   getLevel, LEVELS, parTime, chapterOf,
@@ -35,6 +36,7 @@ class Shell {
     this.gs = new GameServices(this.save);
     this.ui = new UI();
     this.ads = new Ads(this.save, this.ui);   // needs ui for honest failure toasts
+    this.purchases = new Purchases(this.save);
     this.teacher = new Teacher(this.save, this.ui);   // needs ui, so it comes after
     this.input = new Input(this.canvas);
     this.palette = PALETTE;
@@ -68,6 +70,10 @@ class Shell {
     // Touches nothing native — consent prompts and SDK init wait for the
     // first depth whose win could show an ad (ads.js decides).
     this.ads.init();
+    // Purchases restore themselves quietly: someone who already bought this on
+    // another install should never see an ad, and never have to go find the
+    // restore button first. No-ops entirely until the store side is live.
+    this.purchases.init().then(() => this.ui.syncPurchase(this.purchases));
     // Debug/test API only in plain-web dev, never in shipped native builds.
     if (!window.Capacitor) installDebug(this);
 
@@ -177,9 +183,10 @@ class Shell {
             }
             this._show('results');
             // The only interstitial in the game, and only ever here: a depth
-            // you just cleared, every 2-3 wins. The cadence and the
-            // never-after-death rule live in ads.js, not at call sites.
-            this.ads.maybeInterstitial({ won: true });
+            // you just cleared, every 2-3 wins. The cadence, the offer's
+            // frequency and the never-after-death rule all live in ads.js, not
+            // at call sites; this only supplies the offer's screen.
+            this.ads.maybeInterstitial({ won: true, offer: () => this._offerBeforeAd() });
           }, 900);
         }
       },
@@ -495,6 +502,75 @@ class Shell {
     this._show('playing');
   }
 
+  // ---- the one purchase ----
+  // Buying from settings. Every outcome says something true: a cancelled sheet
+  // is silent (backing out is not an error), a real failure says so plainly.
+  async _buyRemoveAds() {
+    const btn = $('btn-remove-ads');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    this.ui.setPurchaseNote('');
+    const res = await this.purchases.buy();
+    btn.disabled = false;
+    this.ui.syncPurchase(this.purchases);
+    if (res === 'owned') this.ui.setPurchaseNote('Ads are off. Thank you.', true);
+    else if (res === 'failed') this.ui.setPurchaseNote('The store could not complete that. Nothing was charged.');
+    else if (res === 'unavailable') this.ui.setPurchaseNote('Purchases are not available here.');
+    // 'cancelled' says nothing: the player simply changed their mind.
+  }
+
+  async _restorePurchase() {
+    const btn = $('btn-restore-purchase');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    this.ui.setPurchaseNote('Checking…');
+    const res = await this.purchases.restore();
+    btn.disabled = false;
+    this.ui.syncPurchase(this.purchases);
+    if (res === 'owned') this.ui.setPurchaseNote('Restored. Ads are off.', true);
+    else if (res === 'none') this.ui.setPurchaseNote('No previous purchase found on this account.');
+    else this.ui.setPurchaseNote('Could not reach the store. Try again later.');
+  }
+
+  // The offer shown just before an interstitial. Resolves 'bought' or
+  // 'continue'; ads.js decides whether it is shown at all and how often.
+  // Whatever happens, this promise always settles, because an ad is waiting.
+  _offerBeforeAd() {
+    if (!this.purchases.available) return Promise.resolve('continue');
+    return new Promise((resolve) => {
+      const buy = $('btn-offer-buy');
+      const cont = $('btn-offer-continue');
+      this.ui.setOfferPrice(this.purchases.priceText());
+      this.ui.setOfferNote('');
+      let done = false;
+      const finish = (choice) => {
+        if (done) return;
+        done = true;
+        buy.removeEventListener('click', onBuy);
+        cont.removeEventListener('click', onCont);
+        this.ui.showAdOffer(false);
+        this.ui.syncPurchase(this.purchases);
+        resolve(choice);
+      };
+      const onBuy = async () => {
+        if (buy.disabled) return;
+        this.audio.ui();
+        buy.disabled = true;
+        const res = await this.purchases.buy();
+        buy.disabled = false;
+        if (res === 'owned') { finish('bought'); return; }
+        // Anything else leaves them here with the ad still waiting, and the
+        // plain way past it still one tap away.
+        if (res === 'failed') this.ui.setOfferNote('The store could not complete that. Nothing was charged.');
+        else if (res === 'unavailable') this.ui.setOfferNote('Purchases are not available here.');
+      };
+      const onCont = () => { this.audio.ui(); finish('continue'); };
+      buy.addEventListener('click', onBuy);
+      cont.addEventListener('click', onCont);
+      this.ui.showAdOffer(true);
+    });
+  }
+
   // The front door for a save with no progress (first launch, or after a
   // reset): About once, then How to sing, whose Begin-the-dive starts depth 1.
   _firstDoor() {
@@ -544,7 +620,16 @@ class Shell {
     });
     // The only other door out of a gate: back to the levels you can re-swim.
     click('btn-gate-back', () => { this._pendingGate = null; this._show('levels'); });
-    click('btn-settings', () => { this._settingsReturn = this.state; this._show('settings'); });
+    click('btn-settings', () => {
+      this._settingsReturn = this.state;
+      this.ui.setPurchaseNote('');
+      this.ui.syncPurchase(this.purchases);
+      // The store's own localized price may still be in flight on a cold open.
+      this.purchases.init().then(() => this.ui.syncPurchase(this.purchases));
+      this._show('settings');
+    });
+    click('btn-remove-ads', () => this._buyRemoveAds('settings'));
+    click('btn-restore-purchase', () => this._restorePurchase());
     click('btn-about', () => this._show('about'));
     // "To the depths": mid-first-door it leads on to the verbs; from the menu
     // link (tutorial long seen) it is simply the way back.

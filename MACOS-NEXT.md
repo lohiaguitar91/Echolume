@@ -18,6 +18,29 @@ round** — `16e7b34..e7a967a`, Aug 28–29 2026 — summarized in the next sect
 
 ---
 
+## The Aug 31 round (remote session) — the purchase surface
+
+`www/` + docs only, but it is the one thing that needs **store console work from
+you** before it does anything. Two surfaces are built and verified against a fake
+plugin: a **Settings block** (Remove ads + Restore purchase) and an **offer shown
+just before an interstitial** ("An ad is next", with Remove ads or Watch the ad).
+Both are **invisible until the store side is live**, so this ships safely as-is.
+
+Buying lives in the new `www/js/purchases.js`, never in `ads.js`. Turning it on is
+SHIP.md §3.6's checklist: create the non-consumable in both consoles, install a
+plugin, set `PURCHASE.productId`. **Read the ⚠ header in `purchases.js` first** —
+its adapter is written for RevenueCat from docs and is UNVERIFIED on device, which
+is precisely the mistake that wedged the ad button once. Verify the call names
+against plugin source, then sandbox-test buy, restore, and a cancelled sheet.
+
+Two rules baked in that must survive: `save.reset()` preserves `adsRemoved` (erasing
+progress must never revoke a purchase), and the pre-ad offer is rate-limited by
+`AD_RULES.offerBeforeAd` so it stays an offer instead of a toll booth. Also in this
+round: the How to sing copy, teach cards and a few level hints were rewritten to
+drop em-dashes and colon-splice explainers.
+
+---
+
 ## The Aug 28–29 round (remote session) — new since Build 8
 
 All of it is `www/` + docs; nothing native moved. Pull main, `npx cap sync`,
