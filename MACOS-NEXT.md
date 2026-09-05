@@ -28,8 +28,12 @@ grants it retroactively to depths already banked to full light. The intro
 tail on a 430pt phone: a stray `nowrap`, and under it a `left:50%` box that
 could only shrink-wrap into half the viewport). **Motes never spawn inside
 urchin or ice hurt zones** any more (64 did, across 32 depths; the Abyss
-spawner nudges the same way). The Listener's telegraph is being redesigned —
-four options were screenshotted for Disha; her pick lands next.
+spawner nudges the same way). The Listener's tell is now **bone fangs** along the
+edges of the bite with red motes drawn in (option C of four screenshotted), and
+its **arena tightened**: half-width 210 against a 280 reach from a warden 40 off
+centre, so the far wall (250) is inside the bite; the old 300 / -70 left a 90px
+strip the strike could never touch and the fight could be swum past. The naive
+bot still clears it 11/11 but now leaves with one heart.
 
 ## The Aug 31 round (remote session) — the purchase surface
 
@@ -269,8 +273,8 @@ human to confirm they now read:
 - **Bosses.** There are four, each a different creature with a different
   counter. Depth 14's is new: an anchored *warden* that strikes along the line
   to your **last song**, so you beat it by singing somewhere you are not. Its
-  telegraph is a red arc that widens during windup — the whole fight is whether
-  that arc is legible in time. The bot cannot judge this, because it sings
+  telegraph is a pair of bone fangs that grow along the edges of the bite during windup, red motes streaming in between (the flat red wedge was retired Sept 5) — the whole fight is whether
+  those jaws are legible in time. The bot cannot judge this, because it sings
   exactly where it swims. Three cast-performances also need human eyes: does
   the warden's body-turn toward your held aim *read* as "it hears where the
   song will land"; does the Deaf God's gray ring-death read as "my voice does

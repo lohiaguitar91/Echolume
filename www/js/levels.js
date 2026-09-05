@@ -208,7 +208,12 @@ export const LEVELS = [
       tell: 'It cannot move, and it cannot chase. It strikes where you last sang.',
     },
     path: [[0, 0], [100, 280], [-20, 560], [140, 840], [340, 1000], [560, 940], [700, 700], [900, 620], [1100, 720], [1180, 980], [1080, 1260], [1180, 1540], [1080, 1820], [1140, 2100]],
-    width: [95, 110, 240, 300, 300, 150, 110],
+    // The arena is wide enough to dodge the bite sideways, and never wide
+    // enough to be beyond it: half-width 210 against a 280 reach from a warden
+    // 40 off centre puts the far wall at 250 and the near wall at 170. The
+    // original 300 / -70 left a 90px strip along the far wall the strike could
+    // not touch, and a playtester simply swam it without learning the fight.
+    width: [95, 110, 190, 210, 210, 150, 110],
     checkpoint: 0.42,
     moteCount: 18,
     // Everything hostile sits BEFORE the arena. Past the boss the swim to the
@@ -216,9 +221,11 @@ export const LEVELS = [
     // and was killing five runs in twelve.
     urchins: [{ t: 0.18, off: -40 }, { t: 0.26, off: 40 }, { t: 0.34, off: -38 }],
     hunters: [{ t: 0.3, off: 0, wanderR: 170 }],
-    // Off the centre line on purpose: the arena is wide, and a lane past it
-    // must exist for a player who has not yet worked out the misdirection.
-    wardens: [{ t: 0.56, off: -70 }],
+    // Slightly off centre so the fight has a near side and a far side, but no
+    // side is out of reach (see the width note above). The escape for a player
+    // who has not worked out the misdirection is the telegraph: the fangs
+    // show the exact line for 1.35s, and one tap sideways clears it.
+    wardens: [{ t: 0.56, off: -40 }],
     currents: [{ t: 0.78, off: 0, r: 150, mode: 'along', strength: 0.9 }],
     stars: { motePct: 0.7, maxPings: 51 },
     hints: [

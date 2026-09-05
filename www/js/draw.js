@@ -294,23 +294,60 @@ export function drawGame(R, game, particles, time, dt, palette) {
     w._face += dFace * Math.min(1, dt * 6);
     const face = w._face;
 
-    // The line it is about to take. This is the whole tell, so it is loud.
+    // The line it is about to take. This is the whole tell, so it is loud —
+    // and it is part of the creature, not a chart drawn over it. The old tell
+    // was a flat red wedge (a playtester: "the pie slice is kinda lame"); this
+    // one, chosen from four screenshotted options, is JAWS: two fangs of bone
+    // grow along the edges of the bite as it charges, and the water between
+    // them draws breath. Bone, because the warden is the one thing in the game
+    // that is not a glow; the strike itself is the only moment it goes red.
     if (winding || striking) {
       const charge = winding ? 1 - Math.max(0, w.t) / TUNING.wardenWindup : 1;
       const len = striking ? w.reach : TUNING.wardenReach * (0.35 + charge * 0.5);
       const a0 = w.aim - half, a1 = w.aim + half;
       const s = R.worldToScreen(w.x, w.y);
-      const ctx = R.ctx;
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.globalAlpha = striking ? 0.5 : 0.13 + charge * 0.22;
-      ctx.fillStyle = palette.wardenJaw;
-      ctx.beginPath();
-      ctx.moveTo(s.x, s.y);
-      ctx.arc(s.x, s.y, len * R.cam.zoom, a0, a1);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
+      const zz = R.cam.zoom, L = len * zz;
+      // The fangs. The kill zone is exactly the water between them.
+      const fang = [];
+      for (const a of [a0, a1]) {
+        const root = R.worldToScreen(w.x + Math.cos(a) * TUNING.wardenRadius * 0.9,
+                                     w.y + Math.sin(a) * TUNING.wardenRadius * 0.9);
+        fang.push({ x1: root.x, y1: root.y, x2: s.x + Math.cos(a) * L, y2: s.y + Math.sin(a) * L,
+                    a: 0.5 + charge * 0.5 });
+      }
+      R.strokeGlowSegments(fang, (2.6 + charge * 1.6) * zz, palette.warden, palette.wardenCore);
+      if (winding) {
+        // It draws breath: red motes stream in from the far end of the line,
+        // faster as the strike nears. A charge you can see without a meter.
+        const sp = 140 + charge * 160;
+        for (let k = 0; k < 3; k++) {
+          const a = a0 + Math.random() * (a1 - a0), rr = len * (0.55 + Math.random() * 0.45);
+          particles.spawn({
+            x: w.x + Math.cos(a) * rr, y: w.y + Math.sin(a) * rr,
+            vx: -Math.cos(a) * sp, vy: -Math.sin(a) * sp,
+            life: 0.45, r: 1.8, color: palette.wardenJaw, alpha: 0.35 + charge * 0.4, drag: 0,
+          });
+        }
+      } else {
+        // The bite: for the strike frames only, the whole line goes hot. Raw
+        // ctx after strokeGlowSegments, so it sets its own composite.
+        const hex = palette.wardenJaw.replace('#', '');
+        const rgb = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(',');
+        const ctx = R.ctx;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, L);
+        grad.addColorStop(0, `rgba(${rgb},0.6)`);
+        grad.addColorStop(1, `rgba(${rgb},0)`);
+        ctx.fillStyle = grad;
+        ctx.globalAlpha = 0.95;
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y);
+        ctx.arc(s.x, s.y, L, a0, a1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
     }
 
     // The body: plates rather than a glow, so it reads as structure.

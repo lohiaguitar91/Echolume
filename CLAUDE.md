@@ -140,6 +140,11 @@ already cost time, and the design rules that must not be broken.
   killing five runs in twelve on depth 14.
 - The autoplay bot sings exactly where it swims, which is the one thing a warden punishes,
   so **its survival rate says nothing about warden difficulty**. Tune that boss for humans.
+- **The Listener's arena is wide enough to dodge the bite sideways and never wide enough to
+  be beyond it**: half-width 210 vs `wardenReach` 280 from a warden 40 off centre (far wall
+  250, near 170). The original 300 / −70 left a 90px immune strip along the far wall and a
+  playtester swam past without learning the fight. Its tell is bone fangs along the bite's
+  edges with red motes drawn in during windup; the strike is the only red fill.
 
 ## Verifying level content (learned the hard way)
 - **`autoplay` is not deterministic.** Hunter wander uses `Math.random()`, so a single
