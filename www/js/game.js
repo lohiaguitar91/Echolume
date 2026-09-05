@@ -172,6 +172,7 @@ export class Game {
         newMotes.push({
           x: wx + (rng() - 0.5) * 120, y: wy + (rng() - 0.5) * 160,
           taken: false, reveal: 0, phase: rng() * 6.28, driftPhase: rng() * 6.28,
+          _wx: wx, _wy: wy,   // for the keep-out nudge below; the sim never reads them
         });
       }
       const urchinChance = clamp(0.09 + depthM * 0.0006, 0, 0.42);
@@ -196,6 +197,34 @@ export class Game {
           state: 'wander', alertT: 0, commitT: 0, targetX: wx, targetY: wy, retargetT: 0,
           reveal: 0, phase: rng() * 6.28,
         });
+      }
+    }
+
+    // Same rule as setupEntities: a mote never sits inside an urchin's hurt
+    // zone. Nudge sideways away from the thorn, within this stretch's corridor.
+    {
+      const keep = TUNING.urchinVisualRadius + TUNING.playerRadius + 6;
+      const thorns = prevEnts ? this.ents.urchins.concat(newUrchins) : newUrchins;
+      const clear = (x, y) => thorns.every((u) => dist(x, y, u.x, u.y) >= keep);
+      for (const m of newMotes) {
+        if (clear(m.x, m.y)) continue;
+        const span = Math.max(0, this._abyssHalfWidth(m._wy) - 30);
+        const lo = m._wx - span, hi = m._wx + span;
+        // Either side of any thorn crowding it, then short slides along the
+        // shaft; a spot must clear EVERY thorn, or a push out of one lands in
+        // the next.
+        let moved = false;
+        for (const dy of [0, 40, -40, 80, -80]) {
+          for (const u of thorns) {
+            if (dist(m.x, m.y + dy, u.x, u.y) >= keep + 60) continue;
+            for (const dir of [1, -1]) {
+              const x = clamp(u.x + dir * (keep + 4), lo, hi);
+              if (clear(x, m.y + dy)) { m.x = x; m.y += dy; moved = true; break; }
+            }
+            if (moved) break;
+          }
+          if (moved) break;
+        }
       }
     }
 
@@ -942,21 +971,22 @@ export function starTargets(def, moteTotal) {
   };
 }
 
-// Two stars, per criterion — the UI lights each by its own rule, never by count
-// (a lit star must sit above the label it actually earned).
+// Three stars, per criterion — the UI lights each by its own rule, never by
+// count (a lit star must sit above the label it actually earned).
 //
-// Motes used to be the middle star. They are the gate economy now, so grading
-// them here too would give one action two scoreboards. They get a light bar
-// instead; `motes` stays in the breakdown only so older callers keep working.
+// The third star is EVERY mote in the depth (Sept 2026; it came back after a
+// v1.2 spell as a light bar only). It is the one star that is pure option:
+// chapter gates are paid in the vent and song stars alone (GATE_STARS_PER_LEVEL
+// in levels.js), so nobody ever owes a full clear to keep descending. The old
+// motePct threshold in starTargets is no longer a star; it stays for the HUD.
 export function starBreakdown(def, stats) {
-  const need = starTargets(def, stats.moteTotal).motes;
   const vent = true; // you're at the results screen because you reached it
-  const motes = stats.moteTotal === 0 || stats.motes >= need;
+  const motes = stats.moteTotal === 0 || stats.motes >= stats.moteTotal;
   const songs = stats.pings <= (def.stars?.maxPings ?? Infinity);
-  return { vent, motes, songs, count: 1 + (songs ? 1 : 0) };
+  return { vent, motes, songs, count: 1 + (songs ? 1 : 0) + (motes ? 1 : 0) };
 }
 
-export const STARS_PER_LEVEL = 2;
+export const STARS_PER_LEVEL = 3;
 
 export function calcStars(def, stats) {
   return starBreakdown(def, stats).count;

@@ -18,6 +18,19 @@ round** — `16e7b34..e7a967a`, Aug 28–29 2026 — summarized in the next sect
 
 ---
 
+## The Sept 5 round (remote session) — second TestFlight notes
+
+`www/` + docs only. The **third star is back**, for every mote in a depth, and
+it is paid nowhere: chapter gates count only the vent and song stars
+(`save.starsIn` sums `rec.core`), so every gate number is unchanged; save v3
+grants it retroactively to depths already banked to full light. The intro
+**toast wraps** instead of clipping ("Depth 16 · Two Kinds of Star" lost its
+tail on a 430pt phone: a stray `nowrap`, and under it a `left:50%` box that
+could only shrink-wrap into half the viewport). **Motes never spawn inside
+urchin or ice hurt zones** any more (64 did, across 32 depths; the Abyss
+spawner nudges the same way). The Listener's telegraph is being redesigned —
+four options were screenshotted for Disha; her pick lands next.
+
 ## The Aug 31 round (remote session) — the purchase surface
 
 `www/` + docs only, but it is the one thing that needs **store console work from
@@ -119,8 +132,9 @@ session learned all three the hard way.
   both tested, both load-bearing — do not break them:
   - every gate is winnable at **zero** motes (verified 5/5 on an empty save);
   - the bank is **never consumed** (sum of `bestMotes` per depth).
-- **Two stars, not three.** Motes stopped being graded and got their own light
-  bar. Save migrates v1→v2 by recomputing from stored `bestPings`.
+- **Three stars again (Sept 5 2026).** Vent, song budget, every mote. Chapter
+  gates are paid in the two core stars only (`rec.core`), so gate numbers did
+  not move. Save v3 grants the mote star retroactively to full-light depths.
 - **Bosses perform their relationship to casting** (render-only, sim untouched):
   a listening warden turns its body toward your cast-aim landing and parts its
   plates (`_attend`/`_face`, fed by `main.js`, consumed by `draw.js` — the strike

@@ -3,9 +3,9 @@
 // webview data eviction.
 
 import { SAVE_KEY } from './config.js';
-import { chapterOf, chapterGate, prevChapter, getLevel, STARS_PER_LEVEL } from './levels.js';
+import { chapterOf, chapterGate, prevChapter, getLevel, STARS_PER_LEVEL, moteCapacity } from './levels.js';
 
-const SAVE_VERSION = 2;   // 2: motes stopped being a star; three became two
+const SAVE_VERSION = 3;   // 2: motes stopped being a star; 3: the third star returns, for ALL motes
 
 const DEFAULTS = {
   version: SAVE_VERSION,
@@ -80,10 +80,14 @@ export class Save {
     }
   }
 
-  levelResult(id, stars, stats) {
-    const prev = this.data.levels[id] || { stars: 0, bestMotes: 0, bestPings: Infinity, bestTime: Infinity };
+  // `stars` is the full count for display (0-3); `core` is vent + songs only
+  // (0-2), and it is what chapter gates read. Kept apart because a count of 2
+  // cannot say whether the second star was songs or motes.
+  levelResult(id, stars, stats, core = Math.min(2, stars)) {
+    const prev = this.data.levels[id] || { stars: 0, core: 0, bestMotes: 0, bestPings: Infinity, bestTime: Infinity };
     this.data.levels[id] = {
       stars: Math.max(prev.stars, stars),
+      core: Math.max(prev.core || 0, core),
       bestMotes: Math.max(prev.bestMotes, stats.motes),
       bestPings: Math.min(prev.bestPings ?? Infinity, stats.pings),
       bestTime: Math.min(prev.bestTime ?? Infinity, stats.time),
@@ -98,7 +102,7 @@ export class Save {
     const prev = this.data.levels[id];
     if (!prev) {
       this.data.levels[id] = {
-        stars: 0, bestMotes: stats.motes, bestPings: Infinity, bestTime: Infinity,
+        stars: 0, core: 0, bestMotes: stats.motes, bestPings: Infinity, bestTime: Infinity,
       };
     } else if (stats.motes > prev.bestMotes) {
       prev.bestMotes = stats.motes;
@@ -115,14 +119,23 @@ export class Save {
   // one from nobody. bestPings is the song star's own record, so the answer is
   // already on disk — this reads it back rather than guessing.
   _migrate() {
-    if ((this.data.version || 1) >= SAVE_VERSION) return;
+    const from = this.data.version || 1;
+    if (from >= SAVE_VERSION) return;
     for (const [id, rec] of Object.entries(this.data.levels || {})) {
       if (!rec || typeof rec.stars !== 'number') continue;
       if (rec.stars === 0) continue;              // never cleared; nothing to move
       const def = getLevel(Number(id));
-      const maxPings = def?.stars?.maxPings ?? Infinity;
-      const song = Number.isFinite(rec.bestPings) && rec.bestPings <= maxPings;
-      rec.stars = Math.min(STARS_PER_LEVEL, 1 + (song ? 1 : 0));
+      if (from < 2) {
+        // v1 → v2: motes stopped being a star; recompute vent + songs.
+        const maxPings = def?.stars?.maxPings ?? Infinity;
+        const song = Number.isFinite(rec.bestPings) && rec.bestPings <= maxPings;
+        rec.stars = Math.min(2, 1 + (song ? 1 : 0));
+      }
+      // Everything up to here is vent + songs, which is exactly what `core` is.
+      rec.core = Math.min(2, rec.stars);
+      // v2 → v3: the mote star is back, for every mote. A depth already banked
+      // to its full light earned it; nobody replays a clear they already did.
+      if (def && rec.bestMotes >= moteCapacity(def)) rec.stars = Math.min(STARS_PER_LEVEL, rec.stars + 1);
     }
     this.data.version = SAVE_VERSION;
     this.persist();
@@ -187,9 +200,14 @@ export class Save {
     return n;
   }
 
+  // Core stars (vent + songs) in a range: what opens the next chapter. The
+  // mote star is deliberately not in here; see GATE_STARS_PER_LEVEL.
   starsIn(from, to) {
     let sum = 0;
-    for (let id = from; id <= to; id++) sum += this.data.levels[id]?.stars || 0;
+    for (let id = from; id <= to; id++) {
+      const rec = this.data.levels[id];
+      if (rec) sum += rec.core ?? Math.min(2, rec.stars || 0);
+    }
     return sum;
   }
 

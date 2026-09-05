@@ -443,7 +443,7 @@ export class UI {
       const open = save.isUnlocked(chapter.from);
       // A shut chapter says exactly what opens it — the gate is a goal, not a wall.
       const gateLine = (!open && gate !== null)
-        ? `<span class="chapter-gate">${save.starsIn(prev.from, prev.to)} / ${gate} stars to open</span>`
+        ? `<span class="chapter-gate">${save.starsIn(prev.from, prev.to)} / ${gate} vent &amp; song stars to open</span>`
         : '';
       head.innerHTML = `<span>${chapter.id} · ${chapter.name}</span>${gateLine}`;
       grid.appendChild(head);
@@ -501,8 +501,8 @@ export class UI {
     const starEls = this.el.resultsStars.querySelectorAll('.star');
     // Light each star by its own criterion, staggered among the earned ones.
     const earned = opts.breakdown
-      ? [opts.breakdown.vent, opts.breakdown.songs]
-      : [true, stars >= 2];
+      ? [opts.breakdown.vent, opts.breakdown.songs, opts.breakdown.motes]
+      : [true, stars >= 2, stars >= 3];
     let popIndex = 0;
     starEls.forEach((s, i) => {
       s.classList.remove('earned', 'pop1', 'pop2', 'pop3');
@@ -517,6 +517,7 @@ export class UI {
       const labels = {
         1: 'reach the vent',
         2: `≤ ${opts.def.stars?.maxPings ?? '—'} songs`,
+        3: `all ${stats.moteTotal} motes`,
       };
       for (const [n, text] of Object.entries(labels)) {
         const el = this.el.resultsStars.querySelector(`[data-starlabel="${n}"]`);
@@ -548,7 +549,7 @@ export class UI {
       const label = nextDef.id === nextChapter.from
         ? `${nextChapter.name} · ${nextDef.name}`
         : nextDef.name;
-      tease.innerHTML = `Next · <span class="accent">${label}</span> — ${nextLine}`;
+      tease.innerHTML = `Next · <span class="accent">${label}</span> · ${nextLine}`;
     } else {
       tease.hidden = true;
     }
@@ -608,7 +609,7 @@ export class UI {
     const next = $$('recap-next');
     if (nextMilestone) {
       const pctNext = Math.min(100, Math.round((stats.depth / nextMilestone) * 100));
-      next.innerHTML = `Next milestone · <span class="accent">${nextMilestone.toLocaleString()} m</span> — ${pctNext}% there`;
+      next.innerHTML = `Next milestone · <span class="accent">${nextMilestone.toLocaleString()} m</span> · ${pctNext}% there`;
     } else {
       next.textContent = 'Every milestone claimed. The deep has nothing left to name.';
     }

@@ -49,7 +49,10 @@ export function setupEntities(def, geom) {
       const halfW = corridor.w[wi];
       const off = (r2() - 0.5) * 2 * Math.max(0, halfW - 30);
       const p = pointOnCorridor(corridor, t, off);
-      motes.push({ x: p.x, y: p.y, taken: false, reveal: 0, phase: r2() * 6.28, driftPhase: r2() * 6.28 });
+      // _corr/_t/_off are kept so the hazard keep-out pass below can re-place
+      // a mote along its own corridor; the sim never reads them.
+      motes.push({ x: p.x, y: p.y, taken: false, reveal: 0, phase: r2() * 6.28, driftPhase: r2() * 6.28,
+        _corr: corridor, _t: t, _off: off });
     }
   };
   placeMotes(main, def.moteCount || 0, 1);
@@ -188,6 +191,35 @@ export function setupEntities(def, geom) {
   });
 
   const vent = { x: ventP.x, y: ventP.y, discovered: false, reveal: 0, phase: 0 };
+
+  // Motes never sit inside a hazard's hurt zone. Placement is random along the
+  // corridor and hazards are authored independently, so about one mote in
+  // twelve used to land on an urchin or an ice shard (64 across 32 depths,
+  // worst in the narrow late chapters): light you could only take for a heart.
+  // Each offender slides along its own corridor, far side first, until it
+  // clears. One that cannot clear stays where it was rather than vanish, so
+  // counts, capacities and the light bank are exactly what they were.
+  const keepOut = [
+    ...urchins.map((u) => ({ x: u.x, y: u.y, r: TUNING.urchinVisualRadius + TUNING.playerRadius + 6 })),
+    ...(ice || []).map((s) => ({ x: s.x, y: s.y, r: TUNING.iceRadius + TUNING.playerRadius + 6 })),
+    ...(wardens || []).map((w) => ({ x: w.x, y: w.y, r: TUNING.wardenRadius + TUNING.playerRadius + 6 })),
+  ];
+  const blocked = (x, y) => keepOut.some((k) => Math.hypot(x - k.x, y - k.y) < k.r);
+  for (const m of motes) {
+    if (!keepOut.length || !blocked(m.x, m.y)) continue;
+    const c = m._corr, n = c.samples.length;
+    let placed = false;
+    for (const step of [0, 0.015, -0.015, 0.03, -0.03, 0.045, -0.045, 0.06, -0.06]) {
+      const t = clamp(m._t + step, 0.05, 0.95);
+      const span = Math.max(0, c.w[Math.round(t * (n - 1))] - 30);
+      for (const want of [-m._off, m._off, 0, span * 0.6, -span * 0.6]) {
+        const p = pointOnCorridor(c, t, clamp(want, -span, span));
+        if (blocked(p.x, p.y)) continue;
+        m.x = p.x; m.y = p.y; placed = true; break;
+      }
+      if (placed) break;
+    }
+  }
 
   return {
     player, motes, urchins, hunters, currents, lures, crystals, heartMotes,

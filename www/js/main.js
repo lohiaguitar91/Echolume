@@ -17,7 +17,7 @@ import { Teacher } from './teach.js';
 import {
   getLevel, LEVELS, parTime, chapterOf,
   gateKind, gateSpan, gateCapacity, gateBoon, gateBoonLine,
-  carriedBoon, moteCapacity, GATE_EVERY,
+  carriedBoon, moteCapacity, GATE_EVERY, STARS_PER_LEVEL,
 } from './levels.js';
 import { drawGame, drawMenuAmbient } from './draw.js';
 import { installDebug } from './debug.js';
@@ -163,7 +163,7 @@ class Shell {
         const def = this.game.def;
         const breakdown = starBreakdown(def, stats);
         const stars = breakdown.count;
-        this.save.levelResult(def.id, stars, stats);
+        this.save.levelResult(def.id, stars, stats, 1 + (breakdown.songs ? 1 : 0));
         if (def.id >= 7) this.save.unlockAbyss();
         if (def.finale) {
           this.save.unlockAbyss();
@@ -270,7 +270,7 @@ class Shell {
         this.audio.allMotes();
         this.haptics.success();
         this.particles.burst(x, y, this.palette.mote, 22, 130, 1.1, 3, this.palette.moteCore);
-        this.ui.hint('Every mote gathered.', 2800);
+        this.ui.hint('Every mote gathered. The third star waits at the vent.', 2800);
       },
       onHint: (text, plain) => this.ui.hint(text, undefined, plain),
       onThud: (i) => {
@@ -343,7 +343,7 @@ class Shell {
       }
     }
     const stars = this.save.totalStars();
-    if (stars > 0) return `<span class="accent">${stars}</span> of ${LEVELS.length * 3} stars gathered`;
+    if (stars > 0) return `<span class="accent">${stars}</span> of ${LEVELS.length * STARS_PER_LEVEL} stars gathered`;
     return null;
   }
 

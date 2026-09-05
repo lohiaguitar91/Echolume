@@ -1140,13 +1140,19 @@ export function prevChapter(chapter) {
 
 // Stars needed in the preceding chapter to open this one. Null for chapter 1.
 // Two stars per level since motes stopped being graded. Keep this in step with
-// STARS_PER_LEVEL in game.js or every chapter gate silently moves.
-export const STARS_PER_LEVEL = 2;
+// STARS_PER_LEVEL in game.js; the level grid and results read this one.
+export const STARS_PER_LEVEL = 3;
+// Chapter gates are paid in the two CORE stars (vent, songs) only. The mote
+// star is optional by design: counting it here would turn full light into
+// a toll for opening the next chapter, i.e. the quota the Aug 29 round
+// rejected on measured floor data. Every gate number is unchanged by the
+// third star's return.
+export const GATE_STARS_PER_LEVEL = 2;
 
 export function chapterGate(chapter) {
   const prev = prevChapter(chapter);
   if (!prev) return null;
-  return Math.ceil(0.6 * (prev.to - prev.from + 1) * STARS_PER_LEVEL);
+  return Math.ceil(0.6 * (prev.to - prev.from + 1) * GATE_STARS_PER_LEVEL);
 }
 
 export function getLevel(id) {

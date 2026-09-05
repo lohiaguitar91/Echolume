@@ -70,8 +70,13 @@ already cost time, and the design rules that must not be broken.
   deaths as well as wins), so replaying raises it and a failed gate costs nothing.
 - The gate screen states a fact and offers a door back. No shop, no purchase, nothing that
   could read as a paywall — there is no way to buy light.
-- Two stars per level, not three (`STARS_PER_LEVEL`, mirrored in `game.js` and `levels.js` —
-  keep them in step or every chapter gate silently moves). Motes get a light bar instead.
+- **Three stars per level** (`STARS_PER_LEVEL`, mirrored in `game.js` and `levels.js`): reach
+  the vent, stay under the song budget, gather every mote. **Chapter gates are paid in the two
+  core stars only** — `chapterGate` uses `GATE_STARS_PER_LEVEL = 2` and `save.starsIn` sums
+  `rec.core` (vent + songs), never `rec.stars` — so the mote star can never become a toll for
+  descending; every gate number is what it was with two stars. Save v3 granted it
+  retroactively to depths already banked to full light. The light bar and the gold marks stay:
+  the star is the same fact in the star vocabulary.
 - `www/js/ads.js` is dormant by design: fill `AD_IDS` / `IAP_PRODUCT_ID` to enable. Turning
   ads on also means a privacy-manifest and store data-safety update, and the iOS ATT prompt.
 
@@ -105,6 +110,10 @@ already cost time, and the design rules that must not be broken.
 - A depth's t=0 hint fires **during the intro**, so the verbs strip and the hint slot
   genuinely coexist: on short screens (≤640px tall) the strip rides higher and smaller,
   and the toast wraps under a max-width. Both live in ui.css media rules — keep them.
+- `.hud-toast` is centred with auto margins and `width: fit-content`, never
+  `left:50%` + translate: an absolutely positioned box at left:50% can only shrink-wrap
+  into the right half of the viewport, so once allowed to wrap, "Depth 16 · Two Kinds of
+  Star" folded into three lines (and before that, a stray `nowrap` clipped it at both edges).
 - `[hidden] { display: none !important }` is global in ui.css. Any author `display:`
   rule outranks the UA's hidden style, which is how an empty boon chip and a "0 m"
   meter sat on every story depth. Show things with `el.hidden = false`, never by
@@ -143,6 +152,10 @@ already cost time, and the design rules that must not be broken.
   in a 90-wide corridor walls the seam completely.
 - Never use more than 2 hunters in a corridor under ~110 wide. Three is beyond anything
   shipped and reads as unfair.
+- **Motes never spawn inside a hazard's hurt zone.** `setupEntities` slides any mote within
+  46px of an urchin (31px of ice; wardens likewise) along its own corridor, far side first;
+  the Abyss spawner nudges the same way. Before this, 64 motes across 32 depths were light
+  you could only take for a heart, worst in the narrow late chapters.
 
 ## Constraints worth remembering
 - Future level content must **sawtooth** in difficulty per chapter (~60% of the previous peak,
