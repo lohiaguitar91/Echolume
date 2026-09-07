@@ -99,7 +99,7 @@ export const AD_RULES = {
   interstitialEveryNWins: [3, 3],   // every 3rd win. [a,b] still rerolls if widened.
   neverAfterDeath: true,
   noRewardedRevive: true,
-  offerBeforeAd: { alwaysFirst: 3, everyNAds: 2, stopAfterDeclines: 6 },
+  offerBeforeAd: { everyNAds: 1, stopAfterDeclines: 6 },   // 1 = before every ad
 };
 
 export class Ads {
@@ -297,17 +297,10 @@ export class Ads {
     const rule = AD_RULES.offerBeforeAd;
     const d = this.save.data;
     if ((d.adOfferDeclines || 0) >= rule.stopAfterDeclines) return false;
-    const tick = d.adOfferTick || 0;
-    // The first few ads ALWAYS offer, then it thins out. The offer's job is
-    // mostly to inform — a player who has never seen it does not know the way
-    // out exists — and a pure every-Nth rule did that badly twice over: with
-    // ads on every third win it surfaced about once every six depths, and
-    // whether you saw it at all depended on the parity of a counter that
-    // persists across installs, so a save landing mid-cycle could look broken.
-    //   ad:  1 2 3 4 5 6 7 8 9
-    //   off: Y Y Y . Y . Y . Y
-    if (tick < rule.alwaysFirst) return true;
-    return ((tick - rule.alwaysFirst + 1) % rule.everyNAds) === 0;
+    // everyNAds = 1: before EVERY ad, so with interstitials on every third win
+    // the offer is simply every third depth. No thinning, nothing that depends
+    // on where a carried-over save happens to sit in a cycle.
+    return ((d.adOfferTick || 0) % rule.everyNAds) === 0;
   }
 
   // Called on every level win. Counts the win, and shows an interstitial once
