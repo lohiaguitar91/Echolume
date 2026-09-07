@@ -1,6 +1,8 @@
-# Echolume — what to test in TestFlight build 10
+# Echolume — what to test in TestFlight build 11
 
-**Build:** 1.0.0 (10) · uploaded Sept 6 2026 · iOS
+**Build:** 1.0.0 (11) · uploaded Sept 6 2026 · iPhone only
+**Note:** gameplay is identical to build 10; 11 only drops iPad support. Test on an
+iPhone. If you already installed 10, update to 11 before starting.
 **Time needed:** about 90 minutes for the focused list, longer if you play all 50 depths.
 
 Read this before you start. Echolume is verified automatically by a bot that plays

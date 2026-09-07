@@ -18,11 +18,18 @@ round** — `16e7b34..e7a967a`, Aug 28–29 2026 — summarized in the next sect
 
 ---
 
-## Build 10 is on TestFlight (Sept 6 2026) — this is the one to play
+## Build 11 is on TestFlight (Sept 6 2026) — this is the one to play
 
-Uploaded 1.0.0 (10) from the Mac. **It is the first build that contains the Sept 5
-round.** Build 9 was bumped for the Aug 28-29 round and four `www/` commits landed
-after it, so anything tested before this was testing the previous round.
+Uploaded 1.0.0 (10), then 1.0.0 (11) from the Mac. **10 is the first build that
+contains the Sept 5 round** - build 9 was bumped for the Aug 28-29 round and four
+`www/` commits landed after it, so anything tested before 10 was testing the previous
+round. **11 is 10 with iPad support dropped** and is the one to play; its gameplay is
+byte-identical.
+
+iPad went because the app declared `TARGETED_DEVICE_FAMILY = "1,2"` and had therefore
+never been run on an iPad by anyone, while App Store Connect would have demanded iPad
+screenshots for a portrait-locked one-thumb game. `UISupportedInterfaceOrientations~ipad`
+went with it.
 
 Verified in the archived bundle before upload, not just at the exit code: `Info.plist`
 reads 1.0.0 / 10, and `wardenJaw` is present in `App.app/public/js/draw.js`.
@@ -34,7 +41,7 @@ symbolicate. Not a rejection, not fixable from here.
 
 ### What to actually look at in this build
 
-**A tester-facing version of this list is `QA-BUILD-10.md`** — same six items in plain
+**A tester-facing version of this list is `QA-BUILD-11.md`** — same six items in plain
 language, with what to do and what to report. Hand that to a human; this section is the
 developer's copy.
 
