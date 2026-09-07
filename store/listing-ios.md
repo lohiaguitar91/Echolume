@@ -11,7 +11,38 @@ Primary: Games › Adventure
 Secondary: Games › Casual
 
 ## Age rating
-4+ (no objectionable content; mild "fantasy peril" from sea creatures is below the 9+ threshold — answer "None" for all content descriptors except *Infrequent/Mild Cartoon or Fantasy Violence* if being conservative, which yields 9+. Recommended honest answers yield 4+ or 9+; either passes.)
+
+**9+ — answered and saved in App Store Connect, Sept 6 2026.** These are the exact
+answers; give the same ones to Play's IARC questionnaire so the two stores agree, and
+re-use them on any resubmission rather than re-deciding.
+
+| Step | Question | Answer |
+|---|---|---|
+| 1 | Parental Controls / Age Assurance | No / No |
+| 1 | Unrestricted Web Access | No |
+| 1 | User-Generated Content · Social Media · Messaging and Chat | No |
+| 1 | **Advertising** | **Yes** |
+| 2 | Profanity or Crude Humor | None |
+| 2 | **Horror/Fear Themes** | **Infrequent** |
+| 2 | Alcohol, Tobacco, or Drug Use | None |
+| 3 | Medical or Treatment Information · Health or Wellness Topics | None / No |
+| 4 | Sexuality or Nudity | None |
+| 5 | **Cartoon or Fantasy Violence** | **Infrequent** |
+| 5 | Realistic · Graphic or Sadistic Violence | None |
+| 6 | Gambling · Loot Boxes · Contests | No |
+
+Two notes on the judgment calls. **Horror/Fear is Infrequent, not None**, because the
+premise is being hunted in the dark by things you cannot see — that answer alone sets
+9+. **Violence is Infrequent cartoon/fantasy**: creatures kill you, but they are
+abstract glowing shapes with no blood, no gore and no depicted injury; death is your
+light going out.
+
+9+ rather than 4+ is deliberate. `store/privacy-policy.md` states the app is not
+directed at children under 13, which is load-bearing given ads ship at launch — a 4+
+rating would sit awkwardly beside that sentence and closer to child-directed
+advertising rules. **Loot Boxes is No and must stay No**: Remove Ads is a plain
+non-consumable with a fixed outcome, so Apple's odds-disclosure rules do not apply.
+Adding any randomised purchase later reopens that.
 
 ## Price
 Free, ad-supported, with a single non-consumable in-app purchase: **Remove Ads**.
