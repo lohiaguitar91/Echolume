@@ -7,13 +7,14 @@
 // settings row and the pre-ad offer never appear, and the game behaves exactly
 // as it does today. A purchase surface that might not work must never be shown.
 //
-// ⚠ THE PLUGIN CALLS BELOW ARE UNVERIFIED AGAINST A REAL DEVICE. ads.js carries
-// a scar about exactly this: its event names came from a README, were wrong,
-// and wedged a button on device until they were checked against the plugin's
-// native source. Before trusting this file, the Mac session must (a) install
-// the plugin, (b) read its source for the real method names and result shapes,
-// (c) run a sandbox purchase, a restore, and a CANCELLED purchase. Until then
-// `PURCHASES.plugin` stays null and none of it runs.
+// The native half is `ios/App/App/StorePlugin.swift` — StoreKit 2, written for
+// this app rather than taken from npm, exactly as GameConnectPlugin was. Echolume
+// sells one non-consumable and needs no receipt server, so a purchases SDK would
+// buy nothing and would be the only third-party data collector in the app.
+// Bubble Popper ships the same architecture (expo-iap, direct to StoreKit).
+//
+// Android has no implementation yet: `configured` is false there, so the surface
+// stays invisible rather than broken. See ANDROID-TODO.md.
 
 // ---------------------------------------------------------------------------
 // CONFIG. All of it has to exist before the purchase surface turns on:
@@ -23,17 +24,10 @@
 // Missing any of these leaves the feature invisible rather than broken.
 // ---------------------------------------------------------------------------
 export const PURCHASE = {
-  // The Capacitor plugin's registered global name. SHIP.md §3.6 researched
-  // @revenuecat/purchases-capacitor (13.x, registers as "Purchases"); the
-  // adapter at the bottom of this file implements that one. Swapping plugins
-  // means rewriting _adapter and nothing else.
-  pluginName: 'Purchases',
-  // The store product. Same string in both consoles.
-  productId: null,          // e.g. 'com.wibesllc.echolume.remove_ads'
-  // RevenueCat only: public SDK keys and the entitlement the product grants.
-  // A direct-to-StoreKit plugin would not need these.
-  apiKey: { ios: null, android: null },
-  entitlementId: 'no_ads',
+  // The registered global name of our own plugin (StorePlugin.swift's `jsName`).
+  pluginName: 'Store',
+  // The store product. The SAME string in App Store Connect and Play Console.
+  productId: 'com.wibesllc.echolume.remove_ads',
 };
 
 export class Purchases {
@@ -47,11 +41,10 @@ export class Purchases {
 
   get plugin() { return window.Capacitor?.Plugins?.[PURCHASE.pluginName] || null; }
 
-  // Everything the store side needs before we may show a buy button.
-  get configured() {
-    return !!(this.plugin && PURCHASE.productId &&
-      (!PURCHASE.apiKey || PURCHASE.apiKey[this.platform]));
-  }
+  // Everything the store side needs before we may show a buy button. The
+  // plugin's mere presence is the platform check: StorePlugin is iOS-only, so
+  // Android has no `Store` global and the surface stays hidden there.
+  get configured() { return !!(this.plugin && PURCHASE.productId); }
 
   // May the UI offer this purchase right now? False on web and in any build
   // where the plumbing is incomplete, which is what keeps the surface honest.
@@ -78,6 +71,14 @@ export class Purchases {
         console.warn('[iap] configure failed', e);
         return false;
       }
+      // A purchase can also land while nobody is looking: an Ask to Buy that a
+      // parent approves later, or a buy made on another device. The native side
+      // finishes those transactions and tells us here.
+      try {
+        this.plugin.addListener?.('purchaseUpdated', (ev) => {
+          if (!ev || ev.productId === PURCHASE.productId) this._grant();
+        });
+      } catch (e) { /* no listener support is not fatal */ }
       // Entitlement first: a reinstall on the same account already owns this.
       try {
         if (await this._adapter.isEntitled()) this._grant();
@@ -95,6 +96,9 @@ export class Purchases {
   //   'owned'       — the purchase went through (or was already owned)
   //   'cancelled'   — the player backed out. NOT an error, and never surfaced
   //                   as one; a cancelled sheet is a normal thing to do.
+  //   'pending'     — Ask to Buy, or an interrupted payment. Nothing is owed and
+  //                   nothing is owned; the grant arrives later through the
+  //                   plugin's Transaction.updates watcher if it is approved.
   //   'unavailable' — nothing is configured, so nothing was attempted
   //   'failed'      — the store said no
   async buy() {
@@ -104,6 +108,7 @@ export class Purchases {
     try {
       const res = await this._adapter.purchase();
       if (res === 'cancelled') return 'cancelled';
+      if (res === 'pending') return 'pending';
       if (res === 'owned') { this._grant(); return 'owned'; }
       return 'failed';
     } catch (e) {
@@ -135,42 +140,29 @@ export class Purchases {
   }
 
   // -------------------------------------------------------------------------
-  // ADAPTER — the only plugin-specific code. Written for RevenueCat's
-  // Capacitor plugin; every call and result shape here is from its docs and is
-  // UNVERIFIED on device (see the header). Swapping to a direct StoreKit /
-  // Play Billing plugin means replacing this object and nothing above it.
+  // ADAPTER — the only plugin-specific code, and the only thing that changes if
+  // the native half is ever replaced. Talks to StorePlugin.swift.
   // -------------------------------------------------------------------------
   get _adapter() {
     const p = this.plugin;
-    const entitled = (info) =>
-      !!info?.customerInfo?.entitlements?.active?.[PURCHASE.entitlementId];
+    const id = PURCHASE.productId;
+    const owns = (res) => Array.isArray(res?.owned) && res.owned.includes(id);
     return {
-      configure: () => p.configure({ apiKey: PURCHASE.apiKey[this.platform] }),
-      isEntitled: async () => entitled(await p.getCustomerInfo()),
+      // StoreKit needs no configuration step; the plugin is live once loaded.
+      configure: async () => true,
+      isEntitled: async () => owns(await p.isEntitled()),
       price: async () => {
-        const offerings = await p.getOfferings();
-        const pkgs = offerings?.current?.availablePackages || [];
-        const match = pkgs.find((k) => k?.product?.identifier === PURCHASE.productId)
-          || pkgs[0];
-        this._pkg = match || null;
-        return match?.product?.priceString || null;
+        const res = await p.products({ productIds: [id] });
+        return (res?.products || []).find((x) => x.id === id)?.price || null;
       },
       purchase: async () => {
-        if (!this._pkg) await this._adapter.price();      // need the package
-        if (!this._pkg) return 'failed';
-        try {
-          const res = await p.purchasePackage({ aPackage: this._pkg });
-          return entitled(res) ? 'owned' : 'failed';
-        } catch (e) {
-          // The plugin reports a user-cancelled sheet as an error; treating it
-          // as a failure would show "something went wrong" to someone who
-          // simply changed their mind.
-          if (e?.code === 'PURCHASE_CANCELLED' || e?.userCancelled ||
-              /cancel/i.test(e?.message || '')) return 'cancelled';
-          throw e;
-        }
+        const { status } = await p.purchase({ productId: id });
+        if (status === 'purchased') return 'owned';
+        if (status === 'cancelled') return 'cancelled';
+        if (status === 'pending') return 'pending';
+        return 'failed';
       },
-      restore: async () => entitled(await p.restorePurchases()),
+      restore: async () => owns(await p.restore()),
     };
   }
 }

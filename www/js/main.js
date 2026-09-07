@@ -516,6 +516,7 @@ class Shell {
     if (res === 'owned') this.ui.setPurchaseNote('Ads are off. Thank you.', true);
     else if (res === 'failed') this.ui.setPurchaseNote('The store could not complete that. Nothing was charged.');
     else if (res === 'unavailable') this.ui.setPurchaseNote('Purchases are not available here.');
+    else if (res === 'pending') this.ui.setPurchaseNote('Waiting on approval. Ads switch off as soon as it clears.');
     // 'cancelled' says nothing: the player simply changed their mind.
   }
 

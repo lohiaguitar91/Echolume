@@ -150,41 +150,29 @@ and the `startLevel({revive})` path are gone from the shell, and `Game.revive()`
       `npx cap sync`.
 - [ ] Publish the GDPR consent message in AdMob (Privacy & messaging) before any
       public release; the code already calls the consent APIs and no-ops until then.
-- [ ] **Turn the purchase on.** `www/js/purchases.js` holds the whole buying surface
-      (settings block + pre-ad offer, both already built and verified against a fake
-      plugin). It stays invisible until all of this exists, so shipping without it is
-      safe. To enable, in order:
-      1. Create the `remove_ads` **non-consumable** in App Store Connect AND Play
-         Console (same product id in both): `com.wibesllc.echolume.remove_ads`.
-         ASC's create dialog only takes Reference Name + Product ID; everything else
-         is a section on the product page afterwards. What each wants:
-         - **Availability** — all territories (the default).
-         - **Price Schedule** — base United States. Nothing in `www/` has to
-           match it: the buy button shows a price only once the store itself has
-           returned one, so the console is the single source of truth.
-         - **App Store Localization** (en-US) — Display Name `Remove Ads` (30 char
-           limit), Description `Removes all ads from Echolume permanently.`
-           (**45 char limit** — the obvious two-sentence version does not fit).
-         - **Tax Category** — leave it. IAPs inherit the app's, and the default
-           App Store Software is right for a game.
-         - **Offer Codes**, **Image** — skip both; neither is required to submit.
-         - **Review Information** — screenshot + note, done LAST, because the
-           settings row does not render until `productId` is set.
-         Then **attach it to the version** on the 1.0 page. An app's first IAP is
-         reviewed with an app version; created-but-unattached is never reviewed.
-      2. Install a purchase plugin and put its registered global in
-         `PURCHASE.pluginName`. `@revenuecat/purchases-capacitor` 13.x (registers as
-         `Purchases`, declares `@capacitor/core >=8.0.0`) is what the adapter at the
-         bottom of `purchases.js` is written for. **Note it is a third-party SDK: it
-         adds a privacy-manifest / data-safety entry.** A direct StoreKit + Play
-         Billing plugin avoids that, and swapping means rewriting `_adapter` only.
-      3. Set `PURCHASE.productId` (and `apiKey`/`entitlementId` if the plugin needs
-         them). `npx cap sync`.
-      4. **Verify the adapter's calls against the plugin's own source, not its
-         README** — that exact mistake wedged the ad button on device once. Then test
-         on a device with a sandbox account: buy, restore, and a **cancelled** sheet
-         (cancel must be silent, not an error), plus a fresh install → Restore.
-      Until this lands, interstitials simply cannot be turned off — fine for testing.
+- [x] **The purchase is implemented (Sept 7 2026).** Not a third-party SDK:
+      `ios/App/App/StorePlugin.swift` is a StoreKit 2 plugin in the app target,
+      exposed as `Capacitor.Plugins.Store` and registered in `capacitorDidLoad()`
+      exactly like GameConnectPlugin. RevenueCat was rejected — Echolume sells one
+      non-consumable and needs no receipt server, so an SDK would have bought
+      nothing and would have been the app's only third-party data collector.
+      Bubble Popper ships the same architecture (expo-iap, direct to StoreKit).
+      `PURCHASE.productId` is set; `purchases.js`'s adapter talks to our plugin.
+      Verified on the Simulator against `ios/Echolume.storekit` (referenced from
+      the shared `App` scheme, so Xcode's Run applies it):
+      - the plugin registers and `configured` is true, so the surface appears;
+      - `products()` returns the real store price and the button reads
+        "Remove ads · $2.99" (no hardcoded fallback exists any more);
+      - a **cancelled** sheet is silent — no error text, button re-enabled;
+      - **restore with nothing owned** says "No previous purchase found on this
+        account." rather than failing, even when `AppStore.sync()` is cancelled.
+      Review screenshot for App Store Connect: `store/iap/remove-ads-review.png`.
+- [ ] **Still to verify: a COMPLETED purchase.** The Simulator asks for an Apple
+      Account to finish one, so the buy-through path has never actually run. Sign
+      in as a **sandbox tester** (Users and Access → Sandbox → Test Accounts) on a
+      device, then confirm: buy → ads stop · reinstall → Restore brings it back ·
+      **Reset progress → the purchase survives** (`save.reset()` preserves
+      `adsRemoved`; erasing progress must never revoke a purchase).
 - [ ] Re-test that a death never produces an interstitial.
 - [ ] **`AD_DEBUG` stays false everywhere; `FORCE_TEST_ADS` stays TRUE through every
       beta and flips to false only for the STORE submission build.** Test-ads betas are

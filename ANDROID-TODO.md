@@ -131,14 +131,21 @@ blocked on shipping.
 
 ## 5. The purchase, done once for both stores
 
-`remove_ads` uses the **same product id in both consoles** and the purchase plugin
-should be a cross-platform one (`www/js/purchases.js` §CONFIG researched
-`@revenuecat/purchases-capacitor`). If iOS is done first and done right, the
-Android half is configuration, not a second implementation.
+`remove_ads` uses the **same product id in both consoles**:
+`com.wibesllc.echolume.remove_ads`.
 
-⚠ Read the header comment in `www/js/purchases.js` before trusting its adapter —
-it is written from docs and **unverified on device**, which is the exact mistake
-that wedged the ad button once.
+**This is no longer configuration — Android needs code.** iOS was implemented as
+`ios/App/App/StorePlugin.swift`, a StoreKit 2 plugin in the app target rather than
+a cross-platform SDK, so there is no Android half to inherit. Android needs the
+same shape against Play Billing: a `StorePlugin.java` exposing the same four
+methods (`products`, `purchase`, `restore`, `isEntitled`) under the same `Store`
+JS name, and `purchases.js` then works unchanged — `configured` is false on
+Android today purely because no `Store` global exists there, so the surface stays
+hidden rather than broken.
+
+Budget it as real work, not a config line. The upside is that the JS layer, the
+settings block, the pre-ad offer and every rule above them are already done and
+verified; only the native adapter is missing.
 
 ## 6. Signing and release
 
