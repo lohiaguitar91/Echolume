@@ -173,11 +173,18 @@ and the `startLevel({revive})` path are gone from the shell, and `Game.revive()`
       the uncropped capture to re-cut from. (Listing screenshots are a different
       thing entirely: 1260x2736 for 6.9".)
 - [ ] **Still to verify: a COMPLETED purchase.** The Simulator asks for an Apple
-      Account to finish one, so the buy-through path has never actually run. Sign
-      in as a **sandbox tester** (Users and Access → Sandbox → Test Accounts) on a
-      device, then confirm: buy → ads stop · reinstall → Restore brings it back ·
+      Account to finish one, so the buy-through path has never actually run.
+      **Do this from TestFlight, and do NOT create a sandbox account for it.**
+      A TestFlight build runs in the StoreKit sandbox automatically and uses the
+      tester's own Apple ID; purchases are free and nothing is charged. Sandbox
+      Apple Accounts (Users and Access → Sandbox) apply only to builds installed
+      from Xcode, and TestFlight ignores them — signing out of Media & Purchases
+      to "use the sandbox account" is wasted effort here.
+      Confirm: buy → ads stop · delete and reinstall → Restore brings it back ·
       **Reset progress → the purchase survives** (`save.reset()` preserves
       `adsRemoved`; erasing progress must never revoke a purchase).
+      A TestFlight purchase does not carry over to the App Store build, so expect
+      to buy again after release — that is the sandbox working, not a bug.
 - [ ] Re-test that a death never produces an interstitial.
 - [x] **Test ads are automatic (Sept 7 2026).** `BuildInfoPlugin` reads the receipt
       filename, so TestFlight gets test creatives and the App Store gets live ones

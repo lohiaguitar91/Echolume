@@ -36,8 +36,11 @@ buy button reading "Remove ads", and the TV markup and styles both present.
 
 ### What only a device can settle in 13
 
-- **A completed purchase.** Buy through with a sandbox tester: buy → ads stop ·
-  reinstall → Restore → ads stay off · **Reset progress → the purchase survives**.
+- **A completed purchase.** Straight from TestFlight with your own Apple ID — a
+  TestFlight build is already in the StoreKit sandbox and the purchase is free.
+  No sandbox account: TestFlight ignores the ones made in App Store Connect.
+  Buy → ads stop · reinstall → Restore → ads stay off · **Reset progress → the
+  purchase survives**.
 - **That the ad switch works.** TestFlight must show ads labelled "Test Ad". That
   is the proof the receipt check reads sandbox correctly; the live side can only
   be proven by the App Store build itself.
