@@ -48,14 +48,23 @@ export const AD_IDS = {
   },
 };
 export const ADS_ARE_SAMPLE = false;  // iOS ids above are real units
-// ⚠ TEST-ADS MODE — true through every BETA round, false for the STORE build
-// (SHIP.md 3.6). Passes isTesting to the plugin, which swaps in Google's
-// sample ad UNITS at request time: guaranteed fill, "Test Ad" label, zero
-// invalid-traffic risk. Beta testers are ~100% of a brand-new account's
-// traffic, which is exactly the ratio Google's invalid-traffic systems
-// dislike — so betas serve test creatives, and the live units get their
-// pre-launch proof from an impressions-only smoke run instead (never tap).
-export const FORCE_TEST_ADS = true;
+
+// TEST ADS ARE NOW AUTOMATIC. Nothing has to be remembered at submission time.
+//
+// Test creatives (isTesting) are served unless this install came from the App
+// Store, which the native BuildInfo plugin decides from the receipt filename:
+// an App Store install carries "receipt", TestFlight and every other sandbox
+// install carries "sandboxReceipt". Same binary, different install, so the flag
+// cannot be left in the wrong state by anyone.
+//
+// Why it matters in both directions: beta testers are close to 100% of a new
+// AdMob account's traffic, which is the ratio Google's invalid-traffic systems
+// punish, so betas must not touch the live units. And a store build that ships
+// still forced to test ads earns nothing, silently, with no error anywhere.
+//
+// Set FORCE_TEST_ADS true to override and serve test creatives EVERYWHERE,
+// including in production. Only useful for a deliberate live-build smoke run.
+export const FORCE_TEST_ADS = false;
 // ⚠ DEBUG RIG — must be false in any distributed build (SHIP.md 3.6). Paints
 // an on-screen breadcrumb log of the ad flow, because a USB console attach
 // dies whenever iOS relaunches the app and we were debugging blind.
@@ -87,7 +96,7 @@ export const TEST_DEVICE_IDS = [
 //     booth, and it stops asking entirely once someone has declined enough
 //     times to have clearly meant it.
 export const AD_RULES = {
-  interstitialEveryNWins: [2, 3],
+  interstitialEveryNWins: [3, 3],   // every 3rd win. [a,b] still rerolls if widened.
   neverAfterDeath: true,
   noRewardedRevive: true,
   offerBeforeAd: { everyNAds: 2, stopAfterDeclines: 6 },
@@ -108,7 +117,7 @@ export class Ads {
     this._showed = false;
     this._closed = null;         // resolver for "the fullscreen ad went away"
     this._npa = false;           // non-personalized, decided by the ATT answer
-    this._bug(`boot plugin=${this.plugin ? 'yes' : 'no'} ids=${this.configured ? 'set' : 'missing'} testads=${FORCE_TEST_ADS}`);
+    this._bug(`boot plugin=${this.plugin ? 'yes' : 'no'} ids=${this.configured ? 'set' : 'missing'} forcetest=${FORCE_TEST_ADS}`);
   }
 
   get ids() { return AD_IDS[this.platform]; }
@@ -143,7 +152,34 @@ export class Ads {
   // Called once at boot. Deliberately does nothing native — see header.
   async init() { return this.configured; }
 
-  // How many wins the next interstitial costs: 2 or 3, rerolled per cycle.
+  // Is this the real App Store build? Cached: the receipt does not change while
+  // the app is running. Anything unknown — web, Android, a missing plugin, a
+  // rejected call — answers false, which serves TEST ads. That is the safe
+  // direction: a beta that shows real ads risks the account, a production build
+  // that shows test ads only loses revenue, and this way an unknown build never
+  // does the first one.
+  async _isProduction() {
+    if (this._isProd != null) return this._isProd;
+    try {
+      const bi = window.Capacitor?.Plugins?.BuildInfo;
+      const res = await bi?.isAppStoreProduction();
+      this._isProd = res?.value === true;
+    } catch (e) {
+      this._isProd = false;
+    }
+    this._bug(`build=${this._isProd ? 'appstore' : 'sandbox/testflight'}`);
+    return this._isProd;
+  }
+
+  // Test creatives unless this is a real App Store install.
+  async _useTestAds() {
+    if (FORCE_TEST_ADS || ADS_ARE_SAMPLE) return true;
+    return !(await this._isProduction());
+  }
+
+  // How many wins the next interstitial costs. [3,3] means a flat every-third;
+  // the range machinery stays because a jittered cadence reads less mechanical
+  // if that is ever wanted again.
   _rollCadence() { const [a, b] = AD_RULES.interstitialEveryNWins; return a + Math.floor(Math.random() * (b - a + 1)); }
 
   // Called by the shell on every real level entry. This is where the
@@ -180,9 +216,11 @@ export class Ads {
         }
         this._npa = status !== 'authorized';
       } catch (e) { /* pre-iOS-14 or plugin oddity — carry on */ }
+      this._testAds = await this._useTestAds();
+      this._bug(`testads=${this._testAds}`);
       try {
         await this.plugin.initialize({
-          initializeForTesting: ADS_ARE_SAMPLE || FORCE_TEST_ADS || TEST_DEVICE_IDS.length > 0,
+          initializeForTesting: this._testAds || TEST_DEVICE_IDS.length > 0,
           testingDevices: TEST_DEVICE_IDS,
         });
         this._bug('sdk init ok');
@@ -219,7 +257,7 @@ export class Ads {
       if (!(await this._ensureStarted())) return;
       await this.plugin.prepareInterstitial({
         adId: this.ids.interstitial,
-        isTesting: ADS_ARE_SAMPLE || FORCE_TEST_ADS,
+        isTesting: this._testAds !== false,   // resolved in _ensureStarted
         npa: this._npa,
       });
       this._interstitialLoaded = true;
@@ -235,7 +273,7 @@ export class Ads {
       if (!(await this._ensureStarted())) return;
       await this.plugin.prepareRewardVideoAd({
         adId: this.ids.rewarded,
-        isTesting: ADS_ARE_SAMPLE || FORCE_TEST_ADS,
+        isTesting: this._testAds !== false,   // resolved in _ensureStarted
         npa: this._npa,
       });
       this._rewardLoaded = true;

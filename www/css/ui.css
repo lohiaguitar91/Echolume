@@ -290,6 +290,38 @@ html, body {
   font-size: 12.5px; line-height: 1.5; color: var(--text-dim); margin: 0;
 }
 .offer-body { text-align: center; font-size: 13.5px; }
+
+/* The set in the corner of the room. Drawn in the same thin-line language as
+   the verbs strip rather than as an icon, because every other glyph in this
+   game is a stroke and a glow. Amber, not cyan: cyan is the player's own
+   voice and the walls it lights, and no hue is ever reused here. */
+.offer-tv { width: 68px; height: 55px; display: block; margin: 0 auto 2px; }
+.offer-tv .tv-body,
+.offer-tv .tv-aerial {
+  fill: none; stroke: var(--mote, #ffc978); stroke-width: 1.6;
+  stroke-linecap: round; stroke-linejoin: round; opacity: 0.75;
+}
+.offer-tv .tv-glass {
+  fill: rgba(255, 201, 120, 0.07);
+  stroke: rgba(255, 201, 120, 0.35); stroke-width: 1;
+}
+.offer-tv .tv-node { fill: var(--mote, #ffc978); opacity: 0.9; }
+.offer-tv .tv-scan line {
+  stroke: var(--mote, #ffc978); stroke-width: 1.4; stroke-linecap: round;
+  opacity: 0.5; transform-origin: center;
+  animation: tv-carrier 2.4s ease-in-out infinite;
+}
+.offer-tv .tv-scan line:nth-child(2) { animation-delay: 0.35s; }
+.offer-tv .tv-scan line:nth-child(3) { animation-delay: 0.7s; }
+@keyframes tv-carrier {
+  0%, 100% { opacity: 0.18; transform: scaleX(0.55); }
+  50%      { opacity: 0.62; transform: scaleX(1); }
+}
+/* Reduced motion turns the signal off, not the set. */
+@media (prefers-reduced-motion: reduce) {
+  .offer-tv .tv-scan line { animation: none; opacity: 0.4; }
+}
+body.reduced-motion .offer-tv .tv-scan line { animation: none; opacity: 0.4; }
 .purchase-note, .offer-note {
   font-size: 12px; margin: 0; text-align: center; color: var(--text-dim);
 }
