@@ -155,7 +155,23 @@ and the `startLevel({revive})` path are gone from the shell, and `Game.revive()`
       plugin). It stays invisible until all of this exists, so shipping without it is
       safe. To enable, in order:
       1. Create the `remove_ads` **non-consumable** in App Store Connect AND Play
-         Console (same product id in both).
+         Console (same product id in both): `com.wibesllc.echolume.remove_ads`.
+         ASC's create dialog only takes Reference Name + Product ID; everything else
+         is a section on the product page afterwards. What each wants:
+         - **Availability** — all territories (the default).
+         - **Price Schedule** — $2.99, base United States. Must match
+           `PURCHASE.fallbackPrice` in `purchases.js` or the pre-store price shown
+           to a player is a lie for the second it is on screen.
+         - **App Store Localization** (en-US) — Display Name `Remove Ads` (30 char
+           limit), Description `Removes all ads from Echolume permanently.`
+           (**45 char limit** — the obvious two-sentence version does not fit).
+         - **Tax Category** — leave it. IAPs inherit the app's, and the default
+           App Store Software is right for a game.
+         - **Offer Codes**, **Image** — skip both; neither is required to submit.
+         - **Review Information** — screenshot + note, done LAST, because the
+           settings row does not render until `productId` is set.
+         Then **attach it to the version** on the 1.0 page. An app's first IAP is
+         reviewed with an app version; created-but-unattached is never reviewed.
       2. Install a purchase plugin and put its registered global in
          `PURCHASE.pluginName`. `@revenuecat/purchases-capacitor` 13.x (registers as
          `Purchases`, declares `@capacitor/core >=8.0.0`) is what the adapter at the
