@@ -127,8 +127,12 @@ no matter who calls them later (revised Aug 26 and Aug 31 2026):
 - **Never** after a death, a failed gate, on the gate warning, or on first launch.
 - **No rewarded revive.** Retired Aug 26: any unlocked depth restarts free, so it bought
   nothing. Its device-proven internals stay dormant in `ads.js` for a future placement.
-- Before an interstitial the player is offered the way out (`AD_RULES.offerBeforeAd`,
-  every Nth ad, silent for good after enough declines). Continuing is one plain tap.
+- Before an interstitial the player is offered the way out (`AD_RULES.offerBeforeAd`):
+  the **first 3 ads always**, then every other one, silent for good after 6 declines.
+  Continuing is one plain tap. The first-few rule exists because a pure every-Nth
+  rule surfaced the offer about once every six depths once ads moved to every third
+  win, and because the counter persists across installs — a save landing mid-cycle
+  made the offer look broken.
 - `remove_ads` kills interstitials permanently.
 
 Current state (Aug 2026): **implemented and live against Google's SAMPLE ids.**
