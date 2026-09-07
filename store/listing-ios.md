@@ -72,7 +72,7 @@ collection has changed between versions, and you own the disclosure either way.
 ## Review notes (paste into App Review Information)
 Echolume is a single-player game with no accounts and no server component of its own. All audio is synthesized on-device (no licensed music). Progress is stored locally.
 
-Ads are served by Google AdMob. An interstitial appears only after a player clears a "gate" depth (every 7th), never after a failure, and a rewarded ad is offered only as an optional revive at a boss. The App Tracking Transparency prompt is shown before any tracking request; declining it serves non-personalised ads and changes nothing else.
+Ads are served by Google AdMob. A single interstitial appears after a player completes a depth, on a cadence of every second or third completion, and never after a failure or on first launch. There are no rewarded ads. Before an interstitial the player is periodically offered the one-time "Remove Ads" purchase instead; continuing to the ad is one plain tap. The App Tracking Transparency prompt is shown before any tracking request; declining it serves non-personalised ads and changes nothing else.
 
 There is one non-consumable in-app purchase, "Remove Ads", which permanently disables interstitials.
 

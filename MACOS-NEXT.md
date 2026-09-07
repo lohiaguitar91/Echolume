@@ -18,6 +18,49 @@ round** — `16e7b34..e7a967a`, Aug 28–29 2026 — summarized in the next sect
 
 ---
 
+## Build 10 is on TestFlight (Sept 6 2026) — this is the one to play
+
+Uploaded 1.0.0 (10) from the Mac. **It is the first build that contains the Sept 5
+round.** Build 9 was bumped for the Aug 28-29 round and four `www/` commits landed
+after it, so anything tested before this was testing the previous round.
+
+Verified in the archived bundle before upload, not just at the exit code: `Info.plist`
+reads 1.0.0 / 10, and `wardenJaw` is present in `App.app/public/js/draw.js`.
+
+Two upload warnings, both benign and expected on every build: no dSYM for
+`GoogleMobileAds.framework` or `UserMessagingPlatform.framework`. Google ships those
+prebuilt without dSYMs; the only cost is that crashes inside Google's ad code do not
+symbolicate. Not a rejection, not fixable from here.
+
+### What to actually look at in this build
+
+The general spot-checks are in SHIP.md 3. These are the things the autoplay bot
+cannot judge, each one a number set by eye that has never moved on a phone:
+
+1. **The Listener's fangs (depth 14).** Two bones grow along the edges of the bite,
+   red motes streaming between them. Can you read the line and clear it inside the
+   1.35s window? One tap sideways is enough IF the shape lands in time. The arena also
+   tightened (half-width 300 -> 210, warden 70 -> 40 off centre) to close a lane the
+   strike could never reach: if the fight now feels cramped rather than tense, blame
+   that, not the tell. The bot clears it 11/11 and is irrelevant here - it sings where
+   it swims, which is the one thing a warden punishes.
+2. **The mote surge in daylight** (`moteSurge` / `moteSurgeTime`, ~+25% for 4s). Tuned
+   on a desk monitor. If it cannot be seen outdoors the whole in-level payoff of
+   collecting light is invisible.
+3. **The fed cast commit on depths 19 and 25** (`effectiveCastCommit`, 2.4s -> 3.79s at
+   the glow cap). Those are the two double-hunter depths where a long commit turns a
+   hard read into a free pass.
+4. **`BOON_CARRY` = 0.3 through depths 15-20.** If chapter 2 opens with no teeth, the
+   carried boon is too generous.
+5. **Ad cadence** (`AD_RULES.interstitialEveryNWins`, 2-3 wins, wins only). Judge it
+   over a real 20-minute session.
+6. **Chapter 3, depths 29-42.** The bot navigates by corridor geometry, not by what it
+   can see, so a hush zone that is miserable scores the same as an easy one. Fourteen
+   depths carry a verification number that means nothing. Somebody has to play them.
+
+Also new and unseen on a device: the third star (every mote), the wrapped intro toast
+at 430pt, and motes no longer spawning inside urchin/ice hurt zones.
+
 ## The Sept 5 round (remote session) — second TestFlight notes
 
 `www/` + docs only. The **third star is back**, for every mote in a depth, and

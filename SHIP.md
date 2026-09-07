@@ -115,11 +115,10 @@ target is iOS 15, so every GameKit API used (all iOS 14+) is available.
 
 `www/js/ads.js` is written against the real plugin API (`Capacitor.Plugins.AdMob`, per
 the plugin's v8 README), wired into the real flow, and **inert until the IDs exist and
-the plugin is installed**. `Ads.maybeInterstitial()` is called on every level win; the
-boss death screen shows a **"Watch ad to try again"** button only while
-`Ads.canRevive()` is true (an ad loaded, a boss, not yet used this attempt) and
-`Ads.showRevive()` resolves true only on a completed reward. Everything returns false
-while dormant, so shipping it that way is safe.
+the plugin is installed**. The shell contract is two calls: `Ads.levelStarted()` on
+every depth entry (which preloads once the cadence says this win could show one) and
+`Ads.maybeInterstitial({ won })` on a win. Everything returns false while dormant, so
+shipping it that way is safe.
 
 The placement rules are enforced **inside `ads.js`**, not at the call sites, so they hold
 no matter who calls them later (revised Aug 26 and Aug 31 2026):
@@ -136,11 +135,13 @@ Current state (Aug 2026): **implemented and live against Google's SAMPLE ids.**
 `@capacitor-community/admob` 8.1.0 is installed and `ads.js` drives it via
 `Capacitor.Plugins.AdMob` (no bundler, so the npm JS wrapper is never imported).
 Consent (UMP, defensive until a message is published) + the ATT prompt + SDK init all
-run lazily on the first gate/boss depth, so the cold open stays clean. Interstitials
-preload on gate-depth entry and show on the win screen; the rewarded revive preloads on
-boss-depth entry and **resumes the run where you fell** (`Game.revive()`: full hearts,
-`TUNING.reviveGrace` i-frames, world untouched) — it has to outbid the free lair-mouth
-retry or it would be a scam. Declining is just using the ordinary death-screen buttons.
+run lazily on the first depth where the cadence says a win could show an ad — with the
+Aug 28–29 rewire that is around **depth 2**, not depth 7, so the cold open still stays
+clean but the prompts arrive early. Interstitials preload on that entry and show on the
+win screen. The rewarded revive is **retired**: the death-screen button, `_reviveSpent`
+and the `startLevel({revive})` path are gone from the shell, and `Game.revive()` /
+`TUNING.reviveGrace` survive only as dormant remnants. `Ads.canRevive()` /
+`showRevive()` remain in `ads.js`, device-proven and uncalled, for a future placement.
 
 - [x] **iOS ids are real** (AdMob app + both units created Aug 20 2026; `ADS_ARE_SAMPLE`
       is false). Still open: put the test iPhone's id in `TEST_DEVICE_IDS` (the SDK logs
@@ -174,7 +175,9 @@ retry or it would be a scam. Declining is just using the ordinary death-screen b
       deliberate: beta testers are ~100% of a new account's traffic, the worst possible
       invalid-traffic ratio. Before submitting: flip false, rebuild, one impressions-only
       smoke run (never tap), confirm requests appear in the AdMob dashboard, submit.
-      (TestFlight history: build 5 = live ads, build 6 = test ads / the beta build.)
+      (TestFlight history: 5 = live ads, 6 = rejected ITMS-91064, 7 = the beta build,
+      8 = the reconciled tree, 9 = bumped for the Aug 28–29 round, 10 = the Sept 5
+      round, uploaded Sept 6 2026.)
 
 ### Metadata: already written for an ad-supported launch
 
