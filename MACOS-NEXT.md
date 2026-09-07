@@ -176,6 +176,8 @@ session learned all three the hard way.
 Ordered by what unblocks the most.
 
 ### 1. Android has never been compiled — do this first
+**The full job is in `ANDROID-TODO.md`** (placeholders, the `jlink` toolchain trap,
+console order, and the sample-ad-id trap that silently earns nothing).
 **Release order (Aug 31 2026): iOS ships first, Android is a fast follow.** That
 does NOT move this item later. Build Android during the iOS beta window: it is the
 one unknown that could make a "fast" follow slow, and an emulator debug build is

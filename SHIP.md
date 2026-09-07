@@ -27,6 +27,10 @@ sections below are numbered by topic, not by sequence — §2 (Android) comes af
 - [ ] Host `store/privacy-policy.md` somewhere public (GitHub Pages of this repo works); save the URL.
 
 ## 2. Android build (any machine with Android Studio)
+
+**The full Android job — every placeholder, trap and console step — is written out in
+`ANDROID-TODO.md`.** This section is the summary; that file is what to open on the day.
+
 - [ ] Install Android Studio, open `android/` (`npx cap open android`), let Gradle sync.
 - [ ] Run on a real device once; check: audio unlocks on first tap, haptics fire, 60fps feel,
       safe-area insets on a notched phone, portrait lock.
