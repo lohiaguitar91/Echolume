@@ -166,7 +166,12 @@ and the `startLevel({revive})` path are gone from the shell, and `Game.revive()`
       - a **cancelled** sheet is silent — no error text, button re-enabled;
       - **restore with nothing owned** says "No previous purchase found on this
         account." rather than failing, even when `AppStore.sync()` is cancelled.
-      Review screenshot for App Store Connect: `store/iap/remove-ads-review.png`.
+      Review screenshot for App Store Connect: `store/iap/remove-ads-review.png`
+      — **1024x1024**, which is the IAP review image spec and is NOT the App Store
+      screenshot spec. A 1260x2736 device capture is rejected as wrong dimensions;
+      crop a square from one instead. `store/iap/remove-ads-fullscreen.png` keeps
+      the uncropped capture to re-cut from. (Listing screenshots are a different
+      thing entirely: 1260x2736 for 6.9".)
 - [ ] **Still to verify: a COMPLETED purchase.** The Simulator asks for an Apple
       Account to finish one, so the buy-through path has never actually run. Sign
       in as a **sandbox tester** (Users and Access → Sandbox → Test Accounts) on a
