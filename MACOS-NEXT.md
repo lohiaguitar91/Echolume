@@ -34,6 +34,10 @@ symbolicate. Not a rejection, not fixable from here.
 
 ### What to actually look at in this build
 
+**A tester-facing version of this list is `QA-BUILD-10.md`** — same six items in plain
+language, with what to do and what to report. Hand that to a human; this section is the
+developer's copy.
+
 The general spot-checks are in SHIP.md 3. These are the things the autoplay bot
 cannot judge, each one a number set by eye that has never moved on a phone:
 
