@@ -179,8 +179,12 @@ and the `startLevel({revive})` path are gone from the shell, and `Game.revive()`
       **Reset progress → the purchase survives** (`save.reset()` preserves
       `adsRemoved`; erasing progress must never revoke a purchase).
 - [ ] Re-test that a death never produces an interstitial.
-- [ ] **`AD_DEBUG` stays false everywhere; `FORCE_TEST_ADS` stays TRUE through every
-      beta and flips to false only for the STORE submission build.** Test-ads betas are
+- [x] **Test ads are automatic (Sept 7 2026).** `BuildInfoPlugin` reads the receipt
+      filename, so TestFlight gets test creatives and the App Store gets live ones
+      from the same binary. There is no longer a flip to remember, and no longer a
+      beta build separate from the store build. `FORCE_TEST_ADS` remains only as a
+      deliberate override (true = test creatives everywhere, including production).
+- [ ] **`AD_DEBUG` stays false everywhere.** Historical note on the old flow: Test-ads betas are
       deliberate: beta testers are ~100% of a new account's traffic, the worst possible
       invalid-traffic ratio. Before submitting: flip false, rebuild, one impressions-only
       smoke run (never tap), confirm requests appear in the AdMob dashboard, submit.

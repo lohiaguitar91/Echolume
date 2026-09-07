@@ -18,7 +18,35 @@ round** — `16e7b34..e7a967a`, Aug 28–29 2026 — summarized in the next sect
 
 ---
 
-## Build 12 is on TestFlight (Sept 7 2026) — the purchase build
+## Build 13 is on TestFlight (Sept 7 2026) — the one to test, and the one to ship
+
+Uploaded 1.0.0 (13). Adds the automatic test-ad switch, interstitials every third
+win, and the television on the pre-ad offer.
+
+**13 is the first build with no test-ads flag to remember.** Earlier rounds needed
+a beta build and a separate store twin because `FORCE_TEST_ADS` was hand-flipped;
+`BuildInfoPlugin` now decides at runtime from the receipt filename, so the same
+binary serves test creatives in TestFlight and real ones from the App Store. If
+testing passes, 13 is submittable as it stands.
+
+Verified in the archive before upload: 1.0.0 (13), UIDeviceFamily [1], all three
+plugins present in the stripped binary (GameConnect, Store, BuildInfo), cadence
+[3,3], `FORCE_TEST_ADS` false, `AD_DEBUG` false, product id in the shipped JS,
+buy button reading "Remove ads", and the TV markup and styles both present.
+
+### What only a device can settle in 13
+
+- **A completed purchase.** Buy through with a sandbox tester: buy → ads stop ·
+  reinstall → Restore → ads stay off · **Reset progress → the purchase survives**.
+- **That the ad switch works.** TestFlight must show ads labelled "Test Ad". That
+  is the proof the receipt check reads sandbox correctly; the live side can only
+  be proven by the App Store build itself.
+- **Every third win, never after a death**, over a real session.
+- **The television** — whether it reads as one at a glance, and whether the
+  carrier pulse is charming or fussy.
+
+## Build 12 (Sept 7 2026) — the purchase build
+
 
 Uploaded 1.0.0 (12). **The first build in which the purchase exists at all**:
 StorePlugin.swift, `productId` set (so the settings row and the pre-ad offer are
