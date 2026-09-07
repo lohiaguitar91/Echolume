@@ -65,8 +65,22 @@ ECHOLUME is a one-thumb atmosphere game about voice, light, and restraint.
 
 The deep is dark. You are not.
 
+## Promotional Text (170 chars max)
+Every tap is a song that lights the dark, and tells the dark where you are. Fifty handcrafted depths, four bosses, and an endless Abyss beneath them all.
+
+> Editable at ANY time without submitting a build, unlike the description. Use it for
+> "what changed" or a seasonal line once the app is live.
+
+## Copyright
+2026 Wibes LLC
+
 ## Keywords (100 chars max)
-echolocation,sonar,deep sea,bioluminescent,atmospheric,one thumb,ambient,cave,glow,indie,offline
+echolocation,sonar,deep,sea,bioluminescent,atmospheric,thumb,ambient,cave,glow,indie,dark,swim
+
+> No spaces after commas — a space costs a character and buys nothing. Apple already
+> combines your keywords with the app name and subtitle, so words there ("echolume",
+> "sound", "light") are wasted here. Phrases are auto-combined too, which is why
+> "deep sea" became "deep,sea" — two tokens for one character less.
 
 ## Support URL
 (Your page or repo — e.g. a GitHub Pages site for the game. Required by App Store Connect.)
