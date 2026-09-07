@@ -51,23 +51,35 @@ third-party SDK's collection as your own.
 
 Declare these, per Google's
 [data disclosure](https://developers.google.com/admob/ios/privacy/data-disclosure).
-All are collected for **Third-Party Advertising** and, where the user grants ATT
-permission, are **used for tracking**:
+The questionnaire asks four things per data type; this is all four:
 
-| Data type | Category | Linked to user | Used for tracking |
-|---|---|---|---|
-| Device ID (advertising identifier) | Identifiers | Yes | Yes |
-| Advertising data (ads shown) | Usage Data | Yes | Yes |
-| Product interaction (taps, video views) | Usage Data | Yes | Yes |
-| Coarse location, derived from IP | Location | Yes | Yes |
-| Crash logs | Diagnostics | No | No |
-| Performance data | Diagnostics | No | No |
+| Data type | Category | Linked to user | Used for tracking | Purpose |
+|---|---|---|---|---|
+| Device ID (advertising identifier) | Identifiers | Yes | Yes | Third-Party Advertising |
+| Advertising data (ads shown) | Usage Data | Yes | Yes | Third-Party Advertising |
+| Product interaction (taps, video views) | Usage Data | Yes | Yes | Third-Party Advertising |
+| Coarse location, derived from IP | Location | Yes | Yes | Third-Party Advertising |
+| Crash logs | Diagnostics | No | No | Analytics — **verify, see below** |
+| Performance data | Diagnostics | No | No | Analytics — **verify, see below** |
+
+The first four are tracking only where the user grants ATT permission; answer Yes
+regardless, since the app does request it.
 
 Nothing is collected for "App Functionality" by Echolume itself. Progress and
 settings never leave the device, so they are not disclosable data.
 
-**Re-check this table against Google's page before each submission** — the SDK's
-collection has changed between versions, and you own the disclosure either way.
+> **⚠ The two Diagnostics rows' *purpose* is the one field to confirm before each
+> submission.** Google lists crash logs and performance data under **Analytics** in
+> some SDK versions and **App Functionality** in others, and the two are not
+> interchangeable on the questionnaire. Everything else in this table has been
+> stable; this is the cell that moves. Check it against Google's
+> [data disclosure page](https://developers.google.com/admob/ios/privacy/data-disclosure)
+> — not against the SDK's bundled privacy manifest, and not against this file.
+> **The disclosure obligation is yours regardless of what Google's manifest says**,
+> so a wrong answer here is your misstatement, not theirs.
+
+**Re-check the whole table against Google's page before each submission** — what the
+SDK collects has changed between versions, and you own the disclosure either way.
 
 ## Review notes (paste into App Review Information)
 Echolume is a single-player game with no accounts and no server component of its own. All audio is synthesized on-device (no licensed music). Progress is stored locally.

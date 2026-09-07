@@ -212,6 +212,12 @@ above — the ⚠ comments sit at the point of use:
       [Android](https://developers.google.com/admob/android/privacy/data-disclosure)).
       What the SDK collects has changed between versions, and the obligation is yours
       regardless of what the SDK's own manifest says.
+      **The specific cell that moves is the *purpose* on the two Diagnostics rows**
+      (crash logs, performance data): Google has listed them as **Analytics** in some
+      SDK versions and **App Functionality** in others, and the questionnaire treats
+      those as different answers. The other four rows have been stable. Confirm it on
+      Google's page, not from the bundled privacy manifest and not from our own table —
+      `store/listing-ios.md` carries the same warning at the table itself.
 
 ## 4. Final sanity before each submit
 - [ ] Version stamps agree: `www/js/config.js` GAME_VERSION, `package.json`,
