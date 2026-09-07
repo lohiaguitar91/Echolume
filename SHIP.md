@@ -159,9 +159,9 @@ and the `startLevel({revive})` path are gone from the shell, and `Game.revive()`
          ASC's create dialog only takes Reference Name + Product ID; everything else
          is a section on the product page afterwards. What each wants:
          - **Availability** — all territories (the default).
-         - **Price Schedule** — $2.99, base United States. Must match
-           `PURCHASE.fallbackPrice` in `purchases.js` or the pre-store price shown
-           to a player is a lie for the second it is on screen.
+         - **Price Schedule** — base United States. Nothing in `www/` has to
+           match it: the buy button shows a price only once the store itself has
+           returned one, so the console is the single source of truth.
          - **App Store Localization** (en-US) — Display Name `Remove Ads` (30 char
            limit), Description `Removes all ads from Echolume permanently.`
            (**45 char limit** — the obvious two-sentence version does not fit).

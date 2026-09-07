@@ -34,9 +34,6 @@ export const PURCHASE = {
   // A direct-to-StoreKit plugin would not need these.
   apiKey: { ios: null, android: null },
   entitlementId: 'no_ads',
-  // Shown only until the store's own localized price arrives. Never shown in
-  // place of a real price at the moment of purchase — see priceText().
-  fallbackPrice: '$2.99',
 };
 
 export class Purchases {
@@ -62,9 +59,11 @@ export class Purchases {
 
   get owned() { return !!this.save?.data?.adsRemoved; }
 
-  // The price to put on a button. Falls back to the configured string only
-  // while the store has not answered yet; a real price replaces it silently.
-  priceText() { return this._price || PURCHASE.fallbackPrice; }
+  // The store's own localized price, or null until it answers. There is
+  // deliberately NO fallback: a hardcoded price is a guess, it goes stale the
+  // moment the App Store price changes, and it is wrong in every currency but
+  // one. Callers render the button without a price until this returns a string.
+  priceText() { return this._price; }
 
   // Configure the SDK and refresh both entitlement and price. Safe to call any
   // time, including when nothing is configured (it just returns false).
