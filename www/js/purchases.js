@@ -52,10 +52,10 @@ export class Purchases {
 
   get owned() { return !!this.save?.data?.adsRemoved; }
 
-  // The store's own localized price, or null until it answers. There is
-  // deliberately NO fallback: a hardcoded price is a guess, it goes stale the
-  // moment the App Store price changes, and it is wrong in every currency but
-  // one. Callers render the button without a price until this returns a string.
+  // The store's own localized price, or null until it answers. NOT currently
+  // rendered anywhere: the buy buttons say only "Remove ads" and let the App
+  // Store sheet state the price. Kept because a non-null value also proves the
+  // store resolved the product, and because putting the price back is one line.
   priceText() { return this._price; }
 
   // Configure the SDK and refresh both entitlement and price. Safe to call any

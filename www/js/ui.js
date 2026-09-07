@@ -247,8 +247,10 @@ export class UI {
       pitch.textContent = 'Echolume is free, and ads between depths pay for it. One purchase turns them off for good and supports the work.';
       buy.hidden = false;
       buy.disabled = false;
-      const price = purchases.priceText();
-      buy.textContent = price ? `Remove ads · ${price}` : 'Remove ads';
+      // No price on the button, deliberately. The App Store sheet states the
+      // real localized price at the moment of purchase, which is the only place
+      // it is guaranteed correct for that account, currency and storefront.
+      buy.textContent = 'Remove ads';
       restore.hidden = false;
     }
   }
@@ -263,7 +265,7 @@ export class UI {
 
   setOfferPrice(text) {
     const b = $('btn-offer-buy');
-    if (b) { b.textContent = text ? `Remove ads · ${text}` : 'Remove ads'; b.disabled = false; }
+    if (b) { b.textContent = 'Remove ads'; b.disabled = false; }
     const n = $('offer-note');
     if (n) { n.hidden = true; n.textContent = ''; }
   }
