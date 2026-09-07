@@ -17,11 +17,11 @@
 // stays invisible rather than broken. See ANDROID-TODO.md.
 
 // ---------------------------------------------------------------------------
-// CONFIG. All of it has to exist before the purchase surface turns on:
-//   1. the non-consumable created in App Store Connect AND Play Console,
-//   2. a purchase plugin installed and named here,
-//   3. `productId` set (and `apiKey`/`entitlementId` if the plugin needs them).
-// Missing any of these leaves the feature invisible rather than broken.
+// CONFIG. Both halves have to exist before the purchase surface turns on:
+//   1. the non-consumable created in App Store Connect (and Play Console later),
+//   2. a native plugin registering under `pluginName` on this platform.
+// Missing either leaves the feature invisible rather than broken, which is why
+// Android shows nothing today.
 // ---------------------------------------------------------------------------
 export const PURCHASE = {
   // The registered global name of our own plugin (StorePlugin.swift's `jsName`).
