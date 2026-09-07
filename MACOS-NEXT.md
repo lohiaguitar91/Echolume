@@ -18,7 +18,34 @@ round** — `16e7b34..e7a967a`, Aug 28–29 2026 — summarized in the next sect
 
 ---
 
-## Build 13 is on TestFlight (Sept 7 2026) — the one to test, and the one to ship
+## Build 14 is on TestFlight (Sept 7 2026) — the submission candidate
+
+Uploaded 1.0.0 (14). The remove-ads card now appears before **every** ad rather
+than every other, which is also the fix for the build 13 report that no card
+appeared at all — that was a carried-over save sitting on an odd counter, not a
+bug, but a rule whose visibility depended on invisible state was worth deleting.
+
+**The purchase is proven end to end.** Buy, cancel, restore and
+reset-keeps-purchase were all exercised against Apple's real sandbox on a device
+over USB, which no earlier build could claim. The scheme's StoreKit configuration
+is now `None` so a Run talks to the sandbox rather than the local file; re-attach
+`ios/Echolume.storekit` only for deliberate Simulator purchase testing.
+
+Verified in the archive before upload: 1.0.0 (14), UIDeviceFamily [1], all three
+plugins present, cadence [3,3], `offerBeforeAd { everyNAds: 1 }`, FORCE_TEST_ADS
+and AD_DEBUG both false, product id present, TV markup and styles present, and no
+`.storekit` file in the bundle.
+
+### The last unproven thing
+
+**That real ads serve from the App Store.** A development build has no receipt and
+TestFlight has a sandbox one, so every build to date has correctly served test
+creatives — which proves the sandbox half only. The production half cannot be
+proven before release; what can be checked is that TestFlight ads are labelled
+"Test Ad", and that AdMob shows impressions once the store build is live.
+
+## Build 13 (Sept 7 2026)
+
 
 Uploaded 1.0.0 (13). Adds the automatic test-ad switch, interstitials every third
 win, and the television on the pre-ad offer.
