@@ -180,8 +180,9 @@ already cost time, and the design rules that must not be broken.
   which App Store Review 3.1.1 requires for a non-consumable) and an offer shown just
   before an interstitial. Both are **hidden unless the store side is live**
   (`PURCHASE.productId` + plugin + key), so a button that cannot work never ships.
-  The pre-ad offer is rate-limited by `AD_RULES.offerBeforeAd` — every Nth ad, silent
-  for good after `stopAfterDeclines` — and "Watch the ad" is always one plain tap.
+  The pre-ad offer is shown before **every** ad (`AD_RULES.offerBeforeAd.everyNAds`
+  = 1), with no decline cutoff: an ad every third depth is the entire pitch for the
+  purchase, so the purchase must be reachable from every one of them.
   **`save.reset()` deliberately preserves `adsRemoved`**: erasing progress must never
   revoke something a player paid for.
 - `ads.js` talks to `Capacitor.Plugins.AdMob` directly (no package import — `www/` has

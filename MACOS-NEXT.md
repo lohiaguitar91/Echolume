@@ -161,7 +161,8 @@ against plugin source, then sandbox-test buy, restore, and a cancelled sheet.
 
 Two rules baked in that must survive: `save.reset()` preserves `adsRemoved` (erasing
 progress must never revoke a purchase), and the pre-ad offer is rate-limited by
-`AD_RULES.offerBeforeAd` so it stays an offer instead of a toll booth. Also in this
+`AD_RULES.offerBeforeAd`. (Superseded Sept 7 2026: it now shows before EVERY ad,
+no rate limit and no decline cutoff.) Also in this
 round: the How to sing copy, teach cards and a few level hints were rewritten to
 drop em-dashes and colon-splice explainers.
 

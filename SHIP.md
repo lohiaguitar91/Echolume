@@ -127,12 +127,12 @@ no matter who calls them later (revised Aug 26 and Aug 31 2026):
 - **Never** after a death, a failed gate, on the gate warning, or on first launch.
 - **No rewarded revive.** Retired Aug 26: any unlocked depth restarts free, so it bought
   nothing. Its device-proven internals stay dormant in `ads.js` for a future placement.
-- **Before every interstitial** the player is offered the way out
-  (`AD_RULES.offerBeforeAd.everyNAds = 1`), so with ads on every third win the offer
-  is every third depth, always. Continuing is one plain tap. It still goes silent for
-  good after 6 declines. Earlier thinning rules were dropped: they made the offer
-  appear about once every six depths and depend on where a carried-over save sat in
-  the cycle, which read as a bug from the outside.
+- **Before every interstitial, always** (`AD_RULES.offerBeforeAd.everyNAds = 1`), so
+  with ads on every third win the offer is every third depth. Continuing is one plain
+  tap. **No rate limit and no decline cutoff** — both were tried and removed. An ad
+  every third depth is the whole pitch for the purchase, so the purchase has to be
+  reachable from every one of them, including from a player who declined ten times
+  and then changed their mind.
 - `remove_ads` kills interstitials permanently.
 
 Current state (Aug 2026): **implemented and live against Google's SAMPLE ids.**

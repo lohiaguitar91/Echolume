@@ -81,25 +81,27 @@ export const TEST_DEVICE_IDS = [
 
 // Placement rules (revised Aug 26 2026 playtest), decided by design and not
 // up for renegotiation by whatever the network would prefer:
-//   - Interstitials run after a LEVEL WIN, every 2–3 wins (the counter
-//     persists in the save; the 2-vs-3 rerolls after each ad). Never after a
-//     death, never after a failed gate, never on the gate warning screen.
+//   - Interstitials run after a LEVEL WIN, every 3rd win (the counter persists
+//     in the save). Never after a death, never after a failed gate, never on
+//     the gate warning screen.
 //   - No rewarded revive. Any unlocked depth can be restarted for free at any
 //     time, so an ad-to-revive bought nothing and read as noise. The rewarded
 //     plumbing below stays dormant (device-proven, a future placement may
 //     want it) but nothing preps or offers it.
 //   - Buying `remove_ads` removes interstitials permanently — with an ad
 //     every few depths, that purchase is the whole pitch.
-//   - The player is TOLD the ad is coming, and offered the way out, before it
-//     plays. Continuing is always one plain tap and never disguised. The offer
-//     is rate-limited (`offerBeforeAd`) so it stays an offer instead of a toll
-//     booth, and it stops asking entirely once someone has declined enough
-//     times to have clearly meant it.
+//   - The player is TOLD the ad is coming, and offered the way out, before
+//     EVERY ad. Continuing is always one plain tap and never disguised. There
+//     is no rate limit and no decline cutoff (both were tried and removed): an
+//     ad every third depth is the pitch for the purchase, so the purchase has
+//     to be reachable from every one of them. What keeps this an offer rather
+//     than a toll booth is that continuing is free, instant, one tap, and
+//     never the harder of the two choices on screen.
 export const AD_RULES = {
   interstitialEveryNWins: [3, 3],   // every 3rd win. [a,b] still rerolls if widened.
   neverAfterDeath: true,
   noRewardedRevive: true,
-  offerBeforeAd: { everyNAds: 1, stopAfterDeclines: 6 },   // 1 = before every ad
+  offerBeforeAd: { everyNAds: 1 },   // 1 = before EVERY ad. No decline cutoff.
 };
 
 export class Ads {
@@ -294,13 +296,12 @@ export class Ads {
   // is an offer and not a toll booth, and silenced for good once the player
   // has declined `stopAfterDeclines` times — at that point they have answered.
   _offerDue() {
-    const rule = AD_RULES.offerBeforeAd;
-    const d = this.save.data;
-    if ((d.adOfferDeclines || 0) >= rule.stopAfterDeclines) return false;
-    // everyNAds = 1: before EVERY ad, so with interstitials on every third win
-    // the offer is simply every third depth. No thinning, nothing that depends
-    // on where a carried-over save happens to sit in a cycle.
-    return ((d.adOfferTick || 0) % rule.everyNAds) === 0;
+    // Before EVERY ad, unconditionally. Buying is the only thing that stops
+    // ads, so the way out has to sit where the ads are — every time, not on a
+    // schedule the player cannot see. everyNAds stays as the single knob;
+    // there is deliberately no decline cutoff, because a player who declines
+    // ten times and then changes their mind must still find the door.
+    return ((this.save.data.adOfferTick || 0) % AD_RULES.offerBeforeAd.everyNAds) === 0;
   }
 
   // Called on every level win. Counts the win, and shows an interstitial once
@@ -335,8 +336,8 @@ export class Ads {
       let choice = 'continue';
       try { choice = await offer(); } catch (e) { this._bug(`offer failed: ${e?.message || e}`); }
       if (choice === 'bought' || this.removed) { this._bug('offer taken'); return false; }
-      d.adOfferDeclines = (d.adOfferDeclines || 0) + 1;
-      this.save.persist();
+      // (adOfferDeclines is no longer counted: nothing gates on it. The save
+      // field stays so older saves load unchanged.)
       // The player may have left the screen while the sheet was up.
       if (!this._interstitialLoaded || this._showing) return false;
     }
