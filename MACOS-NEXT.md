@@ -18,7 +18,31 @@ round** — `16e7b34..e7a967a`, Aug 28–29 2026 — summarized in the next sect
 
 ---
 
-## Build 11 is on TestFlight (Sept 6 2026) — this is the one to play
+## Build 12 is on TestFlight (Sept 7 2026) — the purchase build
+
+Uploaded 1.0.0 (12). **The first build in which the purchase exists at all**:
+StorePlugin.swift, `productId` set (so the settings row and the pre-ad offer are
+visible), and both buy buttons saying "Remove ads" with no price — the App Store
+sheet states the price, being the only surface guaranteed right for that account,
+currency and storefront.
+
+Verified inside the archive before upload, not after: 1.0.0 (12), UIDeviceFamily
+[1], `StorePlugin` present in the stripped binary, the product id in the shipped
+JS, and `FORCE_TEST_ADS` still **true** — 12 is a beta, and beta testers would be
+close to 100% of a new AdMob account's traffic.
+
+**12 is not submittable.** The store build flips `FORCE_TEST_ADS` false and gets
+its own number. The build you test is never the build you ship.
+
+What only a device can settle here: a **completed purchase**. The Simulator asks
+to sign in to an Apple Account, so buy-through has never run. With a sandbox
+tester: buy → ads stop · reinstall → Restore → ads stay off · **Reset progress →
+the purchase survives**.
+
+## Build 11 (Sept 6 2026) — the playtest build
+
+`QA-BUILD-11.md` still applies to 12; gameplay is unchanged between them.
+
 
 Uploaded 1.0.0 (10), then 1.0.0 (11) from the Mac. **10 is the first build that
 contains the Sept 5 round** - build 9 was bumped for the Aug 28-29 round and four
