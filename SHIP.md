@@ -152,8 +152,19 @@ and the `startLevel({revive})` path are gone from the shell, and `Game.revive()`
       it on the first ad request from an unlisted device), and swap the Android sample
       ids in `AD_IDS` + `AndroidManifest.xml` when the Play console work happens. Then
       `npx cap sync`.
-- [ ] Publish the GDPR consent message in AdMob (Privacy & messaging) before any
-      public release; the code already calls the consent APIs and no-ops until then.
+- [x] **GDPR consent message exists** (AdMob → Privacy & messaging → European
+      regulations shows "1 active", Sept 7 2026). That page is ACCOUNT-level, so
+      "1 active" does not by itself mean this app is covered — open Manage and
+      confirm Echolume (iOS) is in the message's app list. US state regulations is
+      a separate card, not created, and is not a gate on serving ads.
+- [ ] **`Requires review` on the AdMob app is expected before launch.** AdMob cannot
+      verify an app it cannot find on a store, so a not-yet-published app sits there.
+      It clears once Echolume is live and the AdMob record is linked to the real
+      listing. Do not treat it as a blocker — but it does mean **the first real
+      check that live ads serve at all is impressions in the AdMob dashboard in the
+      day after release.** Nothing before release can prove it: a development build
+      has no receipt and TestFlight has a sandbox one, so both correctly serve test
+      creatives, which only ever proves the sandbox half of the switch.
 - [x] **The purchase is implemented (Sept 7 2026).** Not a third-party SDK:
       `ios/App/App/StorePlugin.swift` is a StoreKit 2 plugin in the app target,
       exposed as `Capacitor.Plugins.Store` and registered in `capacitorDidLoad()`
