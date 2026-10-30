@@ -27,6 +27,10 @@ sections below are numbered by topic, not by sequence — §2 (Android) comes af
 - [ ] Host `store/privacy-policy.md` somewhere public (GitHub Pages of this repo works); save the URL.
 
 ## 2. Android build (any machine with Android Studio)
+
+**The full Android job — every placeholder, trap and console step — is written out in
+`ANDROID-TODO.md`.** This section is the summary; that file is what to open on the day.
+
 - [ ] Install Android Studio, open `android/` (`npx cap open android`), let Gradle sync.
 - [ ] Run on a real device once; check: audio unlocks on first tap, haptics fire, 60fps feel,
       safe-area insets on a notched phone, portrait lock.
@@ -111,11 +115,10 @@ target is iOS 15, so every GameKit API used (all iOS 14+) is available.
 
 `www/js/ads.js` is written against the real plugin API (`Capacitor.Plugins.AdMob`, per
 the plugin's v8 README), wired into the real flow, and **inert until the IDs exist and
-the plugin is installed**. `Ads.maybeInterstitial()` is called on every level win; the
-boss death screen shows a **"Watch ad to try again"** button only while
-`Ads.canRevive()` is true (an ad loaded, a boss, not yet used this attempt) and
-`Ads.showRevive()` resolves true only on a completed reward. Everything returns false
-while dormant, so shipping it that way is safe.
+the plugin is installed**. The shell contract is two calls: `Ads.levelStarted()` on
+every depth entry (which preloads once the cadence says this win could show one) and
+`Ads.maybeInterstitial({ won })` on a win. Everything returns false while dormant, so
+shipping it that way is safe.
 
 The placement rules are enforced **inside `ads.js`**, not at the call sites, so they hold
 no matter who calls them later (revised Aug 26 and Aug 31 2026):
@@ -124,53 +127,92 @@ no matter who calls them later (revised Aug 26 and Aug 31 2026):
 - **Never** after a death, a failed gate, on the gate warning, or on first launch.
 - **No rewarded revive.** Retired Aug 26: any unlocked depth restarts free, so it bought
   nothing. Its device-proven internals stay dormant in `ads.js` for a future placement.
-- Before an interstitial the player is offered the way out (`AD_RULES.offerBeforeAd`,
-  every Nth ad, silent for good after enough declines). Continuing is one plain tap.
+- **Before every interstitial, always** (`AD_RULES.offerBeforeAd.everyNAds = 1`), so
+  with ads on every third win the offer is every third depth. Continuing is one plain
+  tap. **No rate limit and no decline cutoff** — both were tried and removed. An ad
+  every third depth is the whole pitch for the purchase, so the purchase has to be
+  reachable from every one of them, including from a player who declined ten times
+  and then changed their mind.
 - `remove_ads` kills interstitials permanently.
 
 Current state (Aug 2026): **implemented and live against Google's SAMPLE ids.**
 `@capacitor-community/admob` 8.1.0 is installed and `ads.js` drives it via
 `Capacitor.Plugins.AdMob` (no bundler, so the npm JS wrapper is never imported).
 Consent (UMP, defensive until a message is published) + the ATT prompt + SDK init all
-run lazily on the first gate/boss depth, so the cold open stays clean. Interstitials
-preload on gate-depth entry and show on the win screen; the rewarded revive preloads on
-boss-depth entry and **resumes the run where you fell** (`Game.revive()`: full hearts,
-`TUNING.reviveGrace` i-frames, world untouched) — it has to outbid the free lair-mouth
-retry or it would be a scam. Declining is just using the ordinary death-screen buttons.
+run lazily on the first depth where the cadence says a win could show an ad — with the
+Aug 28–29 rewire that is around **depth 2**, not depth 7, so the cold open still stays
+clean but the prompts arrive early. Interstitials preload on that entry and show on the
+win screen. The rewarded revive is **retired**: the death-screen button, `_reviveSpent`
+and the `startLevel({revive})` path are gone from the shell, and `Game.revive()` /
+`TUNING.reviveGrace` survive only as dormant remnants. `Ads.canRevive()` /
+`showRevive()` remain in `ads.js`, device-proven and uncalled, for a future placement.
 
 - [x] **iOS ids are real** (AdMob app + both units created Aug 20 2026; `ADS_ARE_SAMPLE`
       is false). Still open: put the test iPhone's id in `TEST_DEVICE_IDS` (the SDK logs
       it on the first ad request from an unlisted device), and swap the Android sample
       ids in `AD_IDS` + `AndroidManifest.xml` when the Play console work happens. Then
       `npx cap sync`.
-- [ ] Publish the GDPR consent message in AdMob (Privacy & messaging) before any
-      public release; the code already calls the consent APIs and no-ops until then.
-- [ ] **Turn the purchase on.** `www/js/purchases.js` holds the whole buying surface
-      (settings block + pre-ad offer, both already built and verified against a fake
-      plugin). It stays invisible until all of this exists, so shipping without it is
-      safe. To enable, in order:
-      1. Create the `remove_ads` **non-consumable** in App Store Connect AND Play
-         Console (same product id in both).
-      2. Install a purchase plugin and put its registered global in
-         `PURCHASE.pluginName`. `@revenuecat/purchases-capacitor` 13.x (registers as
-         `Purchases`, declares `@capacitor/core >=8.0.0`) is what the adapter at the
-         bottom of `purchases.js` is written for. **Note it is a third-party SDK: it
-         adds a privacy-manifest / data-safety entry.** A direct StoreKit + Play
-         Billing plugin avoids that, and swapping means rewriting `_adapter` only.
-      3. Set `PURCHASE.productId` (and `apiKey`/`entitlementId` if the plugin needs
-         them). `npx cap sync`.
-      4. **Verify the adapter's calls against the plugin's own source, not its
-         README** — that exact mistake wedged the ad button on device once. Then test
-         on a device with a sandbox account: buy, restore, and a **cancelled** sheet
-         (cancel must be silent, not an error), plus a fresh install → Restore.
-      Until this lands, interstitials simply cannot be turned off — fine for testing.
+- [x] **GDPR consent message exists** (AdMob → Privacy & messaging → European
+      regulations shows "1 active", Sept 7 2026). That page is ACCOUNT-level, so
+      "1 active" does not by itself mean this app is covered — open Manage and
+      confirm Echolume (iOS) is in the message's app list. US state regulations is
+      a separate card, not created, and is not a gate on serving ads.
+- [ ] **`Requires review` on the AdMob app is expected before launch.** AdMob cannot
+      verify an app it cannot find on a store, so a not-yet-published app sits there.
+      It clears once Echolume is live and the AdMob record is linked to the real
+      listing. Do not treat it as a blocker — but it does mean **the first real
+      check that live ads serve at all is impressions in the AdMob dashboard in the
+      day after release.** Nothing before release can prove it: a development build
+      has no receipt and TestFlight has a sandbox one, so both correctly serve test
+      creatives, which only ever proves the sandbox half of the switch.
+- [x] **The purchase is implemented (Sept 7 2026).** Not a third-party SDK:
+      `ios/App/App/StorePlugin.swift` is a StoreKit 2 plugin in the app target,
+      exposed as `Capacitor.Plugins.Store` and registered in `capacitorDidLoad()`
+      exactly like GameConnectPlugin. RevenueCat was rejected — Echolume sells one
+      non-consumable and needs no receipt server, so an SDK would have bought
+      nothing and would have been the app's only third-party data collector.
+      Bubble Popper ships the same architecture (expo-iap, direct to StoreKit).
+      `PURCHASE.productId` is set; `purchases.js`'s adapter talks to our plugin.
+      Verified on the Simulator against `ios/Echolume.storekit` (referenced from
+      the shared `App` scheme, so Xcode's Run applies it):
+      - the plugin registers and `configured` is true, so the surface appears;
+      - `products()` returns the real store price and the button reads
+        "Remove ads · $2.99" (no hardcoded fallback exists any more);
+      - a **cancelled** sheet is silent — no error text, button re-enabled;
+      - **restore with nothing owned** says "No previous purchase found on this
+        account." rather than failing, even when `AppStore.sync()` is cancelled.
+      Review screenshot for App Store Connect: `store/iap/remove-ads-review.png`
+      — **1024x1024**, which is the IAP review image spec and is NOT the App Store
+      screenshot spec. A 1260x2736 device capture is rejected as wrong dimensions;
+      crop a square from one instead. `store/iap/remove-ads-fullscreen.png` keeps
+      the uncropped capture to re-cut from. (Listing screenshots are a different
+      thing entirely: 1260x2736 for 6.9".)
+- [ ] **Still to verify: a COMPLETED purchase.** The Simulator asks for an Apple
+      Account to finish one, so the buy-through path has never actually run.
+      **Do this from TestFlight, and do NOT create a sandbox account for it.**
+      A TestFlight build runs in the StoreKit sandbox automatically and uses the
+      tester's own Apple ID; purchases are free and nothing is charged. Sandbox
+      Apple Accounts (Users and Access → Sandbox) apply only to builds installed
+      from Xcode, and TestFlight ignores them — signing out of Media & Purchases
+      to "use the sandbox account" is wasted effort here.
+      Confirm: buy → ads stop · delete and reinstall → Restore brings it back ·
+      **Reset progress → the purchase survives** (`save.reset()` preserves
+      `adsRemoved`; erasing progress must never revoke a purchase).
+      A TestFlight purchase does not carry over to the App Store build, so expect
+      to buy again after release — that is the sandbox working, not a bug.
 - [ ] Re-test that a death never produces an interstitial.
-- [ ] **`AD_DEBUG` stays false everywhere; `FORCE_TEST_ADS` stays TRUE through every
-      beta and flips to false only for the STORE submission build.** Test-ads betas are
+- [x] **Test ads are automatic (Sept 7 2026).** `BuildInfoPlugin` reads the receipt
+      filename, so TestFlight gets test creatives and the App Store gets live ones
+      from the same binary. There is no longer a flip to remember, and no longer a
+      beta build separate from the store build. `FORCE_TEST_ADS` remains only as a
+      deliberate override (true = test creatives everywhere, including production).
+- [ ] **`AD_DEBUG` stays false everywhere.** Historical note on the old flow: Test-ads betas are
       deliberate: beta testers are ~100% of a new account's traffic, the worst possible
       invalid-traffic ratio. Before submitting: flip false, rebuild, one impressions-only
       smoke run (never tap), confirm requests appear in the AdMob dashboard, submit.
-      (TestFlight history: build 5 = live ads, build 6 = test ads / the beta build.)
+      (TestFlight history: 5 = live ads, 6 = rejected ITMS-91064, 7 = the beta build,
+      8 = the reconciled tree, 9 = bumped for the Aug 28–29 round, 10 = the Sept 5
+      round, uploaded Sept 6 2026.)
 
 ### Metadata: already written for an ad-supported launch
 
@@ -205,6 +247,12 @@ above — the ⚠ comments sit at the point of use:
       [Android](https://developers.google.com/admob/android/privacy/data-disclosure)).
       What the SDK collects has changed between versions, and the obligation is yours
       regardless of what the SDK's own manifest says.
+      **The specific cell that moves is the *purpose* on the two Diagnostics rows**
+      (crash logs, performance data): Google has listed them as **Analytics** in some
+      SDK versions and **App Functionality** in others, and the questionnaire treats
+      those as different answers. The other four rows have been stable. Confirm it on
+      Google's page, not from the bundled privacy manifest and not from our own table —
+      `store/listing-ios.md` carries the same warning at the table itself.
 
 ## 4. Final sanity before each submit
 - [ ] Version stamps agree: `www/js/config.js` GAME_VERSION, `package.json`,

@@ -1,6 +1,9 @@
 # Echolume — Privacy Policy
 
-**Effective date:** August 16, 2026
+**Effective date:** September 6, 2026
+
+> Published at <https://wibesllc.github.io/echolume/echolume-privacy.html>.
+> `store/web/echolume-privacy.html` is that page; keep the two in step.
 
 Echolume is a free game supported by advertising. It has no accounts, no
 telemetry of its own, and no analytics. This page explains the one exception:
@@ -15,9 +18,9 @@ ads off permanently with a one-time purchase.
 
 ## Advertising
 
-Ads are served by Google AdMob. Ads appear in two places only: after you clear
-certain depths, and as an optional "watch to revive" you may choose at a boss.
-Ads never interrupt a failed run.
+Ads are served by Google AdMob. A single full-screen ad may appear after you
+complete a depth, on a cadence of roughly every second or third completion. Ads
+never appear after a failed run, and never on first launch.
 
 The Google Mobile Ads SDK collects the following, as described in
 [Google's data disclosure](https://developers.google.com/admob/ios/privacy/data-disclosure):
@@ -41,8 +44,8 @@ anything else.
   You can change this any time in **Settings → Privacy & Security → Tracking**.
 - **On Android**, you can reset or delete your advertising ID in
   **Settings → Google → Ads**.
-- **On any platform**, the one-time **Remove Ads** purchase stops interstitial
-  ads permanently. The optional revive stays available if you want it.
+- **On any platform**, the one-time **Remove Ads** purchase stops ads
+  permanently.
 
 ## In-app purchase
 
@@ -86,4 +89,4 @@ updated and the change described in the release notes before it takes effect.
 
 ## Contact
 
-Questions about this policy: **kaushlohia@gmail.com**
+Questions about this policy: **wibes.llc@gmail.com**

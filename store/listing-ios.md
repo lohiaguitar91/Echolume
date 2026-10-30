@@ -11,7 +11,38 @@ Primary: Games › Adventure
 Secondary: Games › Casual
 
 ## Age rating
-4+ (no objectionable content; mild "fantasy peril" from sea creatures is below the 9+ threshold — answer "None" for all content descriptors except *Infrequent/Mild Cartoon or Fantasy Violence* if being conservative, which yields 9+. Recommended honest answers yield 4+ or 9+; either passes.)
+
+**9+ — answered and saved in App Store Connect, Sept 6 2026.** These are the exact
+answers; give the same ones to Play's IARC questionnaire so the two stores agree, and
+re-use them on any resubmission rather than re-deciding.
+
+| Step | Question | Answer |
+|---|---|---|
+| 1 | Parental Controls / Age Assurance | No / No |
+| 1 | Unrestricted Web Access | No |
+| 1 | User-Generated Content · Social Media · Messaging and Chat | No |
+| 1 | **Advertising** | **Yes** |
+| 2 | Profanity or Crude Humor | None |
+| 2 | **Horror/Fear Themes** | **Infrequent** |
+| 2 | Alcohol, Tobacco, or Drug Use | None |
+| 3 | Medical or Treatment Information · Health or Wellness Topics | None / No |
+| 4 | Sexuality or Nudity | None |
+| 5 | **Cartoon or Fantasy Violence** | **Infrequent** |
+| 5 | Realistic · Graphic or Sadistic Violence | None |
+| 6 | Gambling · Loot Boxes · Contests | No |
+
+Two notes on the judgment calls. **Horror/Fear is Infrequent, not None**, because the
+premise is being hunted in the dark by things you cannot see — that answer alone sets
+9+. **Violence is Infrequent cartoon/fantasy**: creatures kill you, but they are
+abstract glowing shapes with no blood, no gore and no depicted injury; death is your
+light going out.
+
+9+ rather than 4+ is deliberate. `store/privacy-policy.md` states the app is not
+directed at children under 13, which is load-bearing given ads ship at launch — a 4+
+rating would sit awkwardly beside that sentence and closer to child-directed
+advertising rules. **Loot Boxes is No and must stay No**: Remove Ads is a plain
+non-consumable with a fixed outcome, so Apple's odds-disclosure rules do not apply.
+Adding any randomised purchase later reopens that.
 
 ## Price
 Free, ad-supported, with a single non-consumable in-app purchase: **Remove Ads**.
@@ -34,8 +65,22 @@ ECHOLUME is a one-thumb atmosphere game about voice, light, and restraint.
 
 The deep is dark. You are not.
 
+## Promotional Text (170 chars max)
+Every tap is a song that lights the dark, and tells the dark where you are. Fifty handcrafted depths, four bosses, and an endless Abyss beneath them all.
+
+> Editable at ANY time without submitting a build, unlike the description. Use it for
+> "what changed" or a seasonal line once the app is live.
+
+## Copyright
+2026 Wibes LLC
+
 ## Keywords (100 chars max)
-echolocation,sonar,deep sea,bioluminescent,atmospheric,one thumb,ambient,cave,glow,indie,offline
+echolocation,sonar,deep,sea,bioluminescent,atmospheric,thumb,ambient,cave,glow,indie,dark,swim
+
+> No spaces after commas — a space costs a character and buys nothing. Apple already
+> combines your keywords with the app name and subtitle, so words there ("echolume",
+> "sound", "light") are wasted here. Phrases are auto-combined too, which is why
+> "deep sea" became "deep,sea" — two tokens for one character less.
 
 ## Support URL
 (Your page or repo — e.g. a GitHub Pages site for the game. Required by App Store Connect.)
@@ -51,28 +96,40 @@ third-party SDK's collection as your own.
 
 Declare these, per Google's
 [data disclosure](https://developers.google.com/admob/ios/privacy/data-disclosure).
-All are collected for **Third-Party Advertising** and, where the user grants ATT
-permission, are **used for tracking**:
+The questionnaire asks four things per data type; this is all four:
 
-| Data type | Category | Linked to user | Used for tracking |
-|---|---|---|---|
-| Device ID (advertising identifier) | Identifiers | Yes | Yes |
-| Advertising data (ads shown) | Usage Data | Yes | Yes |
-| Product interaction (taps, video views) | Usage Data | Yes | Yes |
-| Coarse location, derived from IP | Location | Yes | Yes |
-| Crash logs | Diagnostics | No | No |
-| Performance data | Diagnostics | No | No |
+| Data type | Category | Linked to user | Used for tracking | Purpose |
+|---|---|---|---|---|
+| Device ID (advertising identifier) | Identifiers | Yes | Yes | Third-Party Advertising |
+| Advertising data (ads shown) | Usage Data | Yes | Yes | Third-Party Advertising |
+| Product interaction (taps, video views) | Usage Data | Yes | Yes | Third-Party Advertising |
+| Coarse location, derived from IP | Location | Yes | Yes | Third-Party Advertising |
+| Crash logs | Diagnostics | No | No | Analytics — **verify, see below** |
+| Performance data | Diagnostics | No | No | Analytics — **verify, see below** |
+
+The first four are tracking only where the user grants ATT permission; answer Yes
+regardless, since the app does request it.
 
 Nothing is collected for "App Functionality" by Echolume itself. Progress and
 settings never leave the device, so they are not disclosable data.
 
-**Re-check this table against Google's page before each submission** — the SDK's
-collection has changed between versions, and you own the disclosure either way.
+> **⚠ The two Diagnostics rows' *purpose* is the one field to confirm before each
+> submission.** Google lists crash logs and performance data under **Analytics** in
+> some SDK versions and **App Functionality** in others, and the two are not
+> interchangeable on the questionnaire. Everything else in this table has been
+> stable; this is the cell that moves. Check it against Google's
+> [data disclosure page](https://developers.google.com/admob/ios/privacy/data-disclosure)
+> — not against the SDK's bundled privacy manifest, and not against this file.
+> **The disclosure obligation is yours regardless of what Google's manifest says**,
+> so a wrong answer here is your misstatement, not theirs.
+
+**Re-check the whole table against Google's page before each submission** — what the
+SDK collects has changed between versions, and you own the disclosure either way.
 
 ## Review notes (paste into App Review Information)
 Echolume is a single-player game with no accounts and no server component of its own. All audio is synthesized on-device (no licensed music). Progress is stored locally.
 
-Ads are served by Google AdMob. An interstitial appears only after a player clears a "gate" depth (every 7th), never after a failure, and a rewarded ad is offered only as an optional revive at a boss. The App Tracking Transparency prompt is shown before any tracking request; declining it serves non-personalised ads and changes nothing else.
+Ads are served by Google AdMob. A single interstitial appears after a player completes a depth, on a cadence of every second or third completion, and never after a failure or on first launch. There are no rewarded ads. Before an interstitial the player is periodically offered the one-time "Remove Ads" purchase instead; continuing to the ad is one plain tap. The App Tracking Transparency prompt is shown before any tracking request; declining it serves non-personalised ads and changes nothing else.
 
 There is one non-consumable in-app purchase, "Remove Ads", which permanently disables interstitials.
 

@@ -11,6 +11,8 @@ import Capacitor
 final class EchoBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(GameConnectPlugin())
+        bridge?.registerPluginInstance(StorePlugin())
+        bridge?.registerPluginInstance(BuildInfoPlugin())
     }
 }
 

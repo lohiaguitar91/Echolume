@@ -48,14 +48,23 @@ export const AD_IDS = {
   },
 };
 export const ADS_ARE_SAMPLE = false;  // iOS ids above are real units
-// ⚠ TEST-ADS MODE — true through every BETA round, false for the STORE build
-// (SHIP.md 3.6). Passes isTesting to the plugin, which swaps in Google's
-// sample ad UNITS at request time: guaranteed fill, "Test Ad" label, zero
-// invalid-traffic risk. Beta testers are ~100% of a brand-new account's
-// traffic, which is exactly the ratio Google's invalid-traffic systems
-// dislike — so betas serve test creatives, and the live units get their
-// pre-launch proof from an impressions-only smoke run instead (never tap).
-export const FORCE_TEST_ADS = true;
+
+// TEST ADS ARE NOW AUTOMATIC. Nothing has to be remembered at submission time.
+//
+// Test creatives (isTesting) are served unless this install came from the App
+// Store, which the native BuildInfo plugin decides from the receipt filename:
+// an App Store install carries "receipt", TestFlight and every other sandbox
+// install carries "sandboxReceipt". Same binary, different install, so the flag
+// cannot be left in the wrong state by anyone.
+//
+// Why it matters in both directions: beta testers are close to 100% of a new
+// AdMob account's traffic, which is the ratio Google's invalid-traffic systems
+// punish, so betas must not touch the live units. And a store build that ships
+// still forced to test ads earns nothing, silently, with no error anywhere.
+//
+// Set FORCE_TEST_ADS true to override and serve test creatives EVERYWHERE,
+// including in production. Only useful for a deliberate live-build smoke run.
+export const FORCE_TEST_ADS = false;
 // ⚠ DEBUG RIG — must be false in any distributed build (SHIP.md 3.6). Paints
 // an on-screen breadcrumb log of the ad flow, because a USB console attach
 // dies whenever iOS relaunches the app and we were debugging blind.
@@ -72,25 +81,27 @@ export const TEST_DEVICE_IDS = [
 
 // Placement rules (revised Aug 26 2026 playtest), decided by design and not
 // up for renegotiation by whatever the network would prefer:
-//   - Interstitials run after a LEVEL WIN, every 2–3 wins (the counter
-//     persists in the save; the 2-vs-3 rerolls after each ad). Never after a
-//     death, never after a failed gate, never on the gate warning screen.
+//   - Interstitials run after a LEVEL WIN, every 3rd win (the counter persists
+//     in the save). Never after a death, never after a failed gate, never on
+//     the gate warning screen.
 //   - No rewarded revive. Any unlocked depth can be restarted for free at any
 //     time, so an ad-to-revive bought nothing and read as noise. The rewarded
 //     plumbing below stays dormant (device-proven, a future placement may
 //     want it) but nothing preps or offers it.
 //   - Buying `remove_ads` removes interstitials permanently — with an ad
 //     every few depths, that purchase is the whole pitch.
-//   - The player is TOLD the ad is coming, and offered the way out, before it
-//     plays. Continuing is always one plain tap and never disguised. The offer
-//     is rate-limited (`offerBeforeAd`) so it stays an offer instead of a toll
-//     booth, and it stops asking entirely once someone has declined enough
-//     times to have clearly meant it.
+//   - The player is TOLD the ad is coming, and offered the way out, before
+//     EVERY ad. Continuing is always one plain tap and never disguised. There
+//     is no rate limit and no decline cutoff (both were tried and removed): an
+//     ad every third depth is the pitch for the purchase, so the purchase has
+//     to be reachable from every one of them. What keeps this an offer rather
+//     than a toll booth is that continuing is free, instant, one tap, and
+//     never the harder of the two choices on screen.
 export const AD_RULES = {
-  interstitialEveryNWins: [2, 3],
+  interstitialEveryNWins: [3, 3],   // every 3rd win. [a,b] still rerolls if widened.
   neverAfterDeath: true,
   noRewardedRevive: true,
-  offerBeforeAd: { everyNAds: 2, stopAfterDeclines: 6 },
+  offerBeforeAd: { everyNAds: 1 },   // 1 = before EVERY ad. No decline cutoff.
 };
 
 export class Ads {
@@ -108,7 +119,7 @@ export class Ads {
     this._showed = false;
     this._closed = null;         // resolver for "the fullscreen ad went away"
     this._npa = false;           // non-personalized, decided by the ATT answer
-    this._bug(`boot plugin=${this.plugin ? 'yes' : 'no'} ids=${this.configured ? 'set' : 'missing'} testads=${FORCE_TEST_ADS}`);
+    this._bug(`boot plugin=${this.plugin ? 'yes' : 'no'} ids=${this.configured ? 'set' : 'missing'} forcetest=${FORCE_TEST_ADS}`);
   }
 
   get ids() { return AD_IDS[this.platform]; }
@@ -143,7 +154,34 @@ export class Ads {
   // Called once at boot. Deliberately does nothing native — see header.
   async init() { return this.configured; }
 
-  // How many wins the next interstitial costs: 2 or 3, rerolled per cycle.
+  // Is this the real App Store build? Cached: the receipt does not change while
+  // the app is running. Anything unknown — web, Android, a missing plugin, a
+  // rejected call — answers false, which serves TEST ads. That is the safe
+  // direction: a beta that shows real ads risks the account, a production build
+  // that shows test ads only loses revenue, and this way an unknown build never
+  // does the first one.
+  async _isProduction() {
+    if (this._isProd != null) return this._isProd;
+    try {
+      const bi = window.Capacitor?.Plugins?.BuildInfo;
+      const res = await bi?.isAppStoreProduction();
+      this._isProd = res?.value === true;
+    } catch (e) {
+      this._isProd = false;
+    }
+    this._bug(`build=${this._isProd ? 'appstore' : 'sandbox/testflight'}`);
+    return this._isProd;
+  }
+
+  // Test creatives unless this is a real App Store install.
+  async _useTestAds() {
+    if (FORCE_TEST_ADS || ADS_ARE_SAMPLE) return true;
+    return !(await this._isProduction());
+  }
+
+  // How many wins the next interstitial costs. [3,3] means a flat every-third;
+  // the range machinery stays because a jittered cadence reads less mechanical
+  // if that is ever wanted again.
   _rollCadence() { const [a, b] = AD_RULES.interstitialEveryNWins; return a + Math.floor(Math.random() * (b - a + 1)); }
 
   // Called by the shell on every real level entry. This is where the
@@ -180,9 +218,11 @@ export class Ads {
         }
         this._npa = status !== 'authorized';
       } catch (e) { /* pre-iOS-14 or plugin oddity — carry on */ }
+      this._testAds = await this._useTestAds();
+      this._bug(`testads=${this._testAds}`);
       try {
         await this.plugin.initialize({
-          initializeForTesting: ADS_ARE_SAMPLE || FORCE_TEST_ADS || TEST_DEVICE_IDS.length > 0,
+          initializeForTesting: this._testAds || TEST_DEVICE_IDS.length > 0,
           testingDevices: TEST_DEVICE_IDS,
         });
         this._bug('sdk init ok');
@@ -219,7 +259,7 @@ export class Ads {
       if (!(await this._ensureStarted())) return;
       await this.plugin.prepareInterstitial({
         adId: this.ids.interstitial,
-        isTesting: ADS_ARE_SAMPLE || FORCE_TEST_ADS,
+        isTesting: this._testAds !== false,   // resolved in _ensureStarted
         npa: this._npa,
       });
       this._interstitialLoaded = true;
@@ -235,7 +275,7 @@ export class Ads {
       if (!(await this._ensureStarted())) return;
       await this.plugin.prepareRewardVideoAd({
         adId: this.ids.rewarded,
-        isTesting: ADS_ARE_SAMPLE || FORCE_TEST_ADS,
+        isTesting: this._testAds !== false,   // resolved in _ensureStarted
         npa: this._npa,
       });
       this._rewardLoaded = true;
@@ -256,11 +296,12 @@ export class Ads {
   // is an offer and not a toll booth, and silenced for good once the player
   // has declined `stopAfterDeclines` times — at that point they have answered.
   _offerDue() {
-    const rule = AD_RULES.offerBeforeAd;
-    const d = this.save.data;
-    if ((d.adOfferDeclines || 0) >= rule.stopAfterDeclines) return false;
-    // Offered on the first due ad, then every Nth after it.
-    return ((d.adOfferTick || 0) % rule.everyNAds) === 0;
+    // Before EVERY ad, unconditionally. Buying is the only thing that stops
+    // ads, so the way out has to sit where the ads are — every time, not on a
+    // schedule the player cannot see. everyNAds stays as the single knob;
+    // there is deliberately no decline cutoff, because a player who declines
+    // ten times and then changes their mind must still find the door.
+    return ((this.save.data.adOfferTick || 0) % AD_RULES.offerBeforeAd.everyNAds) === 0;
   }
 
   // Called on every level win. Counts the win, and shows an interstitial once
@@ -295,8 +336,8 @@ export class Ads {
       let choice = 'continue';
       try { choice = await offer(); } catch (e) { this._bug(`offer failed: ${e?.message || e}`); }
       if (choice === 'bought' || this.removed) { this._bug('offer taken'); return false; }
-      d.adOfferDeclines = (d.adOfferDeclines || 0) + 1;
-      this.save.persist();
+      // (adOfferDeclines is no longer counted: nothing gates on it. The save
+      // field stays so older saves load unchanged.)
       // The player may have left the screen while the sheet was up.
       if (!this._interstitialLoaded || this._showing) return false;
     }

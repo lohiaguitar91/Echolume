@@ -18,6 +18,142 @@ round** — `16e7b34..e7a967a`, Aug 28–29 2026 — summarized in the next sect
 
 ---
 
+## Build 14 is on TestFlight (Sept 7 2026) — the submission candidate
+
+Uploaded 1.0.0 (14). The remove-ads card now appears before **every** ad rather
+than every other, which is also the fix for the build 13 report that no card
+appeared at all — that was a carried-over save sitting on an odd counter, not a
+bug, but a rule whose visibility depended on invisible state was worth deleting.
+
+**The purchase is proven end to end.** Buy, cancel, restore and
+reset-keeps-purchase were all exercised against Apple's real sandbox on a device
+over USB, which no earlier build could claim. The scheme's StoreKit configuration
+is now `None` so a Run talks to the sandbox rather than the local file; re-attach
+`ios/Echolume.storekit` only for deliberate Simulator purchase testing.
+
+Verified in the archive before upload: 1.0.0 (14), UIDeviceFamily [1], all three
+plugins present, cadence [3,3], `offerBeforeAd { everyNAds: 1 }`, FORCE_TEST_ADS
+and AD_DEBUG both false, product id present, TV markup and styles present, and no
+`.storekit` file in the bundle.
+
+### The last unproven thing
+
+**That real ads serve from the App Store.** A development build has no receipt and
+TestFlight has a sandbox one, so every build to date has correctly served test
+creatives — which proves the sandbox half only. The production half cannot be
+proven before release; what can be checked is that TestFlight ads are labelled
+"Test Ad", and that AdMob shows impressions once the store build is live.
+
+## Build 13 (Sept 7 2026)
+
+
+Uploaded 1.0.0 (13). Adds the automatic test-ad switch, interstitials every third
+win, and the television on the pre-ad offer.
+
+**13 is the first build with no test-ads flag to remember.** Earlier rounds needed
+a beta build and a separate store twin because `FORCE_TEST_ADS` was hand-flipped;
+`BuildInfoPlugin` now decides at runtime from the receipt filename, so the same
+binary serves test creatives in TestFlight and real ones from the App Store. If
+testing passes, 13 is submittable as it stands.
+
+Verified in the archive before upload: 1.0.0 (13), UIDeviceFamily [1], all three
+plugins present in the stripped binary (GameConnect, Store, BuildInfo), cadence
+[3,3], `FORCE_TEST_ADS` false, `AD_DEBUG` false, product id in the shipped JS,
+buy button reading "Remove ads", and the TV markup and styles both present.
+
+### What only a device can settle in 13
+
+- **A completed purchase.** Straight from TestFlight with your own Apple ID — a
+  TestFlight build is already in the StoreKit sandbox and the purchase is free.
+  No sandbox account: TestFlight ignores the ones made in App Store Connect.
+  Buy → ads stop · reinstall → Restore → ads stay off · **Reset progress → the
+  purchase survives**.
+- **That the ad switch works.** TestFlight must show ads labelled "Test Ad". That
+  is the proof the receipt check reads sandbox correctly; the live side can only
+  be proven by the App Store build itself.
+- **Every third win, never after a death**, over a real session.
+- **The television** — whether it reads as one at a glance, and whether the
+  carrier pulse is charming or fussy.
+
+## Build 12 (Sept 7 2026) — the purchase build
+
+
+Uploaded 1.0.0 (12). **The first build in which the purchase exists at all**:
+StorePlugin.swift, `productId` set (so the settings row and the pre-ad offer are
+visible), and both buy buttons saying "Remove ads" with no price — the App Store
+sheet states the price, being the only surface guaranteed right for that account,
+currency and storefront.
+
+Verified inside the archive before upload, not after: 1.0.0 (12), UIDeviceFamily
+[1], `StorePlugin` present in the stripped binary, the product id in the shipped
+JS, and `FORCE_TEST_ADS` still **true** — 12 is a beta, and beta testers would be
+close to 100% of a new AdMob account's traffic.
+
+**12 is not submittable.** The store build flips `FORCE_TEST_ADS` false and gets
+its own number. The build you test is never the build you ship.
+
+What only a device can settle here: a **completed purchase**. The Simulator asks
+to sign in to an Apple Account, so buy-through has never run. With a sandbox
+tester: buy → ads stop · reinstall → Restore → ads stay off · **Reset progress →
+the purchase survives**.
+
+## Build 11 (Sept 6 2026) — the playtest build
+
+`QA-BUILD-11.md` still applies to 12; gameplay is unchanged between them.
+
+
+Uploaded 1.0.0 (10), then 1.0.0 (11) from the Mac. **10 is the first build that
+contains the Sept 5 round** - build 9 was bumped for the Aug 28-29 round and four
+`www/` commits landed after it, so anything tested before 10 was testing the previous
+round. **11 is 10 with iPad support dropped** and is the one to play; its gameplay is
+byte-identical.
+
+iPad went because the app declared `TARGETED_DEVICE_FAMILY = "1,2"` and had therefore
+never been run on an iPad by anyone, while App Store Connect would have demanded iPad
+screenshots for a portrait-locked one-thumb game. `UISupportedInterfaceOrientations~ipad`
+went with it.
+
+Verified in the archived bundle before upload, not just at the exit code: `Info.plist`
+reads 1.0.0 / 10, and `wardenJaw` is present in `App.app/public/js/draw.js`.
+
+Two upload warnings, both benign and expected on every build: no dSYM for
+`GoogleMobileAds.framework` or `UserMessagingPlatform.framework`. Google ships those
+prebuilt without dSYMs; the only cost is that crashes inside Google's ad code do not
+symbolicate. Not a rejection, not fixable from here.
+
+### What to actually look at in this build
+
+**A tester-facing version of this list is `QA-BUILD-11.md`** — same six items in plain
+language, with what to do and what to report. Hand that to a human; this section is the
+developer's copy.
+
+The general spot-checks are in SHIP.md 3. These are the things the autoplay bot
+cannot judge, each one a number set by eye that has never moved on a phone:
+
+1. **The Listener's fangs (depth 14).** Two bones grow along the edges of the bite,
+   red motes streaming between them. Can you read the line and clear it inside the
+   1.35s window? One tap sideways is enough IF the shape lands in time. The arena also
+   tightened (half-width 300 -> 210, warden 70 -> 40 off centre) to close a lane the
+   strike could never reach: if the fight now feels cramped rather than tense, blame
+   that, not the tell. The bot clears it 11/11 and is irrelevant here - it sings where
+   it swims, which is the one thing a warden punishes.
+2. **The mote surge in daylight** (`moteSurge` / `moteSurgeTime`, ~+25% for 4s). Tuned
+   on a desk monitor. If it cannot be seen outdoors the whole in-level payoff of
+   collecting light is invisible.
+3. **The fed cast commit on depths 19 and 25** (`effectiveCastCommit`, 2.4s -> 3.79s at
+   the glow cap). Those are the two double-hunter depths where a long commit turns a
+   hard read into a free pass.
+4. **`BOON_CARRY` = 0.3 through depths 15-20.** If chapter 2 opens with no teeth, the
+   carried boon is too generous.
+5. **Ad cadence** (`AD_RULES.interstitialEveryNWins`, 2-3 wins, wins only). Judge it
+   over a real 20-minute session.
+6. **Chapter 3, depths 29-42.** The bot navigates by corridor geometry, not by what it
+   can see, so a hush zone that is miserable scores the same as an easy one. Fourteen
+   depths carry a verification number that means nothing. Somebody has to play them.
+
+Also new and unseen on a device: the third star (every mote), the wrapped intro toast
+at 430pt, and motes no longer spawning inside urchin/ice hurt zones.
+
 ## The Sept 5 round (remote session) — second TestFlight notes
 
 `www/` + docs only. The **third star is back**, for every mote in a depth, and
@@ -52,7 +188,8 @@ against plugin source, then sandbox-test buy, restore, and a cancelled sheet.
 
 Two rules baked in that must survive: `save.reset()` preserves `adsRemoved` (erasing
 progress must never revoke a purchase), and the pre-ad offer is rate-limited by
-`AD_RULES.offerBeforeAd` so it stays an offer instead of a toll booth. Also in this
+`AD_RULES.offerBeforeAd`. (Superseded Sept 7 2026: it now shows before EVERY ad,
+no rate limit and no decline cutoff.) Also in this
 round: the How to sing copy, teach cards and a few level hints were rewritten to
 drop em-dashes and colon-splice explainers.
 
@@ -176,6 +313,8 @@ session learned all three the hard way.
 Ordered by what unblocks the most.
 
 ### 1. Android has never been compiled — do this first
+**The full job is in `ANDROID-TODO.md`** (placeholders, the `jlink` toolchain trap,
+console order, and the sample-ad-id trap that silently earns nothing).
 **Release order (Aug 31 2026): iOS ships first, Android is a fast follow.** That
 does NOT move this item later. Build Android during the iOS beta window: it is the
 one unknown that could make a "fast" follow slow, and an emulator debug build is

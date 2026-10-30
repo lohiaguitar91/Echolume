@@ -197,8 +197,145 @@ function drawFeature(w, h) {
   return c;
 }
 
+// Game Center achievement art: one 1024px tile per abyss milestone.
+// Game Center crops these to a circle, so everything meaningful stays
+// within ~0.42s of centre. The set reads as one descent: background water
+// darkens through the four chapter moods, a gold arc fills one milestone
+// segment per tile, and the deepest tiers go warm-dark gold.
+const ACH_MILESTONES = [
+  1000, 2000, 3000, 4000, 5000,
+  10000, 20000, 30000, 40000, 50000,
+  60000, 70000, 80000, 90000, 100000,
+];
+
+const ACH_PALETTES = [ // shallows → trench → hush → warm dark
+  ['#0a1c33', '#061021', '#02060f'],
+  ['#06122b', '#040d1c', '#010409'],
+  ['#0b0e24', '#070a18', '#020208'],
+  ['#1a0d05', '#0d0602', '#030100'],
+];
+
+function lerpHex(a, b, t) {
+  const ch = (c, i) => parseInt(c.slice(i, i + 2), 16);
+  return '#' + [1, 3, 5].map((i) =>
+    Math.round(ch(a, i) + (ch(b, i) - ch(a, i)) * t).toString(16).padStart(2, '0')
+  ).join('');
+}
+
+function achPalette(t) {
+  const seg = Math.min(2.9999, t * 3), k = Math.floor(seg), f = seg - k;
+  return ACH_PALETTES[k].map((c, i) => lerpHex(c, ACH_PALETTES[k + 1][i], f));
+}
+
+function drawAchievement(s, m, i, n) {
+  const c = document.createElement('canvas');
+  c.width = c.height = s;
+  const g = c.getContext('2d');
+  const t = i / (n - 1);
+  const warm = t > 0.72; // deepest tiers wear gold, like a fully lit depth
+  const [c0, c1, c2] = achPalette(t);
+  const grad = g.createLinearGradient(0, 0, 0, s);
+  grad.addColorStop(0, c0);
+  grad.addColorStop(0.55, c1);
+  grad.addColorStop(1, c2);
+  g.fillStyle = grad;
+  g.fillRect(0, 0, s, s);
+  const vg = g.createRadialGradient(s / 2, s / 2, s * 0.28, s / 2, s / 2, s * 0.62);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,0,0,0.55)');
+  g.fillStyle = vg;
+  g.fillRect(0, 0, s, s);
+
+  // milestone progress: dim track, gold arc to (i+1)/n, bright end dot
+  const cx = 0.5 * s, rT = 0.40 * s;
+  g.save();
+  g.strokeStyle = warm ? '#3a2a18' : '#22354f';
+  g.globalAlpha = 0.6;
+  g.lineWidth = 0.010 * s;
+  g.beginPath(); g.arc(cx, 0.5 * s, rT, 0, Math.PI * 2); g.stroke();
+  g.restore();
+  const a0 = -Math.PI / 2, a1 = a0 + Math.PI * 2 * ((i + 1) / n);
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  g.strokeStyle = '#ffc45e';
+  g.lineCap = 'round';
+  g.globalAlpha = 0.3;
+  g.lineWidth = 0.030 * s;
+  g.beginPath(); g.arc(cx, 0.5 * s, rT, a0, a1); g.stroke();
+  g.globalAlpha = 0.9;
+  g.lineWidth = 0.011 * s;
+  g.beginPath(); g.arc(cx, 0.5 * s, rT, a0, a1); g.stroke();
+  g.restore();
+  drawGlow(g, cx + Math.cos(a1) * rT, 0.5 * s + Math.sin(a1) * rT, 0.04 * s, '#ffc45e', '#fff2d0', 0.9);
+
+  // the lume, cyan in blue water, gold in the warm dark
+  const cy = 0.46 * s;
+  const cols = warm ? ['#c98f2f', '#ffc45e', '#ffe9b0'] : ['#2bbfe0', '#4fd9f2', '#7ef0ff'];
+  ring(g, cx, cy, 0.235 * s, 0.011 * s, cols[0], 0.5);
+  ring(g, cx, cy, 0.160 * s, 0.013 * s, cols[1], 0.75);
+  ring(g, cx, cy, 0.095 * s, 0.015 * s, cols[2], 0.95);
+  drawGlow(g, cx, cy, 0.21 * s, cols[0], cols[2], 0.5);
+  drawGlow(g, cx, cy, 0.07 * s, cols[2], '#ffffff', 1);
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  g.fillStyle = '#ffffff';
+  g.beginPath(); g.arc(cx, cy, 0.020 * s, 0, Math.PI * 2); g.fill();
+  g.restore();
+
+  // one mote per milestone reached, spiralling around the lume
+  const pts = [];
+  for (let k = 0; k <= i; k++) {
+    const ang = -Math.PI / 2 + k * 2.399963;
+    const rr = 0.26 + 0.05 * (k % 3);
+    pts.push([0.5 + Math.cos(ang) * rr, 0.46 + Math.sin(ang) * rr * 0.72, 0.008, 0.5]);
+  }
+  motes(g, s, pts);
+
+  // depth label
+  g.save();
+  g.fillStyle = warm ? '#ffe9c4' : '#dff2fa';
+  g.shadowColor = warm ? 'rgba(255,196,94,0.55)' : 'rgba(126,240,255,0.55)';
+  g.shadowBlur = 0.014 * s;
+  g.font = `300 ${0.062 * s}px -apple-system, "Segoe UI", Roboto, sans-serif`;
+  g.textAlign = 'center';
+  g.fillText(`${m.toLocaleString('en-US')} m`, cx, 0.795 * s);
+  g.restore();
+  return c;
+}
+
+// 5×3 contact sheet, each tile circle-cropped the way Game Center shows it.
+function drawAchievementSheet(tiles) {
+  const cell = 300, pad = 20;
+  const c = document.createElement('canvas');
+  c.width = 5 * cell + 6 * pad;
+  c.height = 3 * cell + 4 * pad;
+  const g = c.getContext('2d');
+  g.fillStyle = '#0a1020';
+  g.fillRect(0, 0, c.width, c.height);
+  tiles.forEach((tile, i) => {
+    const x = pad + (i % 5) * (cell + pad), y = pad + Math.floor(i / 5) * (cell + pad);
+    g.save();
+    g.beginPath(); g.arc(x + cell / 2, y + cell / 2, cell / 2, 0, Math.PI * 2); g.clip();
+    g.drawImage(tile, x, y, cell, cell);
+    g.restore();
+  });
+  return c;
+}
+
 const log = document.getElementById('log');
 window.runFeature = async () => (await post('feature-graphic.png', drawFeature(1024, 500))).ok;
+window.runAchievements = async () => {
+  const out = [], tiles = [];
+  for (let i = 0; i < ACH_MILESTONES.length; i++) {
+    const m = ACH_MILESTONES[i];
+    const tile = drawAchievement(1024, m, i, ACH_MILESTONES.length);
+    tiles.push(tile);
+    out.push(await post(`achievements/abyss_${m}.png`, tile));
+  }
+  out.push(await post('achievements/contact-sheet.png', drawAchievementSheet(tiles)));
+  log.textContent += '\nACHIEVEMENTS DONE';
+  return out.every((o) => o.ok);
+};
 window.run = async () => {
   const out = [];
   out.push(await post('icon.png', drawIcon(1024)));
