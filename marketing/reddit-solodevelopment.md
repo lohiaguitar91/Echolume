@@ -1,8 +1,7 @@
 # Reddit post — r/SoloDevelopment (launch)
 
 Status: ready to paste once the checklist is done. Day 1 of the launch.
-Audience: other solo devs, some of whom saw the Rug Town prototype here in
-October. The story is shipping, and the how earns the body. Media:
+Audience: other solo devs. The story is shipping, and the how earns the body. Media:
 `store/media/echolume-depth19.mp4` as a native video upload; the depth 46
 clip in your first comment.
 
@@ -17,12 +16,10 @@ clip in your first comment.
    in the body by default. If the sub requires disclosure, it stays. If the
    sub bans AI-assisted projects outright, this is the wrong sub; do not
    argue it in comments.
-4. **Account continuity.** The opening line assumes the Rug Town post was
-   made from this account (u/MyTech_Vibes). Delete it if not.
-5. **Video + body.** New Reddit lets a video post carry text; old Reddit
+4. **Video + body.** New Reddit lets a video post carry text; old Reddit
    does not. If there is no body field, post the video with the title and
    put the body as your own first comment, immediately.
-6. **Link.** Replace `<APP STORE LINK>`.
+5. **Link.** Replace `<APP STORE LINK>`.
 
 ## Title (pick one)
 
@@ -36,18 +33,14 @@ clip in your first comment.
 
 ## Body
 
-Some of you saw my Rug Town prototype here a few weeks ago. This is the
-other project, the one that was already in review, and as of today it is
-live.
-
-**Echolume** is a one-thumb game about a small blind creature in a deep-sea
-cave. You move the only way it knows how: by singing. Every tap is a song.
-It pushes you through the water and, for a moment, lights the cave around
-you. But the deep listens back, and the hunters swim toward the last place
-you sang. So the second verb is holding instead of tapping: you throw your
-voice, the song blooms where you aimed, and everything with ears turns
-there instead of toward you. It moves you nowhere and it costs a full song,
-which is what makes it a decision.
+**Echolume** went live on the App Store today. It is a one-thumb game: you
+play a small blind creature in a deep-sea cave, and the only way to move is
+to sing. Tap, and the sound pushes you through the water and lights up the
+walls around you for a second. The catch is that the hunters hear it too,
+and they swim to wherever you sang last. Holding instead of tapping throws
+your voice: the sound goes off where you aimed, everything with ears heads
+there, and you stay put. It costs a full song and moves you nowhere, so you
+only do it when you mean it.
 
 50 handcrafted depths across four chapters, four bosses that each want a
 different counter, and an endless mode after that. Free, an ad after you

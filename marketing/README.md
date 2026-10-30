@@ -61,9 +61,9 @@ either way.
 One sub per day, each with its own framing. Never the same clip in two subs
 on the same day.
 
-1. **r/SoloDevelopment** (`reddit-solodevelopment.md`). The Rug Town post
-   went here three weeks ago, so the account has a face there. Shipping is
-   the story.
+1. **r/SoloDevelopment** (`reddit-solodevelopment.md`). Shipping is the
+   story and the sub is built for it. The post does not mention Rug Town;
+   this launch stands on its own.
 2. **r/aigamedev** (`reddit-aigamedev.md`). The sub where the workflow in
    `docs/ITERATING.md` came from. The how is the whole post; the honest
    details about what the bot could not catch are what they want.
