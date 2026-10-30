@@ -14,7 +14,7 @@ if anyone asks what the later chapters look like.
    risk; name the tool.
 2. **The link rule.** Some AI subs want store links in a comment rather than
    the body. If so, move the two links to your first comment.
-3. **Replace** `<APP STORE LINK>`.
+3. **Link.** Already in the body: https://apps.apple.com/us/app/echolume-sound-light/id6799615320
 
 ## Title (pick one)
 
@@ -93,7 +93,7 @@ restarting any unlocked depth is already free, so it bought nothing. All
 the placement rules live in one file and are enforced there, not at the
 call sites, which is the only way they survived dozens of sessions.
 
-<APP STORE LINK>
+https://apps.apple.com/us/app/echolume-sound-light/id6799615320
 Code, including the rules file and the harness:
 https://github.com/lohiaguitar91/Echolume
 

@@ -20,7 +20,7 @@ the depth 46 clip in your first comment.
    sentence. If the sub also rules on AI-assisted code, the disclosure
    paragraph below covers it. If it bans AI-assisted projects outright, skip
    the sub.
-4. **Replace** `<APP STORE LINK>`.
+4. **Link.** Already in the body: https://apps.apple.com/us/app/echolume-sound-light/id6799615320
 
 ## Title (pick one)
 
@@ -52,7 +52,7 @@ of the typing. I directed it, playtested it, and made the calls. No
 generated art and no generated audio: everything on screen is drawn in
 code and every sound is synthesized while you play.
 
-<APP STORE LINK>
+https://apps.apple.com/us/app/echolume-sound-light/id6799615320
 
 Android is next. If you try it, the thing I most want to know: did the
 hold-to-throw-your-voice verb click on its own, or did you need the hint?

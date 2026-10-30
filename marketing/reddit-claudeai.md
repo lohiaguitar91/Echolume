@@ -21,7 +21,7 @@ megathread).
    the megathread and skip the title.
 3. **Flair.** The showcase flair, exactly; the bot deletes other intents
    under it.
-4. **Replace** `<APP STORE LINK>`.
+4. **Link.** Already in the body: https://apps.apple.com/us/app/echolume-sound-light/id6799615320
 
 ## Title (front page only; pick one)
 
@@ -89,7 +89,7 @@ session reads the section, implements, verifies headlessly (the bot plus a
 Playwright script for layout at 320 px), and merges. Anything visual gets
 reviewed as before-and-after screenshots, not as a diff.
 
-<APP STORE LINK>
+https://apps.apple.com/us/app/echolume-sound-light/id6799615320
 Code, including the CLAUDE.md and the bot:
 https://github.com/lohiaguitar91/Echolume
 

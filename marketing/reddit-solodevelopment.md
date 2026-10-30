@@ -19,7 +19,7 @@ clip in your first comment.
 4. **Video + body.** New Reddit lets a video post carry text; old Reddit
    does not. If there is no body field, post the video with the title and
    put the body as your own first comment, immediately.
-5. **Link.** Replace `<APP STORE LINK>`.
+5. **Link.** Already in the body: https://apps.apple.com/us/app/echolume-sound-light/id6799615320
 
 ## Title (pick one)
 
@@ -33,56 +33,32 @@ clip in your first comment.
 
 ## Body
 
-**Echolume** went live on the App Store today. It is a one-thumb game: you
-play a small blind creature in a deep-sea cave, and the only way to move is
-to sing. Tap, and the sound pushes you through the water and lights up the
-walls around you for a second. The catch is that the hunters hear it too,
-and they swim to wherever you sang last. Holding instead of tapping throws
-your voice: the sound goes off where you aimed, everything with ears heads
-there, and you stay put. It costs a full song and moves you nowhere, so you
-only do it when you mean it.
+Written by hand on Oct 30; this is the one to paste. Blank lines between the
+paragraphs are deliberate: a single newline does not break a paragraph on
+Reddit.
 
-50 handcrafted depths across four chapters, four bosses that each want a
-different counter, and an endless mode after that. Free, an ad after you
-clear a few depths and never after a death, and one pay-once purchase to
-remove them. No currency, no energy, no packs.
+Echolume went live on the App Store today. It is a one-thumb game that pairs
+something I find pleasure in, drifting slowly in water, with one of my fears,
+cave diving (I scuba dive, and avoid caverns like the plague)
 
-The how, since this is the sub for it: vanilla JS on one canvas, about
-7,600 lines, no engine, no bundler, no build step. There is not a single
-audio file in the app. The cave echoes your voice, the motes you collect
-build a melody, and your heartbeat speeds up when something is near, all
-synthesized at runtime from what the sim is doing. The art is the same
-story: everything is drawn in code, including the icon and the store
-screenshots, which are rendered from the game itself through headless
-Chromium.
+You play a small blind creature in a deep-sea cave, and the only way to move
+is to sing. Tap, and the sound pushes you through the water and lights up the
+walls around you for a second. The catch is that the hunters hear it too, and
+they swim to wherever you sang last.
 
-Solo, built with Claude Code doing most of the typing. I directed it,
-playtested it, and made the calls. No generated art and no generated audio:
-everything on screen is drawn in code and every sound is synthesized while
-you play.
+I wanted to see if I could build it mostly using vanilla JS. With Claude's
+help, apparently that was possible. All art and motion is JS, and the thing
+I'm most proud of: there are no audio files! All sound is from WebAudio
+primitives: oscillators, filters and gain envelopes.
 
-The thing I would do again: every one of the 50 depths is checked by an
-autoplay bot before it ships. Is every object actually inside the cave, can
-the exit be reached, does a bot that dodges the obvious survive. It caught
-dozens of placement bugs I would never have found by hand, including 64
-motes sitting inside urchins across 32 levels. The thing I learned the hard
-way: the bot clears a level and it still tells you nothing about whether a
-human will enjoy it. The bot only taps, so it never casts, which means it
-never experiences the one mechanic the game is about. Every real fix in the
-last two months came from a person with the phone in their hand: a boss
-telegraph that read as a pie chart, a title that clipped on narrow phones,
-a star I had cut and had to put back.
+Placement needed its own test harness, because I had like 200+ playthroughs
+where I was catching random objects outside of the "cavern walls". So now
+there's automation that goes through every level to validate placement
+before a new build.
 
-iPhone only today; Android is next.
+I hope you like it! Free on the iOS App Store (with ads because I like to eat)
 
-<APP STORE LINK>
-
-Code is public if you want to see how any of it works:
-https://github.com/lohiaguitar91/Echolume
-
-Question for the solo devs: how do you decide a level is done when you are
-the only tester? I ended up trusting a bot for fairness and strangers for
-fun, and I am not sure that split is right.
+https://apps.apple.com/us/app/echolume-sound-light/id6799615320
 
 ## Replies to have ready
 

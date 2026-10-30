@@ -17,7 +17,7 @@ screenshots as a gallery.
    questions and the ask is real: the next update is driven by it.
 4. **Give before you take.** Play and comment on two other people's games
    the same day. The sub notices who does and who does not.
-5. **Replace** `<APP STORE LINK>`.
+5. **Link.** Already in the body: https://apps.apple.com/us/app/echolume-sound-light/id6799615320
 
 ## Title (pick one)
 
@@ -55,7 +55,7 @@ Three things I would like to know, because they decide the next update:
 
 Also useful: your phone model, if anything stuttered or any text clipped.
 
-<APP STORE LINK>
+https://apps.apple.com/us/app/echolume-sound-light/id6799615320
 
 Solo, built with Claude Code doing most of the typing. I directed it,
 playtested it, and made the calls. No generated art and no generated audio:

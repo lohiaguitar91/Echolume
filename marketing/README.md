@@ -9,10 +9,9 @@ scheduled; you post by hand, one sub per day.
 
 ## Fill these in before anything goes out
 
-- `<APP STORE LINK>` in every file. App Store Connect → the app → App
-  Information → "View on App Store", or the share sheet from the store page
-  on your phone. It looks like `https://apps.apple.com/app/id<number>`.
-  The dev environment could not reach apps.apple.com to find it.
+- The App Store link is in every file:
+  https://apps.apple.com/us/app/echolume-sound-light/id6799615320
+  (store name "Echolume - Sound & Light").
 - The start date. The repo's notes begin Aug 9 2026 ("end of a long Windows
   session"), so the posts say "about three months". Correct it if you started
   earlier.
