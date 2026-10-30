@@ -47,7 +47,11 @@ already cost time, and the design rules that must not be broken.
   local-only when no bridge is present.
 - Icon/splash source art: `/__dev/gen` page → `assets-out/`; fan out with `npx capacitor-assets generate`.
 - Store docs in `store/`; build/publish runbooks in `docs/`; the `docs/plan-v1.*.html`
-  files are archived decision records, not live plans.
+  files are archived decision records, not live plans. Reddit launch drafts live in
+  `marketing/` (one file per subreddit, same shape as RugTown's), and the silent gameplay
+  clips they lead with are in `store/media/`, captured by `scripts/capture-clip.js`, which
+  freezes the shell's loop with `debugTimeScale = 0` and steps the sim two fixed ticks per
+  frame (stubbing rAF instead hides the whole DOM HUD: ui.js fades everything in via rAF).
 
 ## The gate economy (v1.3)
 - Every 7th depth is a gate, every 14th a boss (`gateKind` in `levels.js`). The motes banked
